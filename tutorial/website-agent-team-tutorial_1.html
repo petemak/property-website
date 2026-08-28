@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt to Website — Building a Multi-Agent Web Crew</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  :root{
+    --blue-ink: #0b1c2e;
+    --blue-panel: #10263f;
+    --blue-line: #2c4a6b;
+    --cyan: #6fd8e8;
+    --cyan-dim: #3d7f8c;
+    --amber: #f2a65a;
+    --paper: #eef3f7;
+    --paper-dim: #a9bccf;
+    --ok: #7fd99a;
+    --pink: #e08fb0;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--blue-ink), var(--blue-ink)),
+      repeating-linear-gradient(0deg, rgba(111,216,232,0.06) 0px, rgba(111,216,232,0.06) 1px, transparent 1px, transparent 28px),
+      repeating-linear-gradient(90deg, rgba(111,216,232,0.06) 0px, rgba(111,216,232,0.06) 1px, transparent 1px, transparent 28px);
+    color: var(--paper);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height:1.55;
+    padding-bottom: 80px;
+  }
+  a{ color: var(--cyan); }
+  .wrap{ max-width: 720px; margin: 0 auto; padding: 0 18px; }
+
+  .hero{ padding: 38px 18px 30px; border-bottom: 1px solid var(--blue-line); }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em;
+    color: var(--amber); text-transform: uppercase; margin-bottom: 10px;
+  }
+  h1{
+    font-family:'JetBrains Mono', monospace; font-weight: 800; font-size: clamp(26px, 7.5vw, 38px);
+    line-height: 1.1; margin: 0 0 14px; color: var(--paper);
+  }
+  h1 span{ color: var(--cyan); }
+  .hero p{ color: var(--paper-dim); font-size: 15.5px; max-width: 60ch; }
+  .hero-meta{
+    display:flex; gap:14px; flex-wrap:wrap; margin-top:18px;
+    font-family:'JetBrains Mono', monospace; font-size: 12px; color: var(--paper-dim);
+  }
+  .hero-meta span{ border:1px solid var(--blue-line); border-radius: 3px; padding: 4px 8px; }
+
+  section{ padding: 34px 18px; border-bottom: 1px solid var(--blue-line); }
+  .section-head{ display:flex; align-items:baseline; gap:10px; margin-bottom: 6px; }
+  .sec-num{ font-family:'JetBrains Mono', monospace; color: var(--amber); font-weight:800; font-size:20px; line-height:1; }
+
+  /* Orientation: contents + file map */
+  .orient{ padding: 28px 18px; border-bottom: 1px solid var(--blue-line); background: rgba(255,255,255,0.015); }
+  .orient-block{ margin-bottom: 30px; }
+  .orient-block:last-child{ margin-bottom: 0; }
+  .orient-h{ font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.06em; text-transform:uppercase; color: var(--cyan); margin: 0 0 4px; }
+  .orient-sub{ color: var(--paper-dim); font-size:13.5px; margin: 0 0 14px; }
+  .toc{ list-style:none; padding:0; margin:0; }
+  .toc li a{
+    display:flex; gap:12px; align-items:baseline; padding:8px 6px; border-radius:4px;
+    color: var(--paper); text-decoration:none; font-size:14.5px; border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .toc li:last-child a{ border-bottom:none; }
+  .toc li a:hover{ background: rgba(255,255,255,0.04); }
+  .toc-num{ font-family:'JetBrains Mono', monospace; color: var(--amber); font-weight:700; font-size:13px; width:22px; flex-shrink:0; }
+  .filegroup-label{ font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.04em; text-transform:uppercase; color: var(--paper-dim); margin: 18px 0 8px; }
+  .filegroup-label:first-of-type{ margin-top:0; }
+  .filerow{ border:1px solid var(--blue-line); border-radius:6px; padding:10px 12px; margin-bottom:7px; background: rgba(255,255,255,0.02); }
+  .filerow .fname{ font-family:'JetBrains Mono', monospace; color: var(--amber); font-size:13px; font-weight:600; }
+  .filerow .fmeta{ font-family:'JetBrains Mono', monospace; color: var(--cyan); font-size:10.5px; margin-left:8px; border:1px solid var(--cyan-dim); border-radius:3px; padding:1px 5px; white-space:nowrap; }
+  .filerow p{ margin:5px 0 0; font-size:12.5px; color: var(--paper-dim); }
+  h2{ font-family:'JetBrains Mono', monospace; font-size: 20px; margin: 0 0 4px; color: var(--paper); }
+  .sec-sub{ color: var(--paper-dim); font-size:14px; margin: 0 0 18px; }
+  p{ color: var(--paper); font-size:15px; }
+  p.dim{ color: var(--paper-dim); }
+
+  /* Role cards */
+  .roles{ display:flex; flex-direction:column; gap:10px; }
+  .role{
+    border:1px solid var(--blue-line); border-radius:6px; padding:12px 14px;
+    background: rgba(255,255,255,0.02); display:flex; gap:12px; align-items:flex-start;
+  }
+  .role .tag{
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700;
+    width:40px; height:40px; border-radius:6px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background: var(--blue-panel); border:1.5px solid var(--cyan-dim); color: var(--cyan);
+  }
+  .role .body h3{ margin:0 0 3px; font-size:14.5px; color: var(--paper); font-family:'IBM Plex Sans'; font-weight:600; }
+  .role .body p{ margin:0; font-size:13.5px; color: var(--paper-dim); }
+  .role.brand .tag{ border-color: var(--pink); color: var(--pink); }
+  .role.ux .tag{ border-color: var(--amber); color: var(--amber); }
+
+  /* Tabs */
+  .tabbar{ display:flex; border:1px solid var(--blue-line); border-radius:6px; overflow:hidden; margin-bottom:14px; flex-wrap:wrap; }
+  .tabbtn{
+    flex:1; min-width:70px; padding:9px 6px; background: var(--blue-panel); color: var(--paper-dim);
+    border:none; font-family:'JetBrains Mono', monospace; font-size:11.5px; cursor:pointer;
+    border-right: 1px solid var(--blue-line); border-bottom: 1px solid var(--blue-line);
+  }
+  .tabbtn:last-child{ border-right:none; }
+  .tabbtn.active{ background: var(--cyan-dim); color: var(--paper); }
+  .tabpanel{ display:none; border:1px solid var(--blue-line); border-top:none; border-radius: 0 0 6px 6px; padding:14px; background: rgba(255,255,255,0.02);}
+  .tabpanel.active{ display:block; }
+
+  /* Steps / accordion */
+  .step{ border:1px solid var(--blue-line); border-radius:6px; margin-bottom:12px; overflow:hidden; background: rgba(255,255,255,0.015); }
+  .step-head{
+    width:100%; text-align:left; background:none; border:none; color:var(--paper);
+    padding:14px 14px; display:flex; align-items:center; gap:12px; cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif; font-size:15px; font-weight:600;
+  }
+  .step-head .num{ font-family:'JetBrains Mono', monospace; color: var(--amber); font-size:13px; flex-shrink:0; width:22px; }
+  .step-head .chev{ margin-left:auto; color: var(--paper-dim); transition: transform .2s; font-size:12px; }
+  .step.open .chev{ transform: rotate(90deg); }
+  .step-body{ display:none; padding: 0 14px 16px 48px; color: var(--paper-dim); font-size:14.5px; }
+  .step.open .step-body{ display:block; }
+  .step-body p{ color: var(--paper-dim); }
+
+  pre{
+    background: #081420; border:1px solid var(--blue-line); border-radius:6px;
+    padding:12px 14px; overflow-x:auto; font-family:'JetBrains Mono', monospace; font-size:12.4px;
+    color: #cfe9ee; line-height:1.5; margin: 10px 0;
+  }
+  code{ font-family:'JetBrains Mono', monospace; }
+  .tabpanel code, .step-body code, p code{
+    background: rgba(111,216,232,0.1); padding:1px 5px; border-radius:3px; color: var(--cyan); font-size:0.9em;
+  }
+  .file-tag{
+    display:inline-block; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--paper-dim);
+    background: rgba(255,255,255,0.04); border:1px solid var(--blue-line); border-radius:3px;
+    padding:2px 7px; margin-bottom:-2px;
+  }
+
+  .callout{
+    border-left:3px solid var(--amber); background: rgba(242,166,90,0.06);
+    padding:10px 14px; border-radius: 0 6px 6px 0; font-size:14px; color: var(--paper); margin: 14px 0;
+  }
+  .callout b{ color: var(--amber); }
+
+  .checklist{ list-style:none; padding:0; margin:0; }
+  .checklist li{ display:flex; gap:10px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--blue-line); font-size:14.5px; cursor:pointer; }
+  .checklist li:last-child{ border-bottom:none; }
+  .checkbox{
+    width:18px; height:18px; border:1.5px solid var(--cyan-dim); border-radius:4px; flex-shrink:0; margin-top:2px;
+    display:flex; align-items:center; justify-content:center; font-size:12px; color: var(--ok); font-weight:700;
+  }
+  .checklist li.done{ color: var(--paper-dim); text-decoration: line-through; }
+  .checklist li.done .checkbox{ background: rgba(127,217,154,0.15); border-color: var(--ok); }
+  #progress-label{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--amber); margin-top:10px; display:block; }
+
+  .cheatsheet{ display:grid; grid-template-columns: 1fr; gap:10px; }
+  .cheatsheet .row{ border:1px solid var(--blue-line); border-radius:6px; padding:10px 12px; background: rgba(255,255,255,0.02); }
+  .cheatsheet .cmd{ color: var(--cyan); font-family:'JetBrains Mono',monospace; font-size:13px; display:block; margin-bottom:4px;}
+  .cheatsheet .desc{ color: var(--paper-dim); font-size:13px; }
+
+  footer{ padding: 26px 18px; text-align:center; color: var(--paper-dim); font-size:12.5px; }
+  footer a{ color: var(--cyan); }
+
+  /* Diagrams */
+  .diagram{ border:1px solid var(--blue-line); border-radius:6px; background: rgba(255,255,255,0.02); padding: 14px 10px; margin: 14px 0; overflow-x:auto; }
+  .diagram svg{ display:block; margin:0 auto; }
+  .diagram-caption{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--paper-dim); text-align:center; margin-top:8px; letter-spacing:.02em; }
+  .diagram-caption b{ color: var(--amber); }
+  .dg-box{ fill: var(--blue-panel); stroke: var(--cyan-dim); stroke-width:1.4; }
+  .dg-box-lead{ fill: var(--blue-panel); stroke: var(--amber); stroke-width:1.6; }
+  .dg-box-dashed{ fill: rgba(111,216,232,0.04); stroke: var(--cyan-dim); stroke-width:1.2; stroke-dasharray:4 3; }
+  .dg-box-pink{ fill: rgba(224,143,176,0.06); stroke: var(--pink); stroke-width:1.4; }
+  .dg-text{ font-family:'JetBrains Mono', monospace; fill: var(--paper); font-size:11px; }
+  .dg-text-dim{ font-family:'JetBrains Mono', monospace; fill: var(--paper-dim); font-size:9.5px; }
+  .dg-text-amber{ font-family:'JetBrains Mono', monospace; fill: var(--amber); font-size:9.5px; }
+  .dg-line{ stroke: var(--cyan-dim); stroke-width:1.4; fill:none; }
+  .dg-line-dashed{ stroke: var(--paper-dim); stroke-width:1.2; fill:none; stroke-dasharray:3 3; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <marker id="arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6fd8e8"></path>
+    </marker>
+    <marker id="arrow-dim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a9bccf"></path>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f2a65a"></path>
+    </marker>
+    <marker id="arrow-pink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e08fb0"></path>
+    </marker>
+  </defs>
+</svg>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Interactive tutorial · Claude Code · For beginners</div>
+    <h1>One prompt in.<br>A <span>live website</span> out.</h1>
+    <p>You're going to assemble a crew of six AI specialists — using a tool called <b>Claude Code</b> — that takes a single request like "build me a site for a coffee roastery" and turns it into branding, a design, working front-end and back-end code, and a real deployment customers can visit. No prior experience with Claude Code needed; this starts from zero.</p>
+    <div class="hero-meta">
+      <span>~30 min</span>
+      <span>No prior Claude Code experience needed</span>
+      <span>Tap steps to expand</span>
+    </div>
+  </div>
+</div>
+
+<div class="orient">
+  <div class="wrap">
+    <div class="orient-block">
+      <div class="orient-h">Contents</div>
+      <ol class="toc">
+        <li><a href="#sec01"><span class="toc-num">01</span>Get Claude Code running</a></li>
+        <li><a href="#sec02"><span class="toc-num">02</span>Two ways Claude can delegate work</a></li>
+        <li><a href="#sec03"><span class="toc-num">03</span>Meet the crew</a></li>
+        <li><a href="#sec04"><span class="toc-num">04</span>Not everyone runs at once</a></li>
+        <li><a href="#sec05"><span class="toc-num">05</span>Build the roster</a></li>
+        <li><a href="#sec06"><span class="toc-num">06</span>The contract is what makes parallel safe</a></li>
+        <li><a href="#sec07"><span class="toc-num">07</span>Constraints every agent respects</a></li>
+        <li><a href="#sec08"><span class="toc-num">08</span>Run the whole crew</a></li>
+        <li><a href="#sec09"><span class="toc-num">09</span>Choosing where it lives</a></li>
+        <li><a href="#sec10"><span class="toc-num">10</span>What "Cloudflare," "Render," and "Wrangler" actually are</a></li>
+        <li><a href="#sec11"><span class="toc-num">11</span>Make it scale, not just work</a></li>
+        <li><a href="#sec12"><span class="toc-num">12</span>Build checklist</a></li>
+        <li><a href="#sec13"><span class="toc-num">13</span>Quick reference</a></li>
+      </ol>
+    </div>
+
+    <div class="orient-block">
+      <div class="orient-h">File map</div>
+      <p class="orient-sub">Every file this crew touches, in one place. Each is explained in full where it's first used — this is just the map, so you always know whether something needs your input or shows up on its own.</p>
+
+      <div class="filegroup-label">You create these, once, before running the crew</div>
+      <div class="filerow"><span class="fname">.claude/agents/*.md</span><span class="fmeta">Sec 05</span><p>One file per role, copied from the roster and pasted into your project. Only enable one frontend and one backend at a time.</p></div>
+      <div class="filerow"><span class="fname">business-context.md</span><span class="fmeta">optional · Sec 08</span><p>Project root, freeform markdown. Business details for <code>brand-strategist</code> — skip it and it works from your prompt alone instead.</p></div>
+      <div class="filerow"><span class="fname">engineering-standards.md</span><span class="fmeta">optional · Sec 07</span><p>Project root, freeform markdown under four headers. Architecture and technology constraints every code-writing agent reads first.</p></div>
+
+      <div class="filegroup-label">Agents generate these automatically during a run</div>
+      <div class="filerow"><span class="fname">brand-brief.md</span><span class="fmeta">brand-strategist</span><p>Name, audience, voice, color palette, typography, and any assumptions it had to make.</p></div>
+      <div class="filerow"><span class="fname">scope-checklist.md</span><span class="fmeta">ux-designer</span><p>One line per capability category (catalog, payments, accounts, admin...) marked applies / doesn't / unsure, with a reason.</p></div>
+      <div class="filerow"><span class="fname">design-spec.md</span><span class="fmeta">ux-designer</span><p>Page list, sections, rough layout, and the component inventory reused across pages.</p></div>
+      <div class="filerow"><span class="fname">api-contract.md</span><span class="fmeta">ux-designer · Sec 06</span><p>The exact endpoints and JSON shapes — the shared interface both frontend and backend build against at the same time.</p></div>
+      <div class="filerow"><span class="fname">user-journeys.md</span><span class="fmeta">ux-designer</span><p>2-4 step-by-step task flows across pages, distinct from the page-by-page design spec.</p></div>
+      <div class="filerow"><span class="fname">src/frontend/…</span><span class="fmeta">frontend-html or frontend-cljs</span><p>The actual site code — no fixed filenames, built to match design-spec.md and api-contract.md.</p></div>
+      <div class="filerow"><span class="fname">src/backend/…</span><span class="fmeta">backend-node or backend-clojure</span><p>The actual API code — no fixed filenames, built to implement api-contract.md exactly.</p></div>
+      <div class="filerow"><span class="fname">Playwright test script</span><span class="fmeta">qa</span><p>Saved so QA can actually drive the rendered pages and click-test them, not just read the source.</p></div>
+      <div class="filerow"><span class="fname">QA report</span><span class="fmeta">qa</span><p>Pass/fail summary returned in its response — not saved to disk unless you ask it to write one.</p></div>
+      <div class="filerow"><span class="fname">Hosting config</span><span class="fmeta">deployment-engineer</span><p>Whatever the chosen host needs — Dockerfile, render.yaml, vercel.json, etc.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 01: SET UP CLAUDE CODE -->
+<section id="sec01">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">01</span><h2>Get Claude Code running</h2></div>
+    <p class="sec-sub">Everything in this tutorial runs inside <b>Claude Code</b> — a tool that lets Claude read, write, and run code in a real folder on your computer. It's separate from chat apps like claude.ai; you can drive it from a terminal or from the Claude Desktop app's <b>Code</b> tab.</p>
+
+    <div class="step open" id="s0">
+      <button class="step-head"><span class="num">1</span>Install and launch it<span class="chev">›</span></button>
+      <div class="step-body">
+        <div class="tabbar">
+          <button class="tabbtn active" data-tab2="desktop">Claude Desktop</button>
+          <button class="tabbtn" data-tab2="cli">Terminal (CLI)</button>
+        </div>
+
+        <div class="tabpanel active" id="tab2-desktop">
+          <ol style="padding-left:18px; margin:0; color:var(--paper-dim); font-size:14.5px;">
+            <li style="margin-bottom:8px;">Download and open the Claude Desktop app, and sign in. Agent teams (Section 07) need a paid plan.</li>
+            <li style="margin-bottom:8px;">Click the <b>Code</b> tab at the top of the window.</li>
+            <li style="margin-bottom:8px;">Choose <b>Local</b>, then <b>Select folder</b> and either pick an existing empty folder or create a new one for this project — this is your working directory. Claude Code operates only on files inside it.</li>
+            <li style="margin-bottom:0;">Type your first message in the box that appears. Every prompt in this tutorial gets typed there.</li>
+          </ol>
+        </div>
+
+        <div class="tabpanel" id="tab2-cli">
+          <p style="margin-top:0">If you don't have it yet, install with Node's package manager:</p>
+          <pre>npm install -g @anthropic-ai/claude-code</pre>
+          <p>Then, in your terminal, move into (or create) the folder you want to work in, and start a session there:</p>
+          <pre>mkdir my-website-project
+cd my-website-project
+claude</pre>
+          <p>Claude Code doesn't get pointed at a folder separately from some settings screen — it simply operates on whatever directory you launched it from. You'll land in an interactive prompt (a <code>&gt;</code> waiting for input) — that's where every command in this tutorial gets typed, including plain shell commands like <code>mkdir</code>.</p>
+        </div>
+
+        <div class="callout">There's no separate "create a project" step the way some apps have Projects. The folder you launch Claude Code in <b>is</b> the project.</div>
+      </div>
+    </div>
+
+    <div class="step" id="s0b">
+      <button class="step-head"><span class="num">2</span>Create the folder Claude watches for agent definitions<span class="chev">›</span></button>
+      <div class="step-body">
+        <p>Later sections have you write files describing each specialist. They need to live in a specific spot so Claude Code finds them automatically. Type this at the <code>&gt;</code> prompt (or your regular shell, before launching <code>claude</code>):</p>
+        <pre>mkdir -p .claude/agents</pre>
+        <p>Anything placed here gets scanned every time you start a session in this folder — nothing to import or register by hand.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 02: CORE CONCEPTS -->
+<section id="sec02">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">02</span><h2>Two ways Claude can delegate work</h2></div>
+    <p class="sec-sub">This tutorial uses both, so it's worth knowing the difference before you build anything.</p>
+
+    <div class="tabbar">
+      <button class="tabbtn active" data-tab="sub0">Subagent</button>
+      <button class="tabbtn" data-tab="team0">Agent team</button>
+    </div>
+    <div class="tabpanel active" id="tab-sub0">
+      <p style="margin-top:0">A <b>subagent</b> is a worker your main Claude session sends off to do one focused task. It runs in its own separate context, does the work, and reports back a short summary — its scratch work and exploration never clutter your main conversation. It only ever reports back to you; it can't talk to any other agent.</p>
+      <p class="dim">Good for a task with a clear, narrow job: "write a brand brief," "run the tests and summarize failures."</p>
+    </div>
+    <div class="tabpanel" id="tab-team0">
+      <p style="margin-top:0">An <b>agent team</b> is several full Claude Code sessions running at the same time. One is the <b>lead</b> (that's you); the others are <b>teammates</b>, each with their own context, who can message each other directly and split up work without you relaying every message.</p>
+      <p class="dim">Good for work that's genuinely independent and can happen simultaneously — like a frontend and a backend built at the same time. Costs more, since every teammate is a full separate session — so it's worth using only where the parallelism actually pays off.</p>
+    </div>
+
+    <div class="callout">The crew you're about to build uses <b>subagents</b> for the parts that have to happen in a strict order (you can't design a page before you know the brand), and an <b>agent team</b> for the parts that can genuinely run side by side.</div>
+  </div>
+</section>
+
+<!-- SECTION 03: THE CREW -->
+<section id="sec03">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">03</span><h2>Meet the crew</h2></div>
+    <p class="sec-sub">Six specialists, each narrower than "build a website." Narrow roles are what make agents reliable — a generalist agent tends to skip steps a specialist won't.</p>
+
+    <div class="roles">
+      <div class="role brand"><div class="tag">BR</div><div class="body"><h3>Brand Strategist</h3><p>Turns a one-line prompt into a name, voice, palette, and target audience — the raw material everything else depends on.</p></div></div>
+      <div class="role ux"><div class="tag">UX</div><div class="body"><h3>UX / Web Designer</h3><p>Turns the brand into a page structure, layout, and component list — and writes the API contract frontend and backend will both build against.</p></div></div>
+      <div class="role"><div class="tag">FE</div><div class="body"><h3>Frontend Developer</h3><p>Builds the UI against the design and the contract — in HTML5/CSS/JS or ClojureScript with Replicant, your call per project.</p></div></div>
+      <div class="role"><div class="tag">BE</div><div class="body"><h3>Backend Developer</h3><p>Implements the API defined in the contract — in Node.js or Clojure, your call per project.</p></div></div>
+      <div class="role"><div class="tag">QA</div><div class="body"><h3>Integration &amp; QA</h3><p>Wires frontend to backend, checks the contract was honored, runs accessibility and performance checks.</p></div></div>
+      <div class="role"><div class="tag" style="border-color:#7fd99a;color:#7fd99a;">DE</div><div class="body"><h3>Deployment Engineer</h3><p>Researches hosting suited to this exact project, ships it to a disposable staging environment first, then promotes to production — but only once a human has actually clicked through it.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 02: SHAPE OF THE LINE -->
+<section id="sec04">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">04</span><h2>Not everyone runs at once</h2></div>
+    <p class="sec-sub">Some of this crew has to work in <b>sequence</b> — you can't design a layout before you know the brand. Some can genuinely work in <b>parallel</b> — frontend and backend don't need to wait on each other, only on the contract (Section 06 explains what that is).</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 480 470" width="100%" style="max-width:460px">
+        <rect class="dg-box-pink" x="10" y="10" width="130" height="42" rx="5"></rect>
+        <text class="dg-text" x="75" y="32" text-anchor="middle" style="font-size:10.5px">brand-strategist</text>
+        <text class="dg-text-dim" x="75" y="45" text-anchor="middle">subagent</text>
+
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M140,31 L188,31"></path>
+
+        <rect class="dg-box" x="190" y="10" width="130" height="42" rx="5" style="stroke:#f2a65a"></rect>
+        <text class="dg-text" x="255" y="28" text-anchor="middle" style="font-size:10.5px;fill:#f2a65a">ux-designer</text>
+        <text class="dg-text-dim" x="255" y="41" text-anchor="middle">subagent + contract</text>
+
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M255,54 L255,80"></path>
+        <text class="dg-text-dim" x="255" y="72" text-anchor="middle">fork</text>
+
+        <rect class="dg-box-dashed" x="30" y="90" width="180" height="54" rx="5"></rect>
+        <text class="dg-text" x="120" y="112" text-anchor="middle" style="font-size:10.5px">frontend teammate</text>
+        <text class="dg-text-dim" x="120" y="126" text-anchor="middle">HTML5 / CSS / JS</text>
+
+        <rect class="dg-box-dashed" x="270" y="90" width="180" height="54" rx="5"></rect>
+        <text class="dg-text" x="360" y="112" text-anchor="middle" style="font-size:10.5px">backend teammate</text>
+        <text class="dg-text-dim" x="360" y="126" text-anchor="middle">Node.js or Clojure</text>
+
+        <path class="dg-line" d="M255,80 C255,60 120,70 120,88"></path>
+        <path class="dg-line" d="M255,80 C255,60 360,70 360,88"></path>
+
+        <path class="dg-line-dashed" marker-end="url(#arrow-dim)" marker-start="url(#arrow-dim)" d="M212,117 L268,117"></path>
+        <text class="dg-text-dim" x="240" y="107" text-anchor="middle">coordinate on contract</text>
+
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M120,144 L235,182"></path>
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M360,144 L245,182"></path>
+
+        <rect class="dg-box" x="150" y="184" width="180" height="46" rx="5" style="stroke:#7fd99a"></rect>
+        <text class="dg-text" x="240" y="204" text-anchor="middle" style="font-size:10.5px;fill:#7fd99a">QA teammate</text>
+        <text class="dg-text-dim" x="240" y="218" text-anchor="middle">wires it together, tests it</text>
+
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M240,230 L240,256"></path>
+        <text class="dg-text-dim" x="300" y="248" text-anchor="middle">only if QA passes</text>
+
+        <rect class="dg-box-pink" x="150" y="258" width="180" height="42" rx="5"></rect>
+        <text class="dg-text" x="240" y="276" text-anchor="middle" style="font-size:10.5px">deploy to staging</text>
+        <text class="dg-text-dim" x="240" y="290" text-anchor="middle">disposable preview URL</text>
+
+        <path class="dg-line" marker-end="url(#arrow-amber)" d="M240,300 L240,324"></path>
+        <text class="dg-text-amber" x="330" y="316" text-anchor="middle">you click through it</text>
+
+        <rect class="dg-box" x="150" y="326" width="180" height="42" rx="5" style="stroke:#f2a65a"></rect>
+        <text class="dg-text-amber" x="240" y="344" text-anchor="middle" style="font-size:10.5px">human review</text>
+        <text class="dg-text-dim" x="240" y="358" text-anchor="middle">design &amp; look-and-feel</text>
+
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M240,368 L240,392"></path>
+        <text class="dg-text-dim" x="300" y="384" text-anchor="middle">approved</text>
+
+        <rect class="dg-box" x="150" y="394" width="180" height="42" rx="5" style="stroke:#7fd99a"></rect>
+        <text class="dg-text" x="240" y="412" text-anchor="middle" style="font-size:10.5px;fill:#7fd99a">production</text>
+        <text class="dg-text-dim" x="240" y="426" text-anchor="middle">live for customers</text>
+
+        <text class="dg-text-dim" x="240" y="454" text-anchor="middle">sequential · parallel at the fork · joined at QA · gated by a human before it ships</text>
+      </svg>
+      <div class="diagram-caption">Brand and design run as cheap, sequential <b>subagents</b>. Frontend and backend run as a genuine <b>team</b>. Nothing reaches production without a person actually looking at staging first.</div>
+    </div>
+
+    <div class="callout">Agent <b>teams</b> cost real money — every teammate is a full separate Claude session, not a lightweight helper. Only fork into a team where the work is genuinely independent. Brand and design aren't independent of each other, so they stay subagents; frontend and backend are, so they become a team.</div>
+  </div>
+</section>
+
+<!-- SECTION 03: BUILD THE ROSTER -->
+<section id="sec05">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">05</span><h2>Build the roster</h2></div>
+    <p class="sec-sub">Each specialist is one markdown file inside the <code>.claude/agents/</code> folder from Section 01. The top of the file (between the <code>---</code> lines) is configuration; everything below it is the instructions that specialist follows. Pick a tab to see each one.</p>
+    <div class="callout">Quick guide to the configuration fields you'll see below: <b>name</b> is how you refer to the subagent in a prompt. <b>description</b> helps Claude decide when to use it automatically. <b>tools</b> restricts what it's allowed to touch — a subagent with only <code>Read, Write</code> literally cannot run shell commands or edit existing files, which is a safety feature, not a limitation to work around.</div>
+
+    <div class="tabbar">
+      <button class="tabbtn active" data-tab="brand">Brand</button>
+      <button class="tabbtn" data-tab="ux">UX</button>
+      <button class="tabbtn" data-tab="fe">Frontend (HTML)</button>
+      <button class="tabbtn" data-tab="fecljs">Frontend (ClojureScript)</button>
+      <button class="tabbtn" data-tab="node">Backend (Node)</button>
+      <button class="tabbtn" data-tab="clj">Backend (Clojure)</button>
+      <button class="tabbtn" data-tab="qa">QA</button>
+      <button class="tabbtn" data-tab="deploy">Deploy</button>
+    </div>
+
+    <div class="tabpanel active" id="tab-brand">
+      <span class="file-tag">.claude/agents/brand-strategist.md</span>
+      <pre>---
+name: brand-strategist
+description: Turns a business description into a brand brief.
+  Use first, before any design or code work.
+tools: Read, Write, WebSearch
+model: sonnet
+---
+
+You are a brand strategist. Before anything else, check whether
+a file named business-context.md exists in the project root.
+
+- If it exists: read it in full and treat it as the primary
+  source of truth — it takes priority over anything brief in
+  the prompt itself. Pull out target audience, product or
+  service details, differentiators, tone preferences, existing
+  brand constraints, and any example sites mentioned. If the
+  prompt and the file disagree, the file wins; note the
+  discrepancy in the brief.
+- If it doesn't exist: work from whatever description was given
+  in the prompt. Since that's necessarily thin, state your
+  assumptions explicitly in the brief rather than presenting
+  guesses as facts — for example, "assumed a mid-range price
+  point since none was given."
+
+Either way, produce a brand brief covering:
+1. Name (if not given) and a one-line tagline
+2. Target audience, in one paragraph
+3. Voice: 3-4 adjectives, plus one sentence each of do/don't
+4. Color palette: 2-3 primary colors as hex codes, with rationale
+5. Typography direction: one heading font pairing, one body font
+6. Assumptions made, if business-context.md wasn't provided
+
+Search for 2-3 real competitor or reference sites in the same
+space and note what to borrow or avoid. Write the brief to
+brand-brief.md. Do not touch layout, code, or copy for the site
+itself — that's the next station's job.</pre>
+    </div>
+
+    <div class="tabpanel" id="tab-ux">
+      <span class="file-tag">.claude/agents/ux-designer.md</span>
+      <pre>---
+name: ux-designer
+description: Turns a brand brief into a page structure, layout,
+  and API contract. Use after brand-strategist, before any code.
+tools: Read, Write, WebFetch
+model: sonnet
+---
+
+You are a web UX designer. Read brand-brief.md. Also check for
+engineering-standards.md in the project root — if present, read
+it before designing anything, since it may constrain the shape
+of the API you design or the architecture the site fits into.
+Treat anything marked non-negotiable there as a hard constraint;
+if it conflicts with the brief, stop and flag the conflict
+rather than quietly picking one over the other.
+
+Before designing anything, work out what kind of site this is
+and write out, explicitly, which of these capability categories
+apply and which don't — do not skip categories silently:
+- Catalog / inventory (product or service listings, and who
+  manages them)
+- Payments / checkout (one-time purchase, subscription billing,
+  or none)
+- Accounts / auth (does a customer or admin need to log in?)
+- Admin / back-office (who updates content, stock, or orders
+  after launch — and how?)
+- Search / discovery
+- Notifications (order confirmations, shipping updates, email)
+- Legal / compliance (terms, privacy policy, refund policy)
+- Customer agreements (a binding contract the customer must
+  accept per transaction — e.g. a rental agreement, service
+  contract, or waiver — distinct from a static terms page)
+
+For a business that sells or ships anything, assume catalog,
+payments, and some form of admin/back-office apply unless the
+brief clearly rules them out — do not assume "add later." Write
+this reasoning into scope-checklist.md, one line per category:
+applies / doesn't apply / unsure, with a reason.
+
+If "customer agreements" applies (car rental, equipment rental,
+and most service bookings usually need this even if the brief
+doesn't say so explicitly), treat it as fundamentally different
+from a terms-of-service page, not a variant of it:
+- It has to be shown and explicitly accepted at the specific
+  point in the flow where a transaction is finalized, not just
+  linked in a footer
+- The acceptance itself is a record that must be captured — who
+  accepted, when, and which version of the agreement — not just
+  a checkbox that renders without doing anything on submit
+- It's a first-class step in user-journeys.md ("review and
+  accept the rental agreement"), not folded silently into "then
+  they book"
+
+Then produce design-spec.md covering:
+1. Page list and the sections on each page
+2. For each section: purpose, content, and a rough layout
+   description (not pixel-perfect — enough for a developer
+   to build from)
+3. Component inventory (nav, card, form, footer, etc.) reused
+   across pages
+4. Any dynamic content the page needs (e.g. a contact form,
+   a newsletter signup, a product list)
+5. An explicit page or section for every category marked
+   "applies" in scope-checklist.md — including admin-only
+   pages, which are still in scope even though customers
+   never see them, and including the agreement-acceptance step
+   if "customer agreements" applies
+
+For every piece of dynamic content, also write api-contract.md:
+the exact endpoints, HTTP methods, and JSON request/response
+shapes the frontend will call and the backend must implement.
+This contract is what lets frontend and backend build at the
+same time without waiting on each other — be concrete and
+exhaustive, not aspirational. If "customer agreements" applies,
+this must include an endpoint that records an acceptance event
+(customer, timestamp, agreement version) as a side effect of
+the booking — a text block with no corresponding write is not
+an implementation of this category, it just looks like one.
+
+Finally, write user-journeys.md — this is different from
+design-spec.md and just as important. design-spec.md describes
+pages in isolation; user-journeys.md describes the sequence a
+real person follows across them. Pick the 2-4 most important
+journeys implied by the brand brief (e.g. "customer browses the
+catalog, adds an item, checks out" or "admin logs in, updates
+stock on a product, confirms it reflects on the storefront")
+and write each as a numbered sequence of concrete steps: what
+the user sees, what they click, what happens next, and where
+they end up. If you fetched reference sites earlier, look at
+how they actually structure this same journey, not just their
+visual style. A page that works perfectly in isolation can
+still fail here if getting from one step to the next isn't
+obvious — that gap is exactly what this file exists to catch
+before a developer builds it.
+
+Do not write code.</pre>
+    </div>
+
+    <div class="tabpanel" id="tab-fe">
+      <span class="file-tag">.claude/agents/frontend-html.md</span>
+      <pre>---
+name: frontend-html
+description: Builds HTML5/CSS/JS against a design spec, user
+  journeys, and API contract. Use after ux-designer, alongside
+  a backend teammate.
+tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch
+model: sonnet
+---
+
+You are a frontend developer. Read design-spec.md,
+user-journeys.md, and api-contract.md. Also check for
+engineering-standards.md in the project root — if present, read
+it before making any technology choice; anything marked
+non-negotiable is a hard constraint, not a preference. Build
+semantic HTML5 and CSS. Default to vanilla or lightly-framework'd
+JS unless engineering-standards.md specifies a frontend
+framework, in which case use that instead.
+
+Build to the journeys, not just the pages: user-journeys.md
+describes the sequence a real user follows across pages and
+components — make sure navigation, button placement, and what
+happens after each action actually support that sequence, not
+just that each page in isolation renders correctly.
+
+Rules:
+- Call the API exactly as api-contract.md defines it — do not
+  invent endpoints or response shapes
+- If the contract is ambiguous or missing something you need,
+  say so explicitly rather than guessing
+- Mobile-first responsive layout by default
+- Semantic HTML: proper heading hierarchy, alt text, form labels
+- No inline styles; keep CSS in its own file(s)
+- When an image is missing or no category-appropriate photo is
+  available, use a simple neutral SVG placeholder in the brand's
+  palette, obviously a placeholder — never a random-photo service
+- Before reporting done, click-test the actual rendered page,
+  not just check that it builds without console errors. In
+  particular: a "whole card is clickable" pattern (an overlay
+  element positioned to cover a card) only intercepts clicks
+  correctly when the card itself has a positioning context
+  (e.g. `position: relative`) as its direct ancestor — get this
+  wrong and the overlay silently swallows clicks meant for a
+  nested button or badge instead. Click every card, button, and
+  overlay you build, not just the ones you meant to test.
+- Before adding any library or framework not already in the
+  project, search for current, actively-maintained options
+  rather than defaulting to whatever you remember — package
+  ecosystems move fast enough that memorized advice is often
+  stale. In your summary, name each new dependency you added
+  and one line on why you picked it.
+
+Report which files you created or changed when done.</pre>
+      <p class="dim" style="margin-top:10px;">Only enable one frontend subagent per project — having both <code>frontend-html</code> and <code>frontend-cljs</code> active invites Claude to pick one for you. Keep the other's file around but rename it (e.g. <code>frontend-cljs.md.bak</code>) until you need it.</p>
+    </div>
+
+    <div class="tabpanel" id="tab-fecljs">
+      <span class="file-tag">.claude/agents/frontend-cljs.md</span>
+      <pre>---
+name: frontend-cljs
+description: Builds the UI in ClojureScript with Replicant
+  against a design spec, user journeys, and API contract. Use
+  after ux-designer, alongside a backend teammate.
+tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch
+model: sonnet
+---
+
+You are a ClojureScript frontend developer using Replicant
+(https://replicant.fun). Read design-spec.md, user-journeys.md,
+and api-contract.md. Also check for engineering-standards.md in
+the project root — if present, read it before making any
+technology choice; anything marked non-negotiable is a hard
+constraint, not a preference.
+
+Replicant is not a React wrapper — it's a plain rendering
+library: your entire UI is hiccup (Clojure vectors/maps/
+keywords), views are pure functions of application state, and
+there's no local component state to reason about. Work with
+that model rather than importing React-style habits:
+- Views are pure functions that take state and return hiccup —
+  no side effects inside a view function
+- Event handlers are data: vectors of actions dispatched back
+  to a single top-level state atom, not inline callbacks doing
+  the work themselves
+- Re-render the whole tree on state change and let Replicant's
+  diffing handle the DOM — don't hand-roll manual DOM updates
+- Use shadow-cljs as the build tool unless the project already
+  has a different one configured
+
+Build to the journeys, not just the pages: user-journeys.md
+describes the sequence a real user follows across pages and
+components — make sure navigation, dispatched actions, and what
+happens after each one actually support that sequence, not just
+that each view renders correctly in isolation.
+
+Rules:
+- Call the API exactly as api-contract.md defines it — do not
+  invent endpoints or response shapes
+- If the contract is ambiguous or missing something you need,
+  say so explicitly rather than guessing
+- Mobile-first responsive layout by default
+- Semantic HTML in the hiccup you emit: proper heading
+  hierarchy, alt text, form labels — Replicant renders real DOM,
+  the same accessibility rules apply
+- When an image is missing or no category-appropriate photo is
+  available, use a simple neutral SVG placeholder in the brand's
+  palette, obviously a placeholder — never a random-photo service
+- Before reporting done, click-test the actual rendered page in
+  a browser, not just check that shadow-cljs compiles cleanly.
+  The same "whole card is clickable" overlay footgun applies
+  here as in any CSS — a positioned overlay only intercepts
+  clicks correctly with a positioning context on its ancestor.
+  Click every card, button, and overlay you build.
+- Before adding any library beyond Replicant and shadow-cljs,
+  search for current, actively-maintained options rather than
+  defaulting to whatever you remember — the ClojureScript
+  ecosystem is smaller than npm's, so a stale or abandoned
+  library is easier to accidentally reach for. In your summary,
+  name each new dependency you added and one line on why you
+  picked it.
+
+Report which files you created or changed when done.</pre>
+      <p class="dim" style="margin-top:10px;">Since you already work in Clojure, this pairs naturally with <code>backend-clojure</code> for a single-language stack end to end — though nothing requires pairing them; either frontend works with either backend as long as they agree on <code>api-contract.md</code>.</p>
+    </div>
+
+    <div class="tabpanel" id="tab-node">
+      <span class="file-tag">.claude/agents/backend-node.md</span>
+      <pre>---
+name: backend-node
+description: Implements the API contract in Node.js. Use after
+  ux-designer, alongside a frontend teammate.
+tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch
+model: sonnet
+---
+
+You are a Node.js backend developer. Read api-contract.md and
+implement every endpoint exactly as specified — same paths,
+methods, and JSON shapes the frontend teammate is building
+against. Also check for engineering-standards.md in the project
+root — if present, read it before making any architectural or
+technology choice; anything marked non-negotiable is a hard
+constraint, not a preference.
+
+Rules:
+- Use Express (or the framework already in package.json, if one
+  exists) — don't introduce a second framework
+- Validate input; return real HTTP status codes, not 200 for
+  everything
+- Keep route handlers thin; put logic in separate modules
+- Run `npm test` if a test script exists before reporting done
+- Before adding any library beyond what's already in the
+  project (auth, validation, database drivers, etc.), search
+  for current, actively-maintained options rather than
+  defaulting to whatever you remember — package ecosystems move
+  fast enough that memorized advice is often stale, and picking
+  an unmaintained or since-deprecated package now is expensive
+  to unwind later. In your summary, name each new dependency
+  you added and one line on why you picked it.
+- If seed or sample data includes images (product photos,
+  category thumbnails), never pull from a random-photo
+  placeholder service (e.g. Picsum) — these return an arbitrary
+  unrelated photo per request, so a "coffee bag" can end up
+  with a photo of a bicycle. If you can't source a real,
+  category-matched photo, use a neutral placeholder instead and
+  list explicitly, in your summary, which items still need a
+  real image — don't let a photo that merely loads stand in for
+  one that's actually correct.
+
+If you need to change the contract, say so explicitly and
+flag it — don't silently diverge from what the frontend
+teammate is expecting.</pre>
+    </div>
+
+    <div class="tabpanel" id="tab-clj">
+      <span class="file-tag">.claude/agents/backend-clojure.md</span>
+      <pre>---
+name: backend-clojure
+description: Implements the API contract in Clojure. Use after
+  ux-designer, alongside a frontend teammate.
+tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch
+model: sonnet
+---
+
+You are a Clojure backend developer. Read api-contract.md and
+implement every endpoint exactly as specified — same paths,
+methods, and JSON shapes the frontend teammate is building
+against. Also check for engineering-standards.md in the project
+root — if present, read it before making any architectural or
+technology choice; anything marked non-negotiable is a hard
+constraint, not a preference.
+
+Rules:
+- Use ring + reitit (or whatever's already in deps.edn, if
+  present) for routing
+- Keep handlers as pure functions where possible; isolate I/O
+- Use plain maps for request/response bodies; middleware for
+  JSON encoding
+- Run the project's test alias (check deps.edn) and
+  `clj-kondo --lint src` before reporting done
+- Before adding any library beyond what's already in deps.edn
+  (auth, validation, database drivers, etc.), search for
+  current, actively-maintained options rather than defaulting
+  to whatever you remember — the Clojure library ecosystem
+  shifts which packages are considered current, and memorized
+  advice goes stale. In your summary, name each new dependency
+  you added and one line on why you picked it.
+- If seed or sample data includes images (product photos,
+  category thumbnails), never pull from a random-photo
+  placeholder service (e.g. Picsum) — these return an arbitrary
+  unrelated photo per request, so a "coffee bag" can end up
+  with a photo of a bicycle. If you can't source a real,
+  category-matched photo, use a neutral placeholder instead and
+  list explicitly, in your summary, which items still need a
+  real image — don't let a photo that merely loads stand in for
+  one that's actually correct.
+
+If you need to change the contract, say so explicitly and
+flag it — don't silently diverge from what the frontend
+teammate is expecting.</pre>
+      <p class="dim" style="margin-top:10px;">Only enable one backend subagent per project — having both <code>backend-node</code> and <code>backend-clojure</code> active invites Claude to pick one for you. Keep the other's file around but rename it (e.g. <code>backend-clojure.md.bak</code>) until you need it.</p>
+    </div>
+
+    <div class="tabpanel" id="tab-qa">
+      <span class="file-tag">.claude/agents/qa.md</span>
+      <pre>---
+name: qa
+description: Verifies the finished site against the API contract,
+  the scope checklist, and user journeys, and click-tests the
+  rendered pages. Use after frontend and backend teammates
+  finish, before deployment.
+tools: Read, Write, Bash, Grep
+model: sonnet
+---
+
+You are a QA engineer. Run five separate checks — do not skip
+any of them, they catch different classes of problem:
+
+1. Contract consistency: read api-contract.md and confirm every
+   endpoint it defines actually exists in the backend and is
+   called correctly by the frontend — same paths, methods, and
+   JSON shapes. Run the backend locally and hit each endpoint
+   for real if you can, rather than just reading the code and
+   assuming it works.
+
+2. Scope coverage: read scope-checklist.md and confirm every
+   capability marked "applies" is actually implemented and
+   working end to end — not just a page shell. A checkout page
+   with no working payment call, an admin page with no way to
+   actually edit stock, or a customer-agreement checkbox that
+   renders but doesn't actually record an acceptance event on
+   submit, all count as missing, not done.
+
+3. Real click testing: reading source code cannot tell you
+   whether a click actually lands on the right element — you
+   have to drive an actual rendered page. Check whether
+   Playwright is already a project dependency; if not, install
+   it (`npm install -D playwright && npx playwright install
+   --with-deps chromium`). Write a small script that loads each
+   key page and clicks every primary interactive element — nav
+   links, buttons, product cards, anything styled to look
+   clickable — and confirms each click fires the action it
+   visually promises, not a different one. Pay particular
+   attention to "whole card is clickable" overlay patterns:
+   these are exactly the kind of thing that silently hijacks
+   clicks meant for a nested button or badge, and no amount of
+   reading the CSS will catch it as reliably as actually
+   clicking it.
+
+4. Journey continuity: read user-journeys.md and, for each
+   journey, walk every step in the exact order described,
+   confirming each one is technically reachable from the step
+   before it — the button described in step 3 actually exists
+   and leads where step 4 expects. You are checking that the
+   path exists and functions, not whether it's a good path —
+   that judgment call belongs to the human reviewer at the
+   staging step, not to you.
+
+5. Standards compliance: if engineering-standards.md exists,
+   read it and check the actual code — not just the summaries
+   the other teammates reported — against everything marked
+   non-negotiable. A banned library quietly added, a database
+   call made from a layer the standards say shouldn't make one,
+   a stateful service where statelessness was required: flag
+   each one specifically, with the file and the rule it breaks.
+
+Report:
+- One pass/fail line per contract endpoint
+- One pass/fail line per scope-checklist category marked
+  "applies"
+- One pass/fail line per page for the click test, naming the
+  specific element if a click landed on the wrong target
+- One pass/fail line per journey, naming the first step that
+  breaks continuity if one does
+- One pass/fail line per non-negotiable item in
+  engineering-standards.md, if that file exists
+- Keep it short — the reader needs what's broken, not
+  confirmation of what's fine
+
+Do not edit code yourself. If something's broken, report it and
+name which teammate's files it's most likely in.</pre>
+      <div class="callout">Notice the <code>tools</code> line changed, not just the instructions. The old version — <code>Read, Bash, Grep</code> — could read code and run commands, but had no way to actually drive a rendered page and click something. No amount of prompt wording fixes a missing capability; <code>Write</code> was added so it can save the Playwright script it needs to run. If a bug keeps recurring no matter how the instructions are reworded, check whether the tools list can even do the job before writing another paragraph.</div>
+      <div class="callout">Check 4 is deliberately narrow: QA confirms a journey's steps are wired together correctly, not that the journey is a good one. Whether the flow actually makes sense to a real person is a judgment call no script can make — that's the entire reason the staging review in Section 07 still needs a human.</div>
+    </div>
+
+    <div class="tabpanel" id="tab-deploy">
+      <span class="file-tag">.claude/agents/deployment-engineer.md</span>
+      <pre>---
+name: deployment-engineer
+description: Researches hosting, deploys to staging for human
+  review, then promotes to production once approved. Use only
+  after qa has signed off — never before.
+tools: Read, Write, Edit, Bash, WebSearch, WebFetch
+model: sonnet
+---
+
+You are a deployment engineer. Before doing anything else,
+confirm QA has actually signed off (check for a QA report or
+ask if none exists) — refuse to deploy unverified work. Also
+check for engineering-standards.md in the project root — if
+present, read it before choosing a hosting target or deployment
+approach; anything marked non-negotiable is a hard constraint,
+not a preference.
+
+Work in two phases. Do not skip the pause between them, even
+if asked to "just deploy it" — that pause is what catches a
+design or layout problem before a customer ever sees it.
+
+PHASE 1 — Staging
+1. Given the project's stack (read package.json and/or deps.edn
+   to see what you're dealing with), search the web for current
+   hosting options — do not rely on remembered pricing or
+   free-tier details, they go stale within months. Compare at
+   least two options for the static frontend and, separately,
+   for the backend.
+2. Recommend one pairing with a one-paragraph reason, covering
+   cost at low traffic and whether the backend stays "warm" or
+   sleeps between requests.
+3. Write whatever config the chosen host needs (Dockerfile,
+   render.yaml, vercel.json, etc.) — do not touch application
+   source code to do this.
+4. Deploy to a staging or preview environment, not the final
+   production domain — most hosts (Vercel, Netlify, Cloudflare
+   Pages, Render) offer a free preview URL distinct from
+   production; use one.
+5. Report the staging URL and STOP. Wait for the user to
+   explicitly say the design and functionality look right
+   before continuing to Phase 2.
+
+PHASE 2 — Production (only after explicit approval)
+6. Promote the approved staging deployment to production, or
+   redeploy to the production tier/domain.
+7. This will usually require stopping to ask the user to
+   create an account, add a payment method, or paste in a
+   token — you cannot and should not do these steps yourself.
+8. Once live, report the URL, and list anything the user still
+   needs to do manually (custom domain, environment secrets,
+   DNS records).</pre>
+      <div class="callout">The pause between phases is the point. A staging URL costs nothing and nobody sees it but you — that's exactly when to catch a wrong color, a broken mobile layout, or a tone that doesn't match the brand brief, before it's live.</div>
+      <div class="callout">Notice what this subagent <b>can't</b> do: create accounts, enter payment details, or handle secrets on your behalf. That's intentional — it will stop and ask you to do those parts yourself, the same way any careful assistant should.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 04: THE CONTRACT -->
+<section id="sec06">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">06</span><h2>The contract is what makes parallel safe</h2></div>
+    <p class="sec-sub">This is the single most important idea in this tutorial. Without a written contract, "build the frontend and backend at the same time" quietly turns into "build two things that don't fit together."</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 480 190" width="100%" style="max-width:440px">
+        <rect class="dg-box-dashed" x="10" y="70" width="150" height="54" rx="5"></rect>
+        <text class="dg-text" x="85" y="92" text-anchor="middle" style="font-size:10.5px">frontend teammate</text>
+        <text class="dg-text-dim" x="85" y="106" text-anchor="middle">calls the endpoints</text>
+
+        <rect class="dg-box" x="185" y="20" width="110" height="150" rx="5" style="stroke:#f2a65a"></rect>
+        <text class="dg-text-amber" x="240" y="45" text-anchor="middle">api-contract.md</text>
+        <text class="dg-text-dim" x="240" y="63" text-anchor="middle">POST /signup</text>
+        <text class="dg-text-dim" x="240" y="78" text-anchor="middle">GET /products</text>
+        <text class="dg-text-dim" x="240" y="93" text-anchor="middle">{ id, name,</text>
+        <text class="dg-text-dim" x="240" y="106" text-anchor="middle">  price }</text>
+        <text class="dg-text-dim" x="240" y="124" text-anchor="middle">written once by</text>
+        <text class="dg-text-dim" x="240" y="137" text-anchor="middle">ux-designer</text>
+
+        <rect class="dg-box-dashed" x="320" y="70" width="150" height="54" rx="5"></rect>
+        <text class="dg-text" x="395" y="92" text-anchor="middle" style="font-size:10.5px">backend teammate</text>
+        <text class="dg-text-dim" x="395" y="106" text-anchor="middle">implements the endpoints</text>
+
+        <path class="dg-line" marker-end="url(#arrow-amber)" d="M160,97 L183,97"></path>
+        <path class="dg-line" marker-end="url(#arrow-amber)" d="M297,97 L318,97"></path>
+      </svg>
+      <div class="diagram-caption">Both teammates read the <b>same file</b> — neither improvises against the other's guesses.</div>
+    </div>
+
+    <p>Two extra safeguards worth building in from day one:</p>
+    <ul style="color:var(--paper-dim); font-size:14.5px; padding-left:20px;">
+      <li style="margin-bottom:8px;">Tell both teammates to <b>flag, not silently fix</b>, anything the contract gets wrong — a contract that drifts without anyone noticing is worse than no contract.</li>
+      <li>Give the QA teammate (Section 01) the explicit job of diffing what the backend actually implemented against <code>api-contract.md</code> before calling anything done.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SECTION: ENGINEERING STANDARDS -->
+<section id="sec07">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">07</span><h2>Constraints every agent respects</h2></div>
+    <p class="sec-sub"><code>business-context.md</code> tells the crew what the business needs. <code>api-contract.md</code> tells frontend and backend how to talk to each other. Neither tells anyone <i>how you want the system built</i> — what "good" means beyond "it works," which structural lines nothing should cross, which technologies are and aren't allowed. Without that written down, every agent falls back on its own judgment, and six agents' worth of independent judgment calls rarely adds up to one coherent system.</p>
+
+    <div class="callout" style="border-color:#f2a65a;">Before writing this file, know the trap: it's natural to assume a project-root <code>CLAUDE.md</code> already does this job, since Claude Code reads it automatically. It does — for the <b>main</b> session. It does not for subagents. Each subagent dispatched via the Task/Agent mechanism starts with a clean, isolated context and only sees what its own prompt tells it to read — your project's <code>CLAUDE.md</code> is not part of that by default. Standards that live only in <code>CLAUDE.md</code> will quietly govern your own typed instructions and nothing your crew builds.</div>
+
+    <p>The fix is the same pattern you already know from <code>business-context.md</code>: a plain file in the project root, and an explicit instruction in each relevant subagent telling it, by name, to read it first.</p>
+
+    <span class="file-tag">engineering-standards.md</span>
+    <pre># Engineering Standards
+
+## Goals
+[What "good" means here beyond "it works" — e.g. "must stay
+maintainable by a single developer," "API responses under
+200ms," "accessible to WCAG 2.1 AA."]
+
+## Architectural boundaries
+[Structural lines nothing should cross — e.g. "no direct
+database access from route handlers, always go through a data
+layer," "frontend never calls third-party APIs directly, always
+proxy through our backend," "services must be stateless, no
+in-memory session storage."]
+
+## Technology restrictions
+[Specific allow/deny lists — e.g. "PostgreSQL only, no NoSQL,"
+"no jQuery," "approved auth library: X, nothing else without
+asking."]
+
+## Non-negotiable vs guideline
+[Mark which items above an agent must never violate, versus
+which it may deviate from if it states a reason. Anything left
+unmarked defaults to non-negotiable.]</pre>
+
+    <p>Blank brackets are a fine starting point, but if you'd rather start from a filled-in baseline and delete what doesn't apply, here's one reasonable for a small-to-medium site like the ones this crew builds:</p>
+
+    <span class="file-tag">engineering-standards.md — starter defaults</span>
+    <pre># Engineering Standards
+
+## Goals
+- Simplest architecture that satisfies everything below — one
+  service, one database, until something here demands more
+- Maintainable by a single developer
+- Accessible to WCAG 2.1 AA
+
+## Architectural boundaries
+- Business logic never lives only in the frontend — the server
+  validates and enforces it; client-side logic is convenience
+  only, never the source of truth
+- Route/handler code stays thin; business logic lives in its
+  own module, testable without going through HTTP
+- Organize backend code by feature, not by technical layer —
+  src/features/catalog/, src/features/checkout/, each owning
+  its own logic end to end, rather than one controllers/
+  folder and one services/ folder spanning the whole app
+  (vertical slices). This also lowers collision risk if you
+  ever split work across more than one backend teammate.
+- Frontend never calls third-party APIs or holds secrets
+  directly — always proxied through the backend
+- Auth/authorization enforced server-side on every protected
+  endpoint, never only by hiding a button in the UI
+- One deployable frontend build. Do not split the UI into
+  independently built and deployed fragments (micro-frontends)
+  — that pattern earns its cost at a scale of multiple
+  independent teams shipping on separate schedules, which is
+  not this crew's situation regardless of how the site grows
+
+## Technology restrictions
+- One error response shape across every endpoint:
+  { error: { code, message } }
+- camelCase keys, ISO 8601 dates, consistently across all JSON
+- Mutating endpoints (checkout, booking) must be idempotent —
+  a retried request can't double-charge or double-book
+- All external input validated at the API boundary, before it
+  reaches business logic or the database
+- No secrets or API keys hardcoded anywhere, including seed
+  data — environment variables only
+- Schema changes go through versioned migrations, never ad hoc
+  changes run by whichever agent happens to need a column
+- Structured error logging with real context, not scattered
+  print statements
+
+## Non-negotiable vs guideline
+- Non-negotiable: server-side validation and authorization, no
+  hardcoded secrets, versioned migrations, idempotent mutations,
+  no micro-frontends
+- Guideline, may deviate with a stated reason: vertical-slice
+  folder structure, the specific error shape, the date format</pre>
+    <p class="dim">Vertical slices and "no micro-frontends" are both architectural-boundary items above, not separate categories — a systems-design rule always belongs under one of the same four headers, however specific it gets.</p>
+
+    <div class="callout">Two different levers, easy to conflate: <b>which subagent you spawn</b> (<code>frontend-html</code> vs <code>frontend-cljs</code>, <code>backend-node</code> vs <code>backend-clojure</code>) picks the language and runtime — set that by name in the spawn prompt in Section 08. <b>Technology restrictions</b> above picks specific frameworks and libraries <i>within</i> that choice — React instead of vanilla JS inside <code>frontend-html</code>, Fastify instead of Express inside <code>backend-node</code>. Get the language from the agent type; get everything more specific from this file.</div>
+
+    <p>Add this line to <code>ux-designer</code>, <code>frontend-html</code>, <code>frontend-cljs</code>, <code>backend-node</code>, <code>backend-clojure</code>, and <code>deployment-engineer</code> — anywhere a design or technology decision actually gets made:</p>
+    <pre>Also check for engineering-standards.md in the project root.
+If present, read it before making any structural or technology
+decision. Treat anything marked non-negotiable as a hard
+constraint, not a preference — if honoring it would conflict
+with the brief or contract, stop and flag the conflict rather
+than silently choosing one over the other.</pre>
+
+    <p>And give <code>qa</code> a matching check: read <code>engineering-standards.md</code> if it exists, and confirm nothing built violates a stated boundary or restriction — a banned library quietly added, a database call made from a layer that isn't supposed to make one. This follows the same rule the rest of this crew runs on: the agents building something are never the ones who get the final word on whether it followed the rules — someone else always checks.</p>
+
+    <p class="dim">Like <code>business-context.md</code>, this file is optional. Skip it for a quick prototype where "just make good choices" is good enough. Write it once your architecture or tech stack actually matters to you, and every agent that touches code will read it before making a call that would otherwise be a coin flip.</p>
+  </div>
+</section>
+
+<!-- SECTION 05: RUN IT -->
+<section id="sec08">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">08</span><h2>Run the whole crew</h2></div>
+    <p class="sec-sub">One prompt for the sequential part, then one prompt to fork into a team. Type each of these directly into your Claude Code session from Section 01 — the same window with the <code>&gt;</code> prompt, or the message box in Desktop's Code tab.</p>
+
+    <div class="callout">Notice the shape of these seven steps: an agent scopes it, <b>you</b> check the scope, agents build it, an agent verifies it against that scope, it ships to a disposable staging URL, <b>you</b> look at it, and only then does it reach production. No single agent is ever trusted to both decide something and confirm it delivered — that's what catches a missing payment flow, a broken mobile layout, or a color that doesn't match the brand, before any of it reaches a customer.</div>
+
+    <div class="step open" id="wstep1">
+      <button class="step-head"><span class="num">1</span>Sequential: brand, then design<span class="chev">›</span></button>
+      <div class="step-body">
+        <p>Two ways to start this, depending on how much you already know about the business. A one-line prompt works, but <code>brand-strategist</code> can only work with what it's given — the more real detail you provide, the less it has to guess.</p>
+
+        <div class="tabbar">
+          <button class="tabbtn active" data-tab2b="quick">Quick (one-liner)</button>
+          <button class="tabbtn" data-tab2b="detailed">Detailed (context file)</button>
+        </div>
+
+        <div class="tabpanel active" id="tab2b-quick">
+          <pre style="margin-top:0">Use the brand-strategist subagent to build a brand brief for:
+"A boutique coffee roastery in Kigali that ships subscription
+bags nationwide." Then use the ux-designer subagent to turn
+that brief into a design spec and API contract.</pre>
+          <p>Fast to try, but the brief will be built mostly on assumptions — <code>brand-strategist</code> is instructed to flag them explicitly rather than hide them, so check the "Assumptions made" section of <code>brand-brief.md</code> once it's done.</p>
+        </div>
+
+        <div class="tabpanel" id="tab2b-detailed">
+          <p style="margin-top:0">Create a plain text file named <code>business-context.md</code> in your project root — a normal text file, not something an agent needs to generate. There's no strict schema; loose markdown with headers works well because it's easy for both you and the agent to scan. Here's a template to start from:</p>
+
+          <span class="file-tag">business-context.md</span>
+          <pre># Business Context
+
+## What we do
+[Specific description of the product or service — not a
+tagline, the actual mechanics. E.g. "We roast coffee in small
+batches and sell it as a monthly subscription, plus one-off
+bags through the website."]
+
+## Customers
+[Who buys this, and how they find you. Demographics if you
+know them, but behavior matters more: are they price-sensitive,
+gift-buyers, repeat subscribers, local walk-ins?]
+
+## What makes us different
+[The honest answer, not the marketing answer. Competitors and
+how you differ from them, if you know of any.]
+
+## Existing brand
+[Name, logo, colors, tone already in use — or "none, starting
+fresh." Link an existing Instagram/social presence if its
+voice is one you like.]
+
+## Sites you like
+[2-3 examples, and what specifically you like about each —
+"the checkout flow," "the photography," "how minimal the nav
+is." Vague admiration isn't actionable; specifics are.]
+
+## Scale and budget
+[Hobby project, side income, or a real business expecting real
+traffic? This affects hosting recommendations later too.]</pre>
+
+          <ul style="color:var(--paper-dim); font-size:14px; padding-left:20px; margin:8px 0;">
+            <li><b>Empty sections are fine</b> — leave <code>[none]</code> rather than deleting a header. <code>brand-strategist</code> states assumptions explicitly when something's missing, and an empty section makes "missing" unambiguous versus you forgetting to fill it in.</li>
+            <li><b>Longer is fine too.</b> Paste in an actual business plan or notes doc if you have one — the subagent's job is to extract what's relevant, not follow a rigid field list.</li>
+            <li><b>Plain prose works just as well as headers</b>, if you'd rather just write a few paragraphs than fill in a template.</li>
+          </ul>
+
+          <p>Then run:</p>
+          <pre>Use the brand-strategist subagent to build a brand brief.
+Then use the ux-designer subagent to turn that brief into a
+design spec and API contract.</pre>
+          <p><code>brand-strategist</code> checks for <code>business-context.md</code> automatically and reads it before doing anything else — you don't need to mention the file in the prompt, and you can still add a short line describing the idea too; the file takes priority if the two disagree.</p>
+        </div>
+
+        <p>Either way, wait for both subagents to finish before the next step — the contract has to exist before anyone can build against it.</p>
+      </div>
+    </div>
+
+    <div class="step" id="wstep1b">
+      <button class="step-head"><span class="num">2</span>Stop and read scope-checklist.md yourself<span class="chev">›</span></button>
+      <div class="step-body">
+        <p>This is a <b>you</b> step, not an agent step — the single most important gate in this whole tutorial. Open <code>scope-checklist.md</code> and read every line. This example brief — "ships subscription bags nationwide" — implies recurring billing, a shipping flow, and someone updating stock levels. If any of those show up as "doesn't apply" or "unsure," that's the design spec missing real functionality before a single line of code gets written.</p>
+        <p>Don't proceed to the fork step until every "unsure" is resolved and every "applies" has a matching page or section in <code>design-spec.md</code>. It's far cheaper to catch a missing admin panel here than after frontend and backend have both been built around its absence.</p>
+      </div>
+    </div>
+
+    <div class="step" id="wstep2">
+      <button class="step-head"><span class="num">3</span>Parallel: fork into a team<span class="chev">›</span></button>
+      <div class="step-body">
+        <p>Agent teams are an experimental feature and off by default, so there's one setup step first. Create a file called <code>.claude/settings.json</code> in your project folder (you can ask Claude to create it) with this content:</p>
+        <pre>{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}</pre>
+        <p>One limitation to know about: agent teams currently only work from the <b>terminal</b>, not Desktop's Code tab. If you set up Section 01 using Desktop, open a terminal, install Claude Code there too if you haven't (<code>npm install -g @anthropic-ai/claude-code</code>), <code>cd</code> into the same project folder, and run <code>claude</code> to start a CLI session for this step.</p>
+        <p>With that in place, spawn the team:</p>
+        <pre>Spawn two teammates to build the site from design-spec.md
+and api-contract.md:
+- One teammate using the frontend-html agent type, owning
+  everything under src/frontend/
+- One teammate using the backend-node agent type, owning
+  everything under src/backend/
+Have them confirm they're both reading the same
+api-contract.md before either writes code. Wait for both
+to finish before proceeding.</pre>
+        <p class="dim">Swap <code>frontend-html</code> for <code>frontend-cljs</code>, and/or <code>backend-node</code> for <code>backend-clojure</code>, depending on the stack for this project — the two choices are independent of each other.</p>
+
+        <p>By default, both teammates' output gets interleaved into your one terminal — readable, but jumbled once they're both writing at once. There's a better way to watch them:</p>
+
+        <div class="diagram">
+          <svg viewBox="0 0 480 190" width="100%" style="max-width:440px">
+            <rect class="dg-box" x="15" y="14" width="200" height="150" rx="6"></rect>
+            <text class="dg-text" x="115" y="36" text-anchor="middle" style="font-size:10.5px">in-process (default)</text>
+            <line x1="30" y1="50" x2="200" y2="50" style="stroke:#2c4a6b;stroke-width:1"></line>
+            <text class="dg-text-dim" x="115" y="66" text-anchor="middle">frontend: editing index.html</text>
+            <text class="dg-text-dim" x="115" y="80" text-anchor="middle">backend: npm install...</text>
+            <text class="dg-text-dim" x="115" y="94" text-anchor="middle">frontend: writing styles.css</text>
+            <text class="dg-text-dim" x="115" y="108" text-anchor="middle">backend: creating routes.js</text>
+            <text class="dg-text-dim" x="115" y="122" text-anchor="middle">one stream, interleaved</text>
+            <text class="dg-text-amber" x="115" y="146" text-anchor="middle" style="font-size:9px">↑↓ arrows to switch, Enter to view</text>
+
+            <rect class="dg-box" x="265" y="14" width="200" height="150" rx="6" style="stroke:#f2a65a"></rect>
+            <text class="dg-text-amber" x="365" y="36" text-anchor="middle" style="font-size:10.5px">split panes (tmux)</text>
+            <line x1="365" y1="46" x2="365" y2="154" style="stroke:#2c4a6b;stroke-width:1"></line>
+            <line x1="280" y1="46" x2="450" y2="46" style="stroke:#2c4a6b;stroke-width:1"></line>
+            <text class="dg-text-dim" x="322" y="70" text-anchor="middle">frontend</text>
+            <text class="dg-text-dim" x="322" y="85" text-anchor="middle">pane</text>
+            <text class="dg-text-dim" x="408" y="70" text-anchor="middle">backend</text>
+            <text class="dg-text-dim" x="408" y="85" text-anchor="middle">pane</text>
+            <text class="dg-text-dim" x="365" y="140" text-anchor="middle" style="font-size:9px">both visible</text>
+            <text class="dg-text-dim" x="365" y="152" text-anchor="middle" style="font-size:9px">at once</text>
+          </svg>
+          <div class="diagram-caption">Same two teammates, two different ways to watch them.</div>
+        </div>
+
+        <div class="tabbar">
+          <button class="tabbtn active" data-tab3="inprocess">In-process (no setup)</button>
+          <button class="tabbtn" data-tab3="splitpane">Split panes (tmux)</button>
+        </div>
+
+        <div class="tabpanel active" id="tab3-inprocess">
+          <p style="margin-top:0">This is what you get with no extra configuration. In the agent panel, use the <b>up/down arrow keys</b> to select a teammate, press <b>Enter</b> to view its full output, and just start typing to message that teammate directly. Works in any terminal, including VS Code's integrated terminal — no dependencies to install.</p>
+        </div>
+
+        <div class="tabpanel" id="tab3-splitpane">
+          <p style="margin-top:0">Gives each teammate its own visible pane in the same window, so you can watch both work simultaneously instead of switching between them. Requires <a href="https://github.com/tmux/tmux" target="_blank" rel="noopener">tmux</a> installed — on Ubuntu:</p>
+          <pre>sudo apt install tmux</pre>
+          <p>Then add <code>teammateMode</code> to the same <code>.claude/settings.json</code> from earlier in this step:</p>
+          <pre>{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "teammateMode": "tmux"
+}</pre>
+          <p>Or skip the settings file and pass it directly when starting a session:</p>
+          <pre>claude --teammate-mode tmux</pre>
+          <div class="callout">Two caveats worth knowing before you rely on this: split-pane mode is <b>not</b> supported inside VS Code's integrated terminal, Windows Terminal, or Ghostty — run it from a plain terminal window instead. And it's documented as working best on macOS; on Linux it should work but is more likely to hit rough edges. If a pane misbehaves, dropping <code>teammateMode</code> back to in-process is a safe fallback, not a downgrade in what the team can actually do — it only changes how you watch it.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="wstep3">
+      <button class="step-head"><span class="num">4</span>Join: integrate and verify<span class="chev">›</span></button>
+      <div class="step-body">
+        <pre>Now use a QA subagent to run the frontend against the live
+backend, confirm every endpoint in api-contract.md is called
+correctly and returns what's expected, and cross-check the
+finished site against scope-checklist.md — every "applies"
+item should have working functionality, not just a page. Report
+anything missing or mismatched.</pre>
+        <p>The <code>qa</code> subagent (Section 05) deliberately has two jobs, not one: checking frontend-backend consistency against <code>api-contract.md</code>, and checking finished functionality against <code>scope-checklist.md</code>. The first catches implementation drift; the second catches missing features the contract itself never covered.</p>
+      </div>
+    </div>
+
+    <div class="step" id="wstep4">
+      <button class="step-head"><span class="num">5</span>Deploy to staging<span class="chev">›</span></button>
+      <div class="step-body">
+        <pre>QA has signed off. Use the deployment-engineer subagent to
+research current hosting options for this stack, recommend
+one, and deploy the site to a staging environment.</pre>
+        <p>This step will pause and hand control back to you at points — creating a hosting account, adding a payment method, pasting in an API token. That's expected; see Section 08 for what to have ready before you start. It should stop and give you a staging URL rather than going straight to production — if it tries to skip straight to production, stop it.</p>
+      </div>
+    </div>
+
+    <div class="step" id="wstep5">
+      <button class="step-head"><span class="num">6</span>Click through it yourself<span class="chev">›</span></button>
+      <div class="step-body">
+        <p>Another <b>you</b> step, not an agent step — open the staging URL and actually look at it. This is the only checkpoint in the whole crew that judges whether the site is genuinely usable, not just correct — no agent's job includes forming that opinion, so don't skim it.</p>
+        <p><b>Page by page:</b></p>
+        <ul style="color:var(--paper-dim); font-size:14px; padding-left:20px; margin:8px 0;">
+          <li>Every page from <code>design-spec.md</code> loads and looks like the layout described, not just "a" layout</li>
+          <li>Colors, fonts, and tone match <code>brand-brief.md</code> — this is the one thing no agent in this crew has actually checked visually</li>
+          <li>Resize the window (or use your phone) — does it hold up at mobile width?</li>
+          <li>Click every nav link and button at least once; submit any forms with test data</li>
+          <li>Every capability marked "applies" in <code>scope-checklist.md</code> is something you can actually click through, not just read about in a QA report</li>
+        </ul>
+        <p><b>Then, separately, walk each journey in <code>user-journeys.md</code> start to finish</b> — not by testing pages in isolation, but by actually following the sequence as the described user would: browsing, adding to a cart, checking out; logging in as an admin and updating stock. QA already confirmed each step is technically wired to the next — what you're checking is whether it's <i>obvious</i> what to do at each point, or whether you have to stop and guess. If you find yourself thinking "I only know to click this because I wrote the spec," a first-time visitor won't have that advantage either.</p>
+        <p>If something's off, describe it back to Claude Code directly — "the header font doesn't match the brand brief" or "after adding to cart it's not clear how to get to checkout" — and let the relevant teammate fix it before you approve. Re-check staging after any fix.</p>
+      </div>
+    </div>
+
+    <div class="step" id="wstep6">
+      <button class="step-head"><span class="num">7</span>Approve and promote to production<span class="chev">›</span></button>
+      <div class="step-body">
+        <pre>Staging looks correct. Promote it to production.</pre>
+        <p>Only say this once you mean it — it's the explicit approval <code>deployment-engineer</code> is waiting for before it touches the production domain.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 07b: DEPLOYMENT -->
+<section id="sec09">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">09</span><h2>Choosing where it lives</h2></div>
+    <p class="sec-sub">Hosting recommendations go stale fast — providers change pricing and free tiers every few months. That's exactly why the <code>deployment-engineer</code> subagent is instructed to search the web rather than rely on what it already "knows." A few fundamentals stay true regardless of which provider is current best-in-class:</p>
+
+    <div class="roles">
+      <div class="role"><div class="tag">FE</div><div class="body"><h3>The frontend is usually simple to host</h3><p>Plain HTML5/CSS/JS is <b>static</b> — it doesn't need a server running your code, just files served over a CDN. This is the cheapest, most commodity part of hosting.</p></div></div>
+      <div class="role"><div class="tag">BE</div><div class="body"><h3>The backend needs somewhere to keep running</h3><p>Node.js and Clojure servers need a host that keeps a process alive, not just files. This is where cost and complexity actually live — ask your deployment-engineer subagent to compare whether a service sleeps between requests, since that affects how the site feels to a first-time visitor.</p></div></div>
+      <div class="role"><div class="tag">$</div><div class="body"><h3>Budget shapes the honest answer</h3><p>Tell the subagent your constraint up front — "keep this under $10/month" or "free tier is fine for a demo" — rather than letting it assume. The right host for a portfolio site and the right host for a paying customer's storefront are rarely the same.</p></div></div>
+    </div>
+
+    <div class="callout">Before running the deploy step, have ready: an email you're willing to sign up with, and a payment card if you're expecting a paid tier. The subagent will stop and ask for these rather than guess or skip them.</div>
+  </div>
+</section>
+
+<!-- SECTION 09: HOSTING JARGON -->
+<section id="sec10">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">10</span><h2>What "Cloudflare," "Render," and "Wrangler" actually are</h2></div>
+    <p class="sec-sub"><code>deployment-engineer</code> picked these because they're a solid current pairing for a static frontend plus a Node.js or Clojure backend — but the names alone don't explain themselves. Here's what each one actually does, and why it takes two different services for one website.</p>
+
+    <p>Start from the basic problem: your own laptop can't be the site's home. It's not always on, it doesn't have a stable address, and it's not built to survive a thousand people loading a page at once. "Hosting" just means paying someone else to run a computer that <i>is</i> always on, always reachable, in your site's place. But your frontend and backend need fundamentally different things from that computer, which is why one website ends up using two hosts.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 480 340" width="100%" style="max-width:460px">
+        <text class="dg-text-amber" x="120" y="22" text-anchor="middle" style="font-size:11px">STATIC — your HTML/CSS/JS</text>
+        <text class="dg-text-amber" x="365" y="22" text-anchor="middle" style="font-size:11px">DYNAMIC — your API server</text>
+
+        <rect class="dg-box" x="35" y="34" width="170" height="36" rx="5"></rect>
+        <text class="dg-text" x="120" y="57" text-anchor="middle" style="font-size:10px">built frontend files</text>
+
+        <rect class="dg-box" x="280" y="34" width="170" height="36" rx="5"></rect>
+        <text class="dg-text" x="365" y="57" text-anchor="middle" style="font-size:10px">backend source code</text>
+
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M120,70 L120,96"></path>
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M365,70 L365,96"></path>
+
+        <rect class="dg-box-pink" x="35" y="98" width="170" height="38" rx="5"></rect>
+        <text class="dg-text" x="120" y="121" text-anchor="middle" style="font-size:10.5px">wrangler deploy</text>
+
+        <rect class="dg-box" x="280" y="98" width="170" height="38" rx="5" style="stroke:#a9bccf"></rect>
+        <text class="dg-text" x="365" y="121" text-anchor="middle" style="font-size:10.5px">git push to Render</text>
+
+        <text class="dg-text-dim" x="120" y="146" text-anchor="middle">a CLI — the remote control</text>
+        <text class="dg-text-dim" x="365" y="146" text-anchor="middle">Render watches your repo</text>
+
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M120,150 L120,176"></path>
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M365,150 L365,176"></path>
+
+        <rect class="dg-box" x="20" y="178" width="200" height="70" rx="6" style="stroke:#f2a65a"></rect>
+        <text class="dg-text-amber" x="120" y="198" text-anchor="middle" style="font-size:10.5px">Cloudflare's edge network</text>
+        <circle cx="55" cy="216" r="4" style="fill:#6fd8e8"></circle>
+        <circle cx="120" cy="212" r="4" style="fill:#6fd8e8"></circle>
+        <circle cx="185" cy="218" r="4" style="fill:#6fd8e8"></circle>
+        <circle cx="90" cy="230" r="4" style="fill:#6fd8e8"></circle>
+        <circle cx="150" cy="232" r="4" style="fill:#6fd8e8"></circle>
+        <text class="dg-text-dim" x="120" y="242" text-anchor="middle">copies in many cities</text>
+
+        <rect class="dg-box" x="265" y="178" width="200" height="70" rx="6" style="stroke:#a9bccf"></rect>
+        <text class="dg-text" x="365" y="200" text-anchor="middle" style="font-size:10.5px">Render</text>
+        <text class="dg-text-dim" x="365" y="216" text-anchor="middle">one process, always running</text>
+        <text class="dg-text-dim" x="365" y="230" text-anchor="middle">restarts it if it crashes</text>
+        <text class="dg-text-dim" x="365" y="242" text-anchor="middle">a single home, not copies</text>
+
+        <path class="dg-line" marker-end="url(#arrow-dim)" d="M120,250 L200,286"></path>
+        <path class="dg-line" marker-end="url(#arrow-dim)" d="M365,250 L280,286"></path>
+
+        <rect class="dg-box-lead" x="140" y="288" width="200" height="40" rx="6"></rect>
+        <text class="dg-text" x="240" y="312" text-anchor="middle" style="font-size:10.5px">your domain — one address</text>
+      </svg>
+      <div class="diagram-caption">Two different jobs, two different hosts, one address a visitor never has to think about.</div>
+    </div>
+
+    <div class="roles">
+      <div class="role"><div class="tag" style="border-color:#e08fb0;color:#e08fb0;">CF</div><div class="body"><h3>Cloudflare (Pages)</h3><p>A company best known for a huge global network of servers. Its Pages product takes your built frontend files and copies them onto that network, so a visitor in Kigali and one in Toronto both load the site from a nearby copy instead of one distant server. Fits static frontends specifically — it doesn't run your backend's code, only serves files.</p></div></div>
+      <div class="role"><div class="tag" style="border-color:#a9bccf;color:#a9bccf;">WR</div><div class="body"><h3>Wrangler</h3><p>Not a host itself — it's Cloudflare's command-line tool, the thing that actually uploads your files when someone runs <code>wrangler deploy</code>. Every hosting company needs some way to receive your code; some use a "connect your GitHub repo" web page, Cloudflare's is a CLI you or an agent runs directly.</p></div></div>
+      <div class="role"><div class="tag" style="border-color:#7fd99a;color:#7fd99a;">RN</div><div class="body"><h3>Render</h3><p>Hosts your <b>backend</b> instead — a real, continuously-running Node.js or Clojure process, not files. It provisions a small server, starts your process on it, restarts it automatically if it crashes, and gives your API a stable URL even though the underlying server can change.</p></div></div>
+    </div>
+
+    <div class="callout">The pattern generalizes past this specific pairing: whatever hosting names your <code>deployment-engineer</code> picks in a year, they'll split along this same line — one service copying static files to many locations, another keeping one program alive. Recognizing which job a new name is doing is more durable than memorizing the name itself.</div>
+  </div>
+</section>
+
+<!-- SECTION 10: SCALE -->
+<section id="sec11">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">11</span><h2>Make it scale, not just work</h2></div>
+    <p class="sec-sub">"Working" and "scalable" are different bars. A <b>hook</b> — a command Claude Code runs automatically at a certain point, like right after a file is edited — catches the gap early instead of at launch. It can even block a subagent from finishing until the problem is fixed.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 480 210" width="100%" style="max-width:440px">
+        <rect class="dg-box" x="150" y="10" width="180" height="38" rx="5"></rect>
+        <text class="dg-text" x="240" y="34" text-anchor="middle" style="font-size:10.5px">frontend or backend edits a file</text>
+
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M240,48 L240,76"></path>
+
+        <rect class="dg-box" x="110" y="78" width="260" height="46" rx="5" style="stroke:#f2a65a"></rect>
+        <text class="dg-text-amber" x="240" y="98" text-anchor="middle" style="font-size:10.5px">PostToolUse hooks</text>
+        <text class="dg-text-dim" x="240" y="112" text-anchor="middle">eslint · lighthouse-ci · axe</text>
+
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M195,124 L110,160"></path>
+        <text class="dg-text-dim" x="150" y="147" text-anchor="middle">pass</text>
+        <path class="dg-line" marker-end="url(#arrow-cyan)" d="M285,124 L370,160"></path>
+        <text class="dg-text-dim" x="330" y="147" text-anchor="middle">fail</text>
+
+        <rect class="dg-box" x="20" y="162" width="180" height="42" rx="5" style="stroke:#7fd99a"></rect>
+        <text class="dg-text" x="110" y="188" text-anchor="middle" style="font-size:10px;fill:#7fd99a">continues</text>
+
+        <rect class="dg-box" x="280" y="162" width="180" height="42" rx="5" style="stroke:#f2a65a"></rect>
+        <text class="dg-text" x="370" y="188" text-anchor="middle" style="font-size:10px;fill:#f2a65a">blocked, sent back</text>
+      </svg>
+      <div class="diagram-caption">The hook runs automatically after every edit — you don't have to remember to check.</div>
+    </div>
+
+    <span class="file-tag">.claude/agents/frontend-html.md (add to frontmatter)</span>
+    <pre>hooks:
+  PostToolUse:
+    - matcher: "Edit|Write"
+      hooks:
+        - type: command
+          command: "npx eslint src/frontend --max-warnings 0"</pre>
+    <p class="dim" style="margin-top:8px;">For <code>frontend-cljs</code>, swap the command for <code>clj-kondo --lint src</code> — same hook, same trigger, just the linter that matches the language.</p>
+
+    <p style="margin-top:16px;">Three scale-specific things worth checking before you call a generated site "done":</p>
+    <ul style="color:var(--paper-dim); font-size:14.5px; padding-left:20px;">
+      <li style="margin-bottom:8px;"><b>Performance budget:</b> ask the QA subagent to run Lighthouse and flag any page scoring below a threshold you set — image weight is the usual culprit on generated sites.</li>
+      <li style="margin-bottom:8px;"><b>Accessibility:</b> an <code>axe-core</code> pass on every page catches missing alt text and contrast issues before a human ever looks.</li>
+      <li><b>Statelessness:</b> if the backend teammate is stashing anything in memory between requests (session data, counters), ask it explicitly whether that survives a restart or a second server instance — a "works on my machine" API often doesn't scale past one process.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section id="sec12">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">12</span><h2>Build checklist</h2></div>
+    <p class="sec-sub">Tap items off as you assemble your own crew.</p>
+    <ul class="checklist" id="checklist">
+      <li data-i="0"><span class="checkbox"></span>Wrote <code>brand-strategist</code> and <code>ux-designer</code> subagents</li>
+      <li data-i="1"><span class="checkbox"></span>Ran them in sequence and got a real <code>api-contract.md</code></li>
+      <li data-i="1b"><span class="checkbox"></span>Read <code>scope-checklist.md</code> yourself and resolved every "unsure"</li>
+      <li data-i="1c"><span class="checkbox"></span>Got a real <code>user-journeys.md</code> with 2-4 concrete step-by-step flows</li>
+      <li data-i="1d"><span class="checkbox"></span>Wrote <code>engineering-standards.md</code> if this project's architecture or tech stack actually matters</li>
+      <li data-i="2"><span class="checkbox"></span>Wrote a frontend subagent (HTML or ClojureScript) and one backend subagent (Node or Clojure)</li>
+      <li data-i="3"><span class="checkbox"></span>Forked into a team and watched both build against the same contract</li>
+      <li data-i="4"><span class="checkbox"></span>Wrote a <code>qa</code> subagent to verify the integration</li>
+      <li data-i="4c"><span class="checkbox"></span>Confirmed <code>qa</code>'s report covers standards compliance, not just the contract</li>
+      <li data-i="4b"><span class="checkbox"></span>Checked each teammate's summary named which new libraries it picked and why</li>
+      <li data-i="5"><span class="checkbox"></span>Added a lint/quality hook to the frontend or backend subagent</li>
+      <li data-i="6"><span class="checkbox"></span>Checked performance and accessibility on a real generated page</li>
+      <li data-i="7"><span class="checkbox"></span>Wrote a <code>deployment-engineer</code> subagent</li>
+      <li data-i="8"><span class="checkbox"></span>Had it research and recommend a host — after QA signed off, not before</li>
+      <li data-i="9"><span class="checkbox"></span>Deployed to staging and got a working preview URL</li>
+      <li data-i="8b"><span class="checkbox"></span>Can explain in your own words why the frontend and backend need different hosts</li>
+      <li data-i="9b"><span class="checkbox"></span>Personally clicked through every page against the brand brief and design spec</li>
+      <li data-i="9c-journey"><span class="checkbox"></span>Walked every journey in <code>user-journeys.md</code> end-to-end and judged whether it actually felt obvious</li>
+      <li data-i="9c"><span class="checkbox"></span>Approved and promoted to production yourself</li>
+    </ul>
+    <span id="progress-label">0 / 19 complete</span>
+  </div>
+</section>
+
+<!-- CHEATSHEET -->
+<section id="sec13" style="border-bottom:none;">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">13</span><h2>Quick reference</h2></div>
+    <div class="cheatsheet">
+      <div class="row"><span class="cmd">brand-strategist → ux-designer</span><span class="desc">Always run these two first, in sequence, as subagents — never parallelize them.</span></div>
+      <div class="row"><span class="cmd">api-contract.md</span><span class="desc">The single source of truth frontend and backend both build against. Written once, by ux-designer.</span></div>
+      <div class="row"><span class="cmd">scope-checklist.md</span><span class="desc">ux-designer's explicit applies/doesn't-apply reasoning per capability category. Read it yourself before forking — it's where missing features get caught.</span></div>
+      <div class="row"><span class="cmd">Spawn N teammates using the &lt;name&gt; agent type</span><span class="desc">Reuses a subagent's tools and system prompt as a teammate — no need to redefine the role.</span></div>
+      <div class="row"><span class="cmd">Have them confirm … before either writes code</span><span class="desc">Forces the contract-check handshake explicitly, rather than hoping it happens.</span></div>
+      <div class="row"><span class="cmd">CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1</span><span class="desc">Required for the fork step. CLI only, not yet in Desktop's Code tab.</span></div>
+      <div class="row"><span class="cmd">deployment-engineer subagent</span><span class="desc">Run only after QA signs off. Researches current hosting live rather than stale memorized pricing, deploys to staging, and stops — it will not touch production until you say so.</span></div>
+      <div class="row"><span class="cmd">"Staging looks correct. Promote it to production."</span><span class="desc">The explicit approval phrase deployment-engineer is waiting for before Phase 2. Don't say it until you've actually clicked through staging.</span></div>
+      <div class="row"><span class="cmd">static files vs. a running process</span><span class="desc">The real distinction behind any hosting name pair, current or future: one service copies files to many locations (Cloudflare Pages), the other keeps one program alive (Render).</span></div>
+      <div class="row"><span class="cmd">"teammateMode": "tmux"</span><span class="desc">Gives each teammate its own visible terminal pane instead of one interleaved stream. Needs tmux installed; not supported in VS Code's integrated terminal.</span></div>
+      <div class="row"><span class="cmd">user-journeys.md</span><span class="desc">Step-by-step task flows, not page layouts. Written once by ux-designer, built to by whichever frontend teammate you use, checked for technical continuity by qa, judged for actual usability only by you at staging.</span></div>
+      <div class="row"><span class="cmd">"search for current, actively-maintained options"</span><span class="desc">The instruction added to every code-writing subagent's tools+prompt so library choices come from a live search, not stale memorized defaults.</span></div>
+      <div class="row"><span class="cmd">frontend-html / frontend-cljs · backend-node / backend-clojure</span><span class="desc">Four interchangeable pieces, not two paired stacks — any frontend works with either backend as long as both read the same api-contract.md.</span></div>
+      <div class="row"><span class="cmd">engineering-standards.md</span><span class="desc">Goals, architectural boundaries, and technology restrictions every code-writing subagent reads before making a design decision. Optional; write it once your stack actually matters.</span></div>
+      <div class="row"><span class="cmd">CLAUDE.md ≠ subagents</span><span class="desc">Project CLAUDE.md is loaded for your main session, not for subagents dispatched via Task/Agent — they only see what their own prompt tells them to read.</span></div>
+    </div>
+    <p class="dim" style="margin-top:18px;">Reference: <a href="https://code.claude.com/docs/en/sub-agents" target="_blank" rel="noopener">Subagents docs</a> · <a href="https://code.claude.com/docs/en/agent-teams" target="_blank" rel="noopener">Agent teams docs</a></p>
+  </div>
+</section>
+
+<footer>Agent teams are an experimental Claude Code feature and may change.</footer>
+
+<script>
+  document.querySelectorAll('.tabbar').forEach(bar=>{
+    const btns = bar.querySelectorAll('.tabbtn');
+    btns.forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const dataKey = Object.keys(btn.dataset)[0]; // e.g. 'tab', 'tab2', 'tab2b'
+        const value = btn.dataset[dataKey];
+        const idPrefix = dataKey + '-';
+        btns.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        let panelGroup = [];
+        let el = bar.nextElementSibling;
+        while(el && el.classList.contains('tabpanel')){
+          panelGroup.push(el);
+          el = el.nextElementSibling;
+        }
+        panelGroup.forEach(p=>p.classList.remove('active'));
+        document.getElementById(idPrefix+value).classList.add('active');
+      });
+    });
+  });
+
+  document.querySelectorAll('.step-head').forEach(head=>{
+    head.addEventListener('click',()=>{
+      head.parentElement.classList.toggle('open');
+    });
+  });
+
+  const items = document.querySelectorAll('#checklist li');
+  const label = document.getElementById('progress-label');
+  function updateProgress(){
+    const done = document.querySelectorAll('#checklist li.done').length;
+    label.textContent = done + ' / ' + items.length + ' complete';
+  }
+  items.forEach(li=>{
+    li.addEventListener('click',()=>{
+      li.classList.toggle('done');
+      li.querySelector('.checkbox').textContent = li.classList.contains('done') ? '✓' : '';
+      updateProgress();
+    });
+  });
+</script>
+
+</body>
+</html>
