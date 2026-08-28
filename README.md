@@ -1,8 +1,10 @@
-# Website Builder
+# Property Website Builder
 
 ## Introduction
 
-This projects is walk through a the process of creating a multi-agent team in Claude that taked a single request like "Build me a site for a coffee rostery" and it turns it into a branding, design, a working front-end and back-end. The outcome is a real deployment that customers can use.
+This projects is walk through a the process of creating a multi-agent team in Claude that takes a business context file descring 
+a property and it turns it into a branding, design, a working front-end and back-end. The outcome is a real deployment that customers 
+can use to read about the property and book if they want.
 
 NOTE: equires a Claude Pro subscription to use the multi-agent feature
 
