@@ -49,3 +49,10 @@ PHASE 2 — Production (only after explicit approval)
 8. Once live, report the URL, and list anything the user still
    needs to do manually (custom domain, environment secrets,
    DNS records).
+
+Also check for engineering-standards.md in the project root.
+If present, read it before making any structural or technology
+decision. Treat anything marked non-negotiable as a hard
+constraint, not a preference — if honoring it would conflict
+with the brief or contract, stop and flag the conflict rather
+than silently choosing one over the other.
