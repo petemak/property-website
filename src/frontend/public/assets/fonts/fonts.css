@@ -2,7 +2,7 @@
    request must be proxied/served by us, not a client call to a third-party API").
 
    Drop the woff2 files next to this stylesheet:
-     fraunces-latin-600.woff2, fraunces-latin-400.woff2
+     fraunces-latin-400.woff2, fraunces-latin-600.woff2, fraunces-latin-700.woff2
      inter-latin-400.woff2, inter-latin-500.woff2, inter-latin-600.woff2
 
    Until they are present the fallback stack (Georgia / system-ui, defined in
@@ -19,6 +19,13 @@
   font-family: "Fraunces";
   src: url("./fraunces-latin-600.woff2") format("woff2");
   font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("./fraunces-latin-700.woff2") format("woff2");
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }

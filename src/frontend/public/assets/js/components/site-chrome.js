@@ -46,7 +46,7 @@ export function renderHeader({ transparentOverHero = false, bookingMode = "reque
       h("a", { href: "/", class: "wordmark" }, "Kigali Keys"),
       h("nav", { class: "site-nav", "aria-label": "Site" }, navList),
       h("div", { class: "site-header__actions" },
-        h("a", { class: "btn btn--primary btn--sm", href: "/book" }, "Check dates"),
+        h("a", { class: "btn btn--primary btn--sm site-header__cta", href: "/book" }, "Check dates"),
         toggle,
       )
     ),
@@ -97,19 +97,22 @@ export function renderFooter(property) {
   host.replaceChildren(footer);
 }
 
-// Transparent-over-hero: switch to solid once the hero scrolls out.
+// Transparent-over-hero: white wordmark/nav while the hero is in view, solid Bone
+// once it scrolls past. Call this AFTER the hero element is in the DOM.
 export function wireHeroHeader() {
-  const header = $(".site-header--transparent");
+  const header = $(".site-header");
   const hero = $(".hero");
-  if (!header || !hero || !("IntersectionObserver" in window)) {
-    header?.classList.remove("site-header--transparent");
+  if (!header) return;
+  if (!hero || !("IntersectionObserver" in window)) {
+    header.classList.remove("site-header--transparent");
     return;
   }
-  const obs = new IntersectionObserver(
-    ([e]) => header.classList.toggle("site-header--transparent", e.isIntersecting && e.intersectionRatio > 0.1),
+  const apply = (transparent) => header.classList.toggle("site-header--transparent", transparent);
+  apply(true); // starts over the hero
+  new IntersectionObserver(
+    ([e]) => apply(e.isIntersecting && e.intersectionRatio > 0.1),
     { threshold: [0, 0.1, 0.5] }
-  );
-  obs.observe(hero);
+  ).observe(hero);
 }
 
 export { announce };

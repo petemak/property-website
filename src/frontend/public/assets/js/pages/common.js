@@ -4,6 +4,8 @@ import { api } from "../lib/api.js";
 import { renderHeader, renderFooter, wireHeroHeader } from "../components/site-chrome.js";
 import { h, $ } from "../lib/dom.js";
 
+export { wireHeroHeader };
+
 let propertyPromise;
 export function getProperty() {
   if (!propertyPromise) propertyPromise = api.getProperty().catch((e) => { propertyPromise = null; throw e; });
@@ -17,7 +19,8 @@ export async function initPublicPage({ transparentHeader = false } = {}) {
 
   renderHeader({ transparentOverHero: transparentHeader, bookingMode: property?.bookingMode || "request" });
   renderFooter(property);
-  if (transparentHeader) { document.body.classList.add("has-transparent-header"); wireHeroHeader(); }
+  // Note: pages with a hero must call wireHeroHeader() AFTER they mount the hero.
+  if (transparentHeader) document.body.classList.add("has-transparent-header");
 
   return { property };
 }

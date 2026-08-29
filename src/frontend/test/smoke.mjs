@@ -58,6 +58,35 @@ try {
     if (!(await page.locator("text=What's included").count())) throw new Error("missing included table");
   });
 
+  await check("Header wordmark is the largest header text, both states, no mobile collision", async () => {
+    // mobile (viewport is 390): wordmark bigger than nav-ish text, no overlap with hamburger, CTA hidden
+    await page.goto(BASE + "/", { waitUntil: "networkidle" });
+    const wm = page.locator(".site-header__inner .wordmark");
+    const size = (loc) => loc.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    const wmMobile = await size(wm);
+    if (wmMobile < 24) throw new Error("mobile wordmark too small: " + wmMobile);
+    if (await page.locator(".site-header__cta").isVisible()) throw new Error("Check-dates CTA should be hidden on mobile");
+    const wmBox = await wm.boundingBox();
+    const tglBox = await page.locator(".nav-toggle").boundingBox();
+    if (wmBox.x + wmBox.width > tglBox.x + 1) throw new Error("wordmark overlaps the hamburger on mobile");
+
+    // transparent-over-hero: white + still large
+    const colTop = await wm.evaluate((el) => getComputedStyle(el).color);
+    if (!/255,\s*255,\s*255/.test(colTop)) throw new Error("wordmark not white over the hero: " + colTop);
+
+    // desktop: wordmark clearly larger than the nav links, and solid-state after scroll
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(BASE + "/", { waitUntil: "networkidle" });
+    const wmDesk = await size(wm);
+    const navSize = await size(page.locator(".site-nav a").first());
+    if (wmDesk <= navSize * 1.4) throw new Error(`wordmark (${wmDesk}) not clearly bigger than nav (${navSize})`);
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight + 200));
+    await page.waitForTimeout(300);
+    const wmScrolled = await size(wm);
+    if (wmScrolled !== wmDesk) throw new Error("wordmark size changed between header states");
+    await page.setViewportSize({ width: 390, height: 844 });
+  });
+
   await check("P1 FAQ accordion toggles", async () => {
     const trigger = page.locator(".accordion__trigger").first();
     await trigger.click();

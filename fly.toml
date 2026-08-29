@@ -1,0 +1,46 @@
+# Kigali Keys backend — STAGING.
+# One machine, one SQLite database on a persistent volume. Do not scale past
+# one instance: the rate limiter and idempotency store for replay-dedupe are
+# per-process (SQLite is also single-writer).
+
+app = "kigali-keys-staging"
+primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  HTTP_HOST = "0.0.0.0"
+  # Staging data reset 2026-08-29: bumped to a fresh db/media path so the
+  # idempotent seeder repopulates property/pricing/legal/gallery with the
+  # owner's corrected values (Rebero->Gacuriro/Kagugu, nightly 140->70).
+  # Old /data/kigali-keys.db + /data/media are left on the volume, unused.
+  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r2.db"
+  MEDIA_DIR = "/data/media-r2"
+  SEED_PHOTOS_DIR = "/app/assets/property-photos"
+  SESSION_COOKIE_SECURE = "true"
+  DB_POOL_SIZE = "1"
+  RATE_LIMIT_MAX = "10"
+
+# Persistent disk. MEDIA_DIR and the SQLite file both live here so gallery
+# originals/thumbnails and all data survive restarts and redeploys.
+[[mounts]]
+  source = "kigali_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1   # keep one instance warm so the CDN proxy never
+                             # hits a cold start; still capped at one machine
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 200
+    soft_limit = 150
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

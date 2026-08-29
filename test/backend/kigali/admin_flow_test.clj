@@ -59,7 +59,7 @@
         id (:id item)]
     (testing "appears in admin queue"
       (is (some? id))
-      (is (= 735 (:estimatedTotal item))))
+      (is (= 385 (:estimatedTotal item))))
     (testing "detail view has PII + acceptances + no conflicts"
       (let [d (request :get (str "/api/admin/bookings/" id) :cookie c)]
         (is (= "sam@example.com" (get-in d [:body :guest :email])))
@@ -74,11 +74,11 @@
       (let [ak (h/uuid)
             appr (request :post (str "/api/admin/bookings/" id "/approve")
                           :body {:currency "USD"
-                                 :lineItems [{:code "accommodation" :label "USD 140 x 5 nights" :amount 700}
+                                 :lineItems [{:code "accommodation" :label "USD 70 x 5 nights" :amount 350}
                                              {:code "cleaningFee" :label "Cleaning fee" :amount 35}]
-                                 :total 735
+                                 :total 385
                                  :paymentInstructions "50% bank transfer"
-                                 :addressLine "House 12, KG 5 Ave, Rebero"
+                                 :addressLine "House 12, KG 9 Ave, Gacuriro"
                                  :mapUrl "https://maps.example/x"
                                  :checkInInstructions "Lockbox 4821"
                                  :hostContact "Jean +250"
@@ -86,15 +86,15 @@
                           :headers {"idempotency-key" ak} :cookie c)]
         (is (= 200 (:status appr)))
         (is (= "approved" (get-in appr [:body :status])))
-        (is (= 735 (get-in appr [:body :approvalDetails :total])))
+        (is (= 385 (get-in appr [:body :approvalDetails :total])))
         (testing "replay approve with same key returns stored 200"
           (let [again (request :post (str "/api/admin/bookings/" id "/approve")
                                :body {:currency "USD"
-                                      :lineItems [{:code "accommodation" :label "USD 140 x 5 nights" :amount 700}
+                                      :lineItems [{:code "accommodation" :label "USD 70 x 5 nights" :amount 350}
                                                   {:code "cleaningFee" :label "Cleaning fee" :amount 35}]
-                                      :total 735
+                                      :total 385
                                       :paymentInstructions "50% bank transfer"
-                                      :addressLine "House 12, KG 5 Ave, Rebero"
+                                      :addressLine "House 12, KG 9 Ave, Gacuriro"
                                       :mapUrl "https://maps.example/x"
                                       :checkInInstructions "Lockbox 4821"
                                       :hostContact "Jean +250"
@@ -117,7 +117,7 @@
         (testing "guest sees approved view with approvalDetails"
           (let [g (request :get (str "/api/bookings/" ref) :query {:email "sam@example.com"})]
             (is (= "approved" (get-in g [:body :status])))
-            (is (= "House 12, KG 5 Ave, Rebero" (get-in g [:body :approvalDetails :addressLine])))
+            (is (= "House 12, KG 9 Ave, Gacuriro" (get-in g [:body :approvalDetails :addressLine])))
             (is (= "approved" (get-in g [:body :decision :type])))))))))
 
 (deftest reject-flow

@@ -36,11 +36,18 @@
 }
 .wordmark {
   font-family: var(--font-head);
-  font-weight: 600;
-  font-size: var(--fs-600);
+  font-weight: 700;
+  font-size: var(--fs-700); /* mobile: clearly the largest thing in the header, no wrap */
+  letter-spacing: -0.01em;
+  line-height: 1;
   color: var(--c-hill-green);
   text-decoration: none;
   white-space: nowrap;
+}
+/* Public site header: step the wordmark up once there's room for it (nav appears
+   at 900px and the bar is taller). Footer + admin sidebar keep the smaller step. */
+@media (min-width: 900px) {
+  .site-header__inner .wordmark { font-size: var(--fs-800); }
 }
 .site-nav { display: none; }
 .site-nav ul { display: flex; gap: var(--sp-5); list-style: none; margin: 0; padding: 0; }
@@ -53,6 +60,10 @@
 .site-nav a[aria-current="page"] { text-decoration: underline; text-decoration-thickness: 2px; text-decoration-color: var(--c-clay); }
 
 .site-header__actions { display: flex; align-items: center; gap: var(--sp-3); }
+/* design-spec §1: desktop shows a compact "Check dates" clay button; mobile is
+   just the hamburger. Hiding the CTA also gives the enlarged wordmark room. */
+.site-header__actions .site-header__cta { display: none; }
+@media (min-width: 900px) { .site-header__actions .site-header__cta { display: inline-flex; } }
 
 .nav-toggle {
   display: inline-flex;

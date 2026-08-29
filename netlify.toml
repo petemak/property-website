@@ -1,0 +1,18 @@
+# Kigali Keys frontend — static, no build step.
+# Deployable artifact is src/frontend/public/ exactly as-is.
+# Pretty-route rewrites live in src/frontend/public/_redirects (Netlify reads
+# that automatically). The one thing that must be configured at the platform
+# level is the /api/* proxy to the backend — done here.
+#
+# Redirects in this file are evaluated BEFORE the _redirects file, so the
+# /api/* proxy wins over the catch-all 404 rule there.
+
+[build]
+  publish = "src/frontend/public"
+  command = ""
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://kigali-keys-staging.fly.dev/api/:splat"
+  status = 200
+  force = true

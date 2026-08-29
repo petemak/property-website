@@ -128,6 +128,7 @@ a URL 404s.
 - **Webfonts.** `assets/fonts/fonts.css` declares `@font-face` for Fraunces and
   Inter pointing at local `.woff2` files that aren't committed. Until they're
   added the page renders in the defined fallback stack (Georgia / system-ui)
-  with no layout shift and zero third-party requests. Drop the six `.woff2`
-  files next to `fonts.css` to enable the brand faces.
+  with no layout shift and zero third-party requests. Drop the `.woff2` files
+  next to `fonts.css` to enable the brand faces (Fraunces 400/600/700 — 700 is
+  used by the enlarged header wordmark — and Inter 400/500/600).
 - Wire the platform-level `/api/*` proxy and the `_redirects` rules on the host.

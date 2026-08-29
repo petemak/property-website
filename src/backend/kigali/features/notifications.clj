@@ -48,7 +48,7 @@
        "<hr style=\"border:none;border-top:1px solid #eee\"/>"
        html-body
        "<hr style=\"border:none;border-top:1px solid #eee\"/>"
-       "<div style=\"font-size:12px;color:#888\">Kigali Keys · Rebero, Kigali</div>"
+       "<div style=\"font-size:12px;color:#888\">Kigali Keys · Gacuriro / Kagugu, Kigali</div>"
        "</div></body></html>"))
 
 (defn render

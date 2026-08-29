@@ -1,6 +1,6 @@
 // P1 — Home / the property. Single scrolling page + sticky booking widget.
 
-import { initPublicPage, getProperty, errorNotice } from "./common.js";
+import { initPublicPage, getProperty, errorNotice, wireHeroHeader } from "./common.js";
 import { api } from "../lib/api.js";
 import { h, $, mount } from "../lib/dom.js";
 import { icon, CATEGORY_ICON } from "../components/icons.js";
@@ -45,6 +45,7 @@ const root = $("#home-root");
     mobileBookBar(property, copy, currency),
   );
 
+  wireHeroHeader();       // hero is in the DOM now
   wireStickyRail();
   wireLiveEstimate(property, currency);
 })();

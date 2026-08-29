@@ -18,9 +18,9 @@
   {:name "Kigali Keys"
    :tagline "A furnished home in Kigali — with the keys to a car."
    :summary "Whole 2-bedroom duplex in a gated Kigali neighbourhood. Sleeps 4."
-   :description "Kigali Keys is the whole of a two-bedroom duplex on a quiet gated street in Rebero, ten minutes from the city centre. The ground floor has an open kitchen, a dining table for four and a living room that opens to a small planted terrace. Upstairs are two bedrooms — a king and a queen — each with its own bathroom, blackout curtains and a ceiling fan. Fast fibre runs throughout, and the dining table works well as a desk for anyone working from Kigali.\n\nThe house comes with backup power, 24/7 gated security, weekly linen and towel changes, and a starter supply of coffee, tea and basics. Parked in the driveway is a 2019 Kia Sorento that guests can add to their stay for USD 45 a day, arranged with the booking and paid on site."
-   :neighbourhood "Rebero, Kigali"
-   :neighbourhoodText "Quiet, gated, upmarket residential. 10 minutes from the CBD, walkable to a small supermarket and two cafés."
+   :description "Kigali Keys is the whole of a two-bedroom duplex on a quiet gated street on the Gacuriro–Kagugu border (Kinyinya sector), about fifteen minutes from the city centre. The ground floor has an open kitchen, a dining table for four and a living room that opens to a small planted terrace. Upstairs are two bedrooms — a king and a queen — each with its own bathroom, blackout curtains and a ceiling fan. Fast fibre runs throughout, and the dining table works well as a desk for anyone working from Kigali.\n\nThe house comes with backup power, 24/7 gated security, weekly linen and towel changes, and a starter supply of coffee, tea and basics. Parked in the driveway is a 2019 Kia Sorento that guests can add to their stay for USD 45 a day, arranged with the booking and paid on site."
+   :neighbourhood "Gacuriro / Kagugu, Kigali"
+   :neighbourhoodText "A quiet, upmarket residential pocket on the Gacuriro–Kagugu border in the Kinyinya sector (Gasabo district). Gated streets, embassies and family homes, about 15 minutes from the CBD, with a supermarket and a couple of cafés a short drive away."
    :maxGuests 4
    :bedrooms 2
    :bathrooms 2
@@ -45,16 +45,19 @@
                             "Collect the keys from the lockbox by the front door and text the host that you have arrived."]
              :publicPreview "Self check-in from 14:00 via a lockbox. The exact address is shared once your request is approved."}
    :houseRulesSummary ["No smoking indoors" "No parties or events" "Quiet hours 22:00–06:00" "Maximum 4 guests"]
-   :location {:approxLat -1.9833
-              :approxLng 30.1028
+   ;; Approximate area coordinates for the Gacuriro/Kagugu border; the owner
+   ;; fine-tunes these in the admin Settings screen. The exact pin is never
+   ;; exposed publicly.
+   :location {:approxLat -1.9300
+              :approxLng 30.0930
               :showExactAddress false
               :staticMapUrl "/api/media/map/approx.png"
-              :pointsOfInterest [{:name "Kigali International Airport" :minutesByCar 20 :km 12 :category "transport"}
-                                 {:name "City centre / CBD" :minutesByCar 12 :km 6 :category "transport"}
-                                 {:name "Simba Supermarket, Rebero" :minutesByCar 5 :km 2 :category "amenity"}
+              :pointsOfInterest [{:name "Kigali International Airport" :minutesByCar 20 :km 11 :category "transport"}
+                                 {:name "City centre / CBD" :minutesByCar 15 :km 7 :category "transport"}
+                                 {:name "Local supermarket, Kinyinya" :minutesByCar 5 :km 2 :category "amenity"}
                                  {:name "Volcanoes National Park" :minutesByCar 150 :km 105 :category "trip"}
                                  {:name "Lake Kivu (Rubavu)" :minutesByCar 180 :km 155 :category "trip"}]}
-   :arrivalGuide "Most guests arrive at Kigali International Airport (KGL). A metered taxi or a pre-arranged transfer to Rebero is roughly USD 20–25 and takes about 20 minutes; the host can arrange a trusted driver if you send your flight details. Buy a local SIM (MTN or Airtel) at the airport for a few dollars, or set up an eSIM before you fly. Mobile money is used everywhere; cards work in larger shops and hotels. The currency is the Rwandan franc; plugs are type C/J at 230V. Kigali is calm and safe to walk in daytime; normal city sense at night."
+   :arrivalGuide "Most guests arrive at Kigali International Airport (KGL). A metered taxi or a pre-arranged transfer to Gacuriro/Kagugu (Kinyinya) is roughly USD 20–25 and takes about 20 minutes; the host can arrange a trusted driver if you send your flight details. Buy a local SIM (MTN or Airtel) at the airport for a few dollars, or set up an eSIM before you fly. Mobile money is used everywhere; cards work in larger shops and hotels. The currency is the Rwandan franc; plugs are type C/J at 230V. Kigali is calm and safe to walk in daytime; normal city sense at night."
    :gettingAroundWithoutCar "Moto-taxis (helmet provided) are the fastest way around and cost roughly RWF 1,000–2,000 for a short hop; use the Move or YegoMoto apps for a metered fare. Ride-hail cars via the same apps cost about RWF 3,000–6,000 across town. The house is a 5-minute drive from a small supermarket and two cafés."
    :faq [{:question "How fast is the wifi?" :answer "Fibre, about 100 Mbps down, with a mobile backup line that fails over automatically."}
          {:question "Is there a proper workspace?" :answer "There is fast fibre throughout and the dining table works well as a desk. A dedicated desk and chair are being added."}
@@ -65,7 +68,7 @@
          {:question "What is the cancellation policy?" :answer "See the cancellation and stay terms page. In short: free to cancel up to 14 days before check-in."}]})
 
 (def pricing
-  {:currency "USD" :nightlyRate 140 :cleaningFee 35 :minNights 3})
+  {:currency "USD" :nightlyRate 70 :cleaningFee 35 :minNights 3})
 
 (def vehicle
   {:offered true
@@ -91,14 +94,17 @@
    :geographicLimit "Within Rwanda only"})
 
 (def settings
+  ;; Placeholder host contact details — the owner overwrites publicEmail,
+  ;; publicPhone and newRequestNotificationEmails in the admin Settings screen.
+  ;; approxLat/approxLng are the Gacuriro/Kagugu border area, fine-tuned in admin.
   {:hostDisplayName "Jean at Kigali Keys"
    :publicEmail "host@kigalikeys.rw"
    :publicPhone "+250 788 000 000"
    :newRequestNotificationEmails ["host@kigalikeys.rw"]
    :timezone "Africa/Kigali"
    :currency "USD"
-   :approxLat -1.9833
-   :approxLng 30.1028
+   :approxLat -1.9300
+   :approxLng 30.0930
    :revealExactAddressAfterApproval true
    :guestResponseTimeText "Typically within 24–48 hours"})
 
@@ -141,7 +147,7 @@
               "Return the car with the same fuel level."
               "Rwanda only; no cross-border travel."
               "Report any accident to the host and the police within 24 hours."]
-    :body "# Kia Sorento Rental Agreement (v4)\n\n## 1. Parties\nThis agreement is between the property owner (\"the Owner\") and the guest named as primary driver on the booking (\"the Renter\").\n\n## 2. Vehicle\n2019 Kia Sorento, automatic, diesel, kept at the property in Rebero, Kigali.\n\n## 3. Rental period and rate\nThe car is rented for the pick-up and drop-off dates on the approved booking at USD 45 per calendar day, payable on site at collection. A day is each 24-hour period or part thereof.\n\n## 4. Security deposit and excess\nA refundable deposit of USD 500 is taken at collection (cash or card pre-authorisation) and returned after the car is checked in undamaged. The Renter is responsible for damage up to the USD 500 excess; deliberate or negligent damage is charged in full.\n\n## 5. Permitted use and geographic limit\nThe car may be driven within Rwanda only. Cross-border travel is not permitted. The car may not be used for hire or reward, motorsport, towing, or to carry more passengers than seatbelts.\n\n## 6. Driver eligibility\nThe primary driver must be at least 23 years old and have held a full licence for at least 2 years, and must present the licence and passport at collection. Only drivers approved by the Owner may drive the car.\n\n## 7. Insurance\nThird-party liability insurance is included. Damage to the rented vehicle is the Renter's responsibility up to the excess in clause 4. Fines, tolls and impound fees are the Renter's responsibility.\n\n## 8. Fuel and mileage\nThe car is provided with a set fuel level and must be returned at the same level; otherwise refuelling is charged plus a service fee. Mileage is unlimited within Rwanda.\n\n## 9. Condition on return\nThe car is returned to the property clean enough for inspection, on the agreed date and time. Late return is charged at the daily rate.\n\n## 10. Breakdown and accident\nIn a breakdown, call the assistance number provided at collection. In any accident the Renter must inform the Owner and the Rwanda National Police within 24 hours and must not admit liability.\n\n## 11. Prohibited uses\nDriving under the influence of alcohol or drugs, off-road use, and use by an unapproved driver each void the insurance and make the Renter liable for all resulting loss.\n\n## 12. Termination\nThe Owner may end the rental immediately for a serious breach of this agreement.\n\n## 13. Liability\nNothing in this agreement excludes liability that cannot be excluded under Rwandan law.\n\n## 14. Governing law\nThis agreement is governed by the law of Rwanda.\n\n## 15. Acceptance\nBy ticking the acceptance box in the booking flow the Renter confirms they have read and agree to this agreement in the version shown."}])
+    :body "# Kia Sorento Rental Agreement (v4)\n\n## 1. Parties\nThis agreement is between the property owner (\"the Owner\") and the guest named as primary driver on the booking (\"the Renter\").\n\n## 2. Vehicle\n2019 Kia Sorento, automatic, diesel, kept at the property in Gacuriro/Kagugu, Kigali.\n\n## 3. Rental period and rate\nThe car is rented for the pick-up and drop-off dates on the approved booking at USD 45 per calendar day, payable on site at collection. A day is each 24-hour period or part thereof.\n\n## 4. Security deposit and excess\nA refundable deposit of USD 500 is taken at collection (cash or card pre-authorisation) and returned after the car is checked in undamaged. The Renter is responsible for damage up to the USD 500 excess; deliberate or negligent damage is charged in full.\n\n## 5. Permitted use and geographic limit\nThe car may be driven within Rwanda only. Cross-border travel is not permitted. The car may not be used for hire or reward, motorsport, towing, or to carry more passengers than seatbelts.\n\n## 6. Driver eligibility\nThe primary driver must be at least 23 years old and have held a full licence for at least 2 years, and must present the licence and passport at collection. Only drivers approved by the Owner may drive the car.\n\n## 7. Insurance\nThird-party liability insurance is included. Damage to the rented vehicle is the Renter's responsibility up to the excess in clause 4. Fines, tolls and impound fees are the Renter's responsibility.\n\n## 8. Fuel and mileage\nThe car is provided with a set fuel level and must be returned at the same level; otherwise refuelling is charged plus a service fee. Mileage is unlimited within Rwanda.\n\n## 9. Condition on return\nThe car is returned to the property clean enough for inspection, on the agreed date and time. Late return is charged at the daily rate.\n\n## 10. Breakdown and accident\nIn a breakdown, call the assistance number provided at collection. In any accident the Renter must inform the Owner and the Rwanda National Police within 24 hours and must not admit liability.\n\n## 11. Prohibited uses\nDriving under the influence of alcohol or drugs, off-road use, and use by an unapproved driver each void the insurance and make the Renter liable for all resulting loss.\n\n## 12. Termination\nThe Owner may end the rental immediately for a serious breach of this agreement.\n\n## 13. Liability\nNothing in this agreement excludes liability that cannot be excluded under Rwandan law.\n\n## 14. Governing law\nThis agreement is governed by the law of Rwanda.\n\n## 15. Acceptance\nBy ticking the acceptance box in the booking flow the Renter confirms they have read and agree to this agreement in the version shown."}])
 
 ;; ---------------------------------------------------------------------------
 ;; Email templates

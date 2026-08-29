@@ -1,6 +1,10 @@
 # Pretty routes -> static files (Netlify-style; mirror on any CDN/host).
 # /api/* is proxied to the backend and must be configured at the platform level.
 
+# Platform-level API proxy (must be the first rule, above the catch-all).
+# STAGING backend. Keep in sync with netlify.toml. First match wins in this file.
+/api/*                    https://kigali-keys-staging.fly.dev/api/:splat   200
+
 /                         /index.html                     200
 /gallery                  /gallery.html                   200
 /the-car                  /the-car.html                   200

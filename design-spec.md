@@ -113,7 +113,9 @@ content comes from `GET /api/property`, `GET /api/gallery`, `GET
 /api/availability`.
 
 1. **Header / nav** (component: `SiteHeader`)
-   - Left: "Kigali Keys" wordmark (Fraunces). Right: links — The home, The car,
+   - Left: "Kigali Keys" wordmark (Fraunces). It must read clearly as the brand:
+     noticeably larger than the nav links beside it (target ~`--fs-800`, weight
+     600–700), not near-parity with them. Right: links — The home, The car,
      Location, Contact. On desktop a compact "Check dates" clay button; on
      mobile a hamburger.
    - Transparent over the hero, switches to solid Bone with charcoal text once

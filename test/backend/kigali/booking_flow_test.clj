@@ -29,7 +29,7 @@
       (is (= 200 status))
       (is (= "request" (:bookingMode body)))
       (is (= 3 (get-in body [:termsVersions :stayTerms])))
-      (is (= 140 (get-in body [:pricing :nightlyRate])))))
+      (is (= 70 (get-in body [:pricing :nightlyRate])))))
   (testing "GET /vehicle exposes minDriverAge + agreement"
     (let [{:keys [body]} (request :get "/api/vehicle")]
       (is (= 23 (:minDriverAge body)))
@@ -53,7 +53,8 @@
                     :headers {"idempotency-key" key})]
     (is (= 201 (:status r1)))
     (is (= "pending" (get-in r1 [:body :status])))
-    (is (= 1195 (get-in r1 [:body :estimate :estimatedTotal])))
+    ;; 7 nights x USD 70 + USD 35 cleaning + 4 car days x USD 45 = 705
+    (is (= 705 (get-in r1 [:body :estimate :estimatedTotal])))
     (is (= 3 (count (get-in r1 [:body :acceptancesRecorded]))))
     (is (nil? (get-in r1 [:body :car :driver])) "licence data never echoed")
     (let [ref (get-in r1 [:body :reference])
