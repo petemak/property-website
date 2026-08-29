@@ -1,0 +1,103 @@
+{
+  "name": "Kigali Keys",
+  "tagline": "A furnished home in Kigali — with the keys to a car.",
+  "summary": "Whole 2-bedroom duplex in a gated Kigali neighbourhood. Sleeps 4.",
+  "description": "This is the whole upper-and-lower duplex, not a room in a shared house. Two bedrooms, two bathrooms and a full kitchen. Fast fibre runs throughout at around 100 Mbps, backed up by a second connection and a power inverter for the occasional cut, and the dining table works well as a desk for anyone working from Kigali.\n\nIt sits inside a gated compound in Rebero, a quiet residential hill about 12 minutes from the CBD and 20 from the airport. There is 24-hour security on the gate, private parking, and the Kia Sorento is kept on the premises.\n\nThe home is set up for stays of a week or more: a weekly linen change is included, the kitchen is properly equipped, and there is room to work without sitting on the bed.",
+  "neighbourhood": "Rebero, Kigali",
+  "neighbourhoodText": "Quiet, gated, upmarket residential. About 12 minutes from the CBD and a short drive to two supermarkets. Walkable within the compound and the immediate street; most errands need a car or a moto.",
+  "maxGuests": 4,
+  "bedrooms": 2,
+  "bathrooms": 2,
+  "beds": [
+    { "room": "Primary bedroom", "type": "King" },
+    { "room": "Second bedroom", "type": "Queen" }
+  ],
+  "amenities": [
+    { "key": "wifi", "label": "Fast wifi (100 Mbps) with backup line", "category": "work", "icon": "wifi" },
+    { "key": "desk", "label": "Dining table doubles as a workspace", "category": "work", "icon": "desk" },
+    { "key": "monitor", "label": "External monitor available on request", "category": "work", "icon": "desk" },
+    { "key": "kitchen", "label": "Full kitchen with oven and hob", "category": "kitchen", "icon": "kitchen" },
+    { "key": "coffee", "label": "Filter coffee and kettle", "category": "kitchen", "icon": "kitchen" },
+    { "key": "washer", "label": "Washing machine", "category": "comfort", "icon": "cog" },
+    { "key": "linen", "label": "Weekly linen and towel change", "category": "comfort", "icon": "bed" },
+    { "key": "aircon", "label": "Ceiling fans (Kigali stays mild)", "category": "comfort", "icon": "cog" },
+    { "key": "power", "label": "Backup power inverter", "category": "building", "icon": "power" },
+    { "key": "water", "label": "Water tank and filter", "category": "building", "icon": "power" },
+    { "key": "parking", "label": "Private gated parking", "category": "building", "icon": "car" },
+    { "key": "security", "label": "24-hour gate security", "category": "safety", "icon": "shield" },
+    { "key": "smoke", "label": "Smoke and CO alarms", "category": "safety", "icon": "shield" },
+    { "key": "extinguisher", "label": "Fire extinguisher", "category": "safety", "icon": "shield" }
+  ],
+  "included": [
+    "Water and electricity",
+    "Backup power during outages",
+    "Weekly linen and towel change",
+    "Fast wifi with a backup connection",
+    "24/7 gated security and private parking"
+  ],
+  "notIncluded": [
+    "Daily housekeeping (weekly refresh only)",
+    "Airport pickup unless arranged in advance",
+    "The Kia Sorento unless added to your booking",
+    "Early check-in before 14:00 unless confirmed"
+  ],
+  "checkIn": {
+    "fromTime": "14:00",
+    "untilTime": "21:00",
+    "method": "Self check-in with a lockbox",
+    "processSteps": [
+      "Once your request is approved, the host emails the exact address and the lockbox code.",
+      "Give the booking name to the security team at the compound gate.",
+      "Collect the keys from the lockbox by the front door and let yourself in.",
+      "Message the host to confirm you are settled; anything you need is in the welcome note on the table."
+    ],
+    "publicPreview": "Self check-in from 14:00 with a lockbox. The exact address is shared after your booking is approved."
+  },
+  "houseRulesSummary": [
+    "No smoking anywhere indoors",
+    "No parties or events",
+    "Quiet hours 22:00–06:00",
+    "Maximum 4 guests — the number on the booking"
+  ],
+  "bookingMode": "request",
+  "location": {
+    "approxLat": -1.9833,
+    "approxLng": 30.1028,
+    "showExactAddress": false,
+    "staticMapUrl": "/api/media/map/approx.png",
+    "pointsOfInterest": [
+      { "name": "Kigali International Airport", "minutesByCar": 20, "km": 12, "category": "transport" },
+      { "name": "City centre / CBD", "minutesByCar": 12, "km": 6, "category": "transport" },
+      { "name": "Nearest supermarket", "minutesByCar": 5, "km": 2, "category": "essentials" },
+      { "name": "Pharmacy and ATM", "minutesByCar": 6, "km": 3, "category": "essentials" },
+      { "name": "King Faisal Hospital", "minutesByCar": 15, "km": 8, "category": "essentials" },
+      { "name": "Volcanoes National Park", "minutesByCar": 150, "km": 105, "category": "trip" },
+      { "name": "Lake Kivu (Rubavu)", "minutesByCar": 180, "km": 130, "category": "trip" },
+      { "name": "Nyungwe Forest", "minutesByCar": 300, "km": 220, "category": "trip" }
+    ]
+  },
+  "arrivalGuide": "Airport transfer: a metered taxi from Kigali International to Rebero is about USD 20–25 and takes 20 minutes; the host can arrange a fixed-price pickup for USD 25 if you send a flight number.\n\nConnectivity: buy an Airtel or MTN SIM at the airport (bring your passport) for a few dollars with generous data, or use an eSIM booked before you fly.\n\nMoney: the currency is the Rwandan franc. Cards work in supermarkets and hotels; markets and motos are cash. Mobile money (MoMo) is everywhere.\n\nPractical: plugs are UK-style Type G, 230V. Kigali is safe to walk in, including at night on the main roads; the compound is gated with 24-hour security.",
+  "gettingAroundWithoutCar": "Moto-taxis are the quickest way around the city — flag one down or use the Move or YegoMoto apps; a typical hop across town is RWF 1,000–2,000. Ride-hail cars (Move) are available for longer trips or when it rains. For weekend trips without the Sorento you would need a driver or an intercity bus from Nyabugogo.",
+  "faq": [
+    { "question": "How fast is the wifi, really?", "answer": "Fibre, around 100 Mbps down and 40 up on a normal day, with a second connection that fails over automatically. Video calls are not a problem." },
+    { "question": "Is there a proper place to work?", "answer": "The internet is genuinely fast — fibre at around 100 Mbps with a backup line — and the dining table works well as a desk. A dedicated desk is being added; for now there is no separate study." },
+    { "question": "How does laundry work?", "answer": "There is a washing machine in the unit. Linens and towels are changed once a week." },
+    { "question": "Are pets allowed?", "answer": "Not at this time, so the home stays allergen-free for future guests." },
+    { "question": "Can children stay?", "answer": "Yes. The maximum is 4 guests total including children. A travel cot is available on request." },
+    { "question": "Can we have extra guests over?", "answer": "Day visitors are fine within reason; overnight guests beyond the number on the booking are not, and there are no parties or events." },
+    { "question": "Where do we park?", "answer": "Inside the gated compound, in a private space. The Kia Sorento has its own spot." },
+    { "question": "How is payment handled?", "answer": "No payment is taken on this website. When the host approves your request, the approval email sets out the amount and how to pay — usually a bank transfer to confirm and the balance on arrival. The car is paid on site." },
+    { "question": "What is the cancellation policy?", "answer": "It is set out in full on the cancellation policy page and summarised in the booking flow. You accept it when you submit a request." },
+    { "question": "Do you offer long-stay discounts?", "answer": "For stays of a month or more, mention it in your message and the host will factor it into the final amount at approval." }
+  ],
+  "pricing": {
+    "currency": "USD",
+    "nightlyRate": 140,
+    "cleaningFee": 35,
+    "minNights": 3,
+    "paymentNote": "No payment is taken on this site. The host confirms the final amount and payment method when approving your request.",
+    "carNote": "The Kia Sorento is USD 45/day, arranged with your booking and paid on site."
+  },
+  "termsVersions": { "stayTerms": 3, "houseRules": 2 },
+  "updatedAt": "2026-08-20T09:00:00Z"
+}

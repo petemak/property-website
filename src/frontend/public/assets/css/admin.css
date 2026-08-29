@@ -1,0 +1,65 @@
+/* Admin shell — its own chrome, never the public header/footer. */
+
+.admin-body { background: var(--c-surface-sunk); }
+
+.admin-shell { display: grid; grid-template-columns: 1fr; min-height: 100vh; }
+@media (min-width: 900px) { .admin-shell { grid-template-columns: 248px 1fr; } }
+
+.admin-sidebar {
+  background: var(--c-hill-green);
+  color: var(--c-white);
+  padding: var(--sp-4);
+}
+.admin-sidebar .wordmark { color: var(--c-white); display: block; margin-bottom: var(--sp-4); }
+.admin-sidebar nav ul { list-style: none; margin: 0; padding: 0; }
+.admin-sidebar nav a {
+  display: block; padding: var(--sp-3); border-radius: var(--radius-sm);
+  color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500;
+}
+.admin-sidebar nav a[aria-current="page"] { background: rgba(255,255,255,0.16); color: #fff; }
+.admin-sidebar nav a:hover { background: rgba(255,255,255,0.1); }
+.admin-sidebar .sidebar-group-label { font-size: var(--fs-300); text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; margin: var(--sp-4) 0 var(--sp-2); padding-inline: var(--sp-3); }
+
+.admin-topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+  background: var(--c-white); border-bottom: 1px solid var(--c-border);
+  padding: var(--sp-3) var(--sp-5);
+}
+.admin-main { padding: var(--sp-5); max-width: 1000px; }
+.admin-main h1 { font-size: var(--fs-700); }
+
+.admin-cards { display: grid; gap: var(--sp-4); grid-template-columns: 1fr; }
+@media (min-width: 700px) { .admin-cards { grid-template-columns: repeat(3, 1fr); } }
+.stat-card { background: var(--c-white); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: var(--sp-4); }
+.stat-card .stat-num { font-family: var(--font-head); font-size: var(--fs-800); color: var(--c-hill-green); }
+
+.admin-table { width: 100%; border-collapse: collapse; background: var(--c-white); border: 1px solid var(--c-border); border-radius: var(--radius-md); overflow: hidden; }
+.admin-table th, .admin-table td { text-align: left; padding: var(--sp-3); border-bottom: 1px solid var(--c-border); font-size: var(--fs-300); }
+.admin-table th { background: var(--c-surface-sunk); font-weight: 600; }
+.admin-table tbody tr { cursor: pointer; }
+.admin-table tbody tr:hover { background: var(--c-surface-sunk); }
+.admin-table tbody tr:focus-within { outline: 2px solid var(--c-hill-green); outline-offset: -2px; }
+
+.admin-filters { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: end; margin-bottom: var(--sp-4); }
+.admin-filters .field { margin: 0; }
+
+.admin-panel { background: var(--c-white); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: var(--sp-5); margin-bottom: var(--sp-4); }
+.admin-panel h2 { font-size: var(--fs-600); }
+
+.login-wrap { display: grid; place-items: center; min-height: 100vh; padding: var(--sp-5); }
+.login-card { background: var(--c-white); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: var(--sp-6); max-width: 380px; width: 100%; box-shadow: var(--shadow-1); }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(22,37,32,0.55); display: grid; place-items: center; z-index: 400; padding: var(--sp-4); }
+.modal { background: var(--c-white); border-radius: var(--radius-md); max-width: 640px; width: 100%; max-height: 90vh; overflow: auto; padding: var(--sp-5); }
+.modal h2 { font-size: var(--fs-600); }
+.email-preview { border: 1px solid var(--c-border); border-radius: var(--radius-sm); background: var(--c-surface-sunk); padding: var(--sp-3); }
+.email-preview iframe { width: 100%; min-height: 360px; border: 0; background: #fff; }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: var(--c-white); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: var(--sp-2); }
+.cal-cell { min-height: 56px; padding: var(--sp-2); border: 1px solid var(--c-border); border-radius: 4px; font-size: var(--fs-300); background: var(--c-white); text-align: left; cursor: pointer; }
+.cal-cell[data-state="blocked"] { background: var(--c-status-rejected-bg); }
+.cal-cell[data-state="booked"] { background: var(--c-status-approved-bg); cursor: default; }
+.cal-cell[aria-pressed="true"] { outline: 2px solid var(--c-hill-green); }
+.cal-dow { font-size: var(--fs-300); font-weight: 600; text-align: center; padding: var(--sp-2); color: var(--c-text-muted); }
+
+.role-note { font-size: var(--fs-300); color: var(--c-text-muted); }

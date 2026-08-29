@@ -18,7 +18,8 @@ One paid add-on exists: the on-site Kia Sorento SUV at USD 45/day, collected at
 the property. Because a guest is taking temporary custody of a vehicle, this
 add-on carries a **binding rental agreement** that must be accepted per booking.
 
-No money is taken online anywhere on the site (see Payments below).
+No money is taken online anywhere on the site in v1 (see Payments below, and
+"Future direction / extensibility").
 
 ## Category-by-category
 
@@ -29,19 +30,20 @@ No money is taken online anywhere on the site (see Payments below).
   Per the standing instruction, a business that ships/sells a stay is assumed to
   have a catalog and back-office unless the brief rules it out — it does not.
 
-- **Payments / checkout — DOES NOT APPLY (online).** The business context
-  describes a request that a manager approves, after which the guest receives an
-  email with "detailed information about the location, costs and check-in
-  procedure." Costs are quoted and settled off-platform; the car is "collected
-  on-site" at USD 45/day, implying on-site payment. There is no instruction to
-  integrate a card processor, and the low/variable hosting budget points the
-  same way. The site shows an **estimate** and a price breakdown, but takes no
-  payment. NOTE: the booking mutation is still built idempotently per
-  engineering-standards (a retried submit must not create a second request).
-  CONFIRMED by the owner (2026-08-29): no online payment or card processing for
-  now. Payment instructions are provided to the guest only after the booking
-  request is approved, via the `approvalDetails.paymentInstructions` field in
-  the approval email.
+- **Payments / checkout — NONE IN v1, BY DESIGN.** v1 is a booking-request site:
+  a manager approves each request and the guest then gets an email with
+  "detailed information about the location, costs and check-in procedure." Costs
+  are settled off-platform; the car is "collected on-site" at USD 45/day. No
+  card processor in v1. The flow is deliberately structured so a payment +
+  instant-confirm step can be inserted later **without reshaping the booking
+  model** (see "Future direction / extensibility" below). The site shows a price
+  breakdown that is labelled an **estimate** in v1 only. NOTE: the booking
+  mutation is already built idempotently per engineering-standards (a retried
+  submit must not create a second booking) — that is exactly the property a
+  payment step needs.
+  Owner confirmed: how the stay itself is paid in v1 is "arranged by the manager
+  in the approval email" (bank transfer / on arrival / deposit at the manager's
+  discretion).
 
 - **Accounts / auth — APPLIES (admin only).** The owner plus "chosen
   administrators" log in to maintain the site and process bookings. Guests do
@@ -101,7 +103,42 @@ No money is taken online anywhere on the site (see Payments below).
    side effect of creating the booking — a rendered text block with no
    corresponding stored record does not satisfy the "customer agreements"
    category.
-4. No payment endpoints, no card fields. The booking response carries an
+4. No payment endpoints, no card fields in v1. The booking response carries an
    *estimate*; the real figure is set by the manager at approval time and
    delivered by email.
 5. No guest-facing search, login, or account pages.
+
+## Future direction / extensibility
+
+The owner has confirmed the roadmap: **v1 = booking-request (human approves
+each request, no online payment)**; **v2 = instant booking + online payment**.
+v1 must be built so v2 is an *additive* change, not a rewrite. Concrete
+implications, carried into the other three docs:
+
+- **One booking model, one create endpoint.** `POST /api/bookings` is "create a
+  booking," never "create a request." Whether a booking needs human approval or
+  can auto-confirm on payment is a server-side `bookingMode` / property setting,
+  not a different URL or a different resource. v2 flips the mode; the client
+  contract for creating a booking does not change shape.
+- **Explicit status state machine.** Booking `status` is an enumerated state
+  machine (v1: `pending → approved | rejected | cancelled | expired`). `confirmed`
+  is a **reserved** future state for instant bookings. All clients must treat
+  unknown status values gracefully (render as "in progress," never crash).
+- **Payment is a sub-resource, not a reshaping.** When v2 arrives, a payment
+  attaches under the booking (e.g. `POST /api/bookings/:id/payment`) and a
+  successful payment transitions `pending → confirmed`. v1 does not define or
+  stub this endpoint (no dead code), but the booking resource leaves room for
+  it: `status`, `decision`, and money fields are already separable from the
+  "who approved this" fields.
+- **Quote is already breakdown-shaped, not estimate-shaped.** `POST /api/quote`
+  returns a structured line-item breakdown with a real total. v1 labels it an
+  estimate in copy only; v2 stops calling it an estimate and treats the same
+  payload as the amount to charge. No structural change.
+- **Idempotency keys already required** on booking mutations — this is exactly
+  the guarantee a payment/instant-confirm step depends on, so it is in from day
+  one.
+- **UI seam:** the booking wizard is built so a "payment" step can slot between
+  "review & accept" and "confirmation" without disturbing the other steps
+  (see design-spec.md).
+- v1 ships none of the v2 machinery. This section documents the seams so the v1
+  build does not paint them shut.

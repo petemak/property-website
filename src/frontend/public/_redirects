@@ -1,0 +1,23 @@
+# Pretty routes -> static files (Netlify-style; mirror on any CDN/host).
+# /api/* is proxied to the backend and must be configured at the platform level.
+
+/                         /index.html                     200
+/gallery                  /gallery.html                   200
+/the-car                  /the-car.html                   200
+/location                 /location.html                  200
+/book                     /book.html                      200
+/contact                  /contact.html                   200
+/terms                    /terms.html                     200
+/privacy                  /privacy.html                   200
+/house-rules              /house-rules.html               200
+/cancellation-policy      /cancellation-policy.html       200
+/vehicle-rental-agreement /vehicle-rental-agreement.html  200
+
+/booking                  /booking.html                   200
+/booking/*                /booking.html                   200
+
+/admin                    /admin.html                     200
+/admin/*                  /admin.html                     200
+
+# Everything else: the 404 page with a 404 status.
+/*                        /404.html                       404

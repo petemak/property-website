@@ -8,6 +8,13 @@ Companion files:
 - api-contract.md — every dynamic piece below maps to endpoints there.
 - user-journeys.md — how a real person moves across these pages.
 
+**Versioning (see scope-checklist.md "Future direction / extensibility"):**
+v1 is a booking-request site — no online payment, a human approves every
+booking. v2 will add instant booking + online payment. This spec builds v1 only,
+but flags the copy and the one wizard seam that change for v2, so v1 is not
+built in a way that has to be torn out. Look for **[v1-only copy]** and
+**[v2 seam]** markers.
+
 ---
 
 ## 0. Design foundations
@@ -160,7 +167,7 @@ content comes from `GET /api/property`, `GET /api/gallery`, `GET
 8. **Location & getting around — teaser** (component: `MiniMap`)
    - Purpose: Booking.com "map + travel times" borrow.
    - Content: static map image centred on an *approximate* pin (exact address
-     only after approval — see `property.location.showExactAfterApproval`), plus
+     only after approval — see `property.location.showExactAddress`), plus
      a `TravelTimeList`: Kigali airport 20 min, city centre / CBD 12 min,
      nearest supermarket 5 min, Volcanoes NP ~2h 30m, Lake Kivu ~3h. "Full
      location details" link to P4.
@@ -169,9 +176,9 @@ content comes from `GET /api/property`, `GET /api/gallery`, `GET
 9. **Check-in & house rules** (component: `StepList` + rules list)
    - Purpose: set expectations early (Vrbo borrow).
    - Content: check-in window (e.g. "from 14:00, self check-in via lockbox"),
-     3–5 numbered arrival steps from `property.checkIn.process`, key house rules
-     (no smoking indoors, no parties, quiet hours 22:00–06:00, max 4 guests),
-     link to full P10 and P11.
+     3–5 numbered arrival steps from `property.checkIn.processSteps`, key house
+     rules (no smoking indoors, no parties, quiet hours 22:00–06:00, max 4
+     guests), link to full P10 and P11.
    - Layout: numbered vertical steps; rules as a short bulleted list beneath.
 
 10. **Pricing** (component: `PriceBreakdown`)
@@ -179,7 +186,15 @@ content comes from `GET /api/property`, `GET /api/gallery`, `GET
     - Content: nightly rate, cleaning fee, minimum nights, car add-on rate,
       note that the total is confirmed by the host on approval and the car is
       paid on site. If the guest has already chosen dates in the widget, show
-      the live estimate from `POST /api/quote`.
+      the live breakdown from `POST /api/quote`.
+    - **[v1-only copy]** The heading/label "Estimate", the disclaimer "The host
+      confirms the final amount when approving your request", and "No payment is
+      taken on this site" all come from `property.pricing.paymentNote` /
+      `quote.disclaimer`. In v2 (instant booking) the same `PriceBreakdown`
+      component renders the same line items as the amount to pay now, and this
+      copy is replaced with a checkout summary — no layout change, only text and
+      the added CTA. Build `PriceBreakdown` with a `mode` prop
+      (`"estimate" | "final"`) so the switch is a prop, not a rewrite.
     - Layout: simple 2-column money table, total row emphasised, explanatory
       note below in smaller text.
 
@@ -190,8 +205,13 @@ content comes from `GET /api/property`, `GET /api/gallery`, `GET
       keyboard.
 
 12. **Booking call-to-action band**
-    - Content: "Ready? Send a request — no charge until the host confirms."
-      Dates + guests + clay "Request to book" -> P5.
+    - Content: dates + guests + clay "Request to book" -> P5.
+    - **[v1-only copy]** The reassurance line "Send a request — no charge until
+      the host confirms." is v1 wording. Source it from a single copy
+      constant (e.g. `bookingCtaReassurance`) keyed off `property.bookingMode`
+      so v2's `"instant"` mode swaps in "Book instantly — pay now, keys are
+      yours" without touching the band's markup. Button label likewise:
+      "Request to book" (v1) vs "Book now" (v2).
     - Layout: full-width Hill Green band, centred content.
 
 13. **Footer** (component: `SiteFooter`)
@@ -204,7 +224,8 @@ content comes from `GET /api/property`, `GET /api/gallery`, `GET
 **Sticky element:** on desktop, once section 4 scrolls into view, a condensed
 `BookingWidget` docks to the top-right / a right rail (dates, guests, estimate,
 "Request to book"). On mobile it becomes a sticky bottom bar (from-price +
-"Check dates").
+"Check dates"). The from-price/estimate label is the same **[v1-only copy]**
+constant as §10.
 
 ### P2 — Gallery (`/gallery`)
 
@@ -270,8 +291,10 @@ State held client-side between steps; **nothing is authoritative until `POST
 `/book?checkIn=&checkOut=&guests=&car=1` pre-fills.
 
 - **Persistent summary rail** (desktop right / collapsible top on mobile):
-  `PriceBreakdown` from `POST /api/quote`, recalculated on any change. Labelled
-  "Estimate — the host confirms the final amount." Car line only when selected.
+  `PriceBreakdown` from `POST /api/quote`, recalculated on any change. In v1,
+  labelled "Estimate — the host confirms the final amount" (**[v1-only copy]**,
+  same constant as P1 §10; `PriceBreakdown` `mode="estimate"`). Car line only
+  when selected.
 
 **Step 1 — Your trip**
 - Purpose: dates + party size.
@@ -328,6 +351,21 @@ scope-checklist)*
 - Layout: stacked cards, each acceptance its own bordered block; sticky submit
   bar on mobile.
 
+**[v2 seam] Payment step.** In v2, when `property.bookingMode === "instant"`, a
+**Step 5 — Payment** slots in *between Step 4 (review & accept) and the
+confirmation view*, with no change to steps 1–4 or to the confirmation page's
+structure. Concretely, build for this now:
+- The `Stepper` reads its step list from a config array, not hard-coded to 4 —
+  adding an entry is a data change.
+- Step 4's submit is "advance to next step" semantics; whether the next thing is
+  "call `POST /api/bookings` then go to P6" (v1) or "call `POST /api/bookings`
+  then go to Step 5 payment" (v2) is decided by `bookingMode`.
+- The confirmation destination is P6 in both cases — v1 lands on a `pending`
+  P6, v2 lands on a `confirmed` P6 after payment succeeds.
+- Do **not** build Step 5, the payment UI, or any payment field in v1. This note
+  exists only so the wizard's step model and submit handler are not written in a
+  way that assumes exactly four steps ending in one API call.
+
 ### P6 — Booking status (`/booking/:reference`)
 
 Dynamic: `GET /api/bookings/:reference?email=`.
@@ -335,9 +373,12 @@ Dynamic: `GET /api/bookings/:reference?email=`.
 - **Access:** reference in URL + email entered on a small gate form (or via the
   link in the acknowledgement email that carries a signed token). Wrong email
   -> generic "we couldn't find that booking."
+- **Status rendering:** switch on `status`; render a neutral "in progress" card
+  for any value the frontend does not recognise (the contract reserves
+  `confirmed` for v2 and may add more — never crash on an unknown status).
 1. Header / nav.
-2. **Status card** (`StatusBadge`: Pending / Approved / Rejected) with the
-   reference, submitted date, stay dates, guests, car yes/no.
+2. **Status card** (`StatusBadge`: Pending / Approved / Rejected / Cancelled /
+   Expired) with the reference, submitted date, stay dates, guests, car yes/no.
 3. **If Pending:** "The host is reviewing your request. You'll get an email at
    {masked email}. Typical response within 24–48h." Show what was requested and
    the estimate. Button: "Contact the host" -> P7 prefilled.
@@ -383,7 +424,8 @@ subheadings, table of contents on desktop, footer.
   pets, visitors, damage responsibility, check-out tasks. Versioned.
 - **P11 `/cancellation-policy`** — the booking terms: what a "request" means, how
   approval works, how/whether payment is taken, cancellation windows and
-  refunds, changes to dates, no-show, host cancellation. Versioned.
+  refunds, changes to dates, no-show, host cancellation. Versioned. (v2 will
+  need a paid-booking cancellation/refund section added here — additive.)
 - **P12 `/vehicle-rental-agreement`** — read-only render of the **current**
   published Kia Sorento Rental Agreement (`GET /api/vehicle` -> `agreement`).
   Shows version + effective date. A banner: "This is the current version.
@@ -423,8 +465,8 @@ control.
    changed 88 days ago," "Vehicle agreement v4 — 12 acceptances."
 
 ### A2 — `/admin/bookings` Queue
-1. **Filters** — status (Pending/Approved/Rejected/All), date range, car-only,
-   text search (name/email/reference).
+1. **Filters** — status (Pending/Approved/Rejected/Cancelled/Expired/All), date
+   range, car-only, text search (name/email/reference).
 2. **Table** (`AdminTable`) — reference, guest, submitted, stay dates, nights,
    guests, car, estimate, status badge. Row click -> A3. Pagination.
 3. **Export** — CSV of the current filter (optional, nice-to-have).
@@ -528,6 +570,9 @@ control.
   recipients for new-request alerts, timezone, default currency, approximate
   map coordinates + "reveal exact address only after approval" toggle,
   response-time text shown to guests.
+- **[v2 seam]** This is where a `bookingMode` switch (`request` / `instant`)
+  will live. Not shown in v1 (the value is fixed to `request`), but the page is
+  the right home for it so no new screen is needed later.
 
 ---
 
@@ -537,9 +582,9 @@ control.
 |-----------|---------|-------|
 | `SiteHeader` | all public | transparent-over-hero variant + solid variant; mobile drawer |
 | `SiteFooter` | all public | legal links incl. vehicle rental agreement + booking lookup |
-| `BookingWidget` | P1 (hero + sticky), P2/P3/P4 CTA bands | date range + guests + action; emits to `/book` |
+| `BookingWidget` | P1 (hero + sticky), P2/P3/P4 CTA bands | date range + guests + action; emits to `/book`; action label + reassurance from a `bookingMode`-keyed copy constant |
 | `DateRangePicker` | BookingWidget, P5 step 1 | consumes availability; disables taken/min-stay-invalid nights; keyboard operable |
-| `PriceBreakdown` | P1, P5 rail, P6, A3 | line items + total + "estimate / confirmed" mode |
+| `PriceBreakdown` | P1, P5 rail, P6, A3 | line items + total; `mode` prop `"estimate" \| "final"` — v1 uses `estimate`, v2 checkout uses `final` |
 | `FactRow` | P1, P3 | icon + label cells |
 | `AmenityGrid` | P1 | grouped, disclosure |
 | `IncludedTable` | P1, P3 | two-column included / not-included with text-labelled icons |
@@ -549,10 +594,10 @@ control.
 | `TravelTimeList` | P1, P4 | place / minutes / km rows |
 | `StepList` | P1, P3 | numbered vertical steps |
 | `Accordion` | P1 FAQ, P7 | single-open, keyboard |
-| `Stepper` | P5 | 4-step progress, current/complete/upcoming |
+| `Stepper` | P5 | step list from a **config array**, not hard-coded to 4 — a v2 payment step is a data entry |
 | `Form`, `Field`, `FieldError`, `Fieldset` | P5, P7, all admin | label always visible, aria-describedby errors |
 | `AgreementPanel` | P5 step 4, A7 preview, P12 | scrollable versioned document + accept checkbox (checkbox only in P5) |
-| `StatusBadge` | P6, A1, A2, A3 | pending / approved / rejected |
+| `StatusBadge` | P6, A1, A2, A3 | pending / approved / rejected / cancelled / expired; neutral fallback for unknown values |
 | `CtaBand` | P1, P2, P3, P4 | full-width Hill Green band with BookingWidget |
 | `LegalPage` | P8–P12 | prose template + TOC + version line |
 | `Toast` / `InlineAlert` | forms, admin | text + icon, not colour alone |
@@ -571,12 +616,12 @@ Every item below has a matching endpoint in api-contract.md.
 
 | Where | Dynamic content | Endpoint(s) | Direction |
 |-------|-----------------|-------------|-----------|
-| P1, P3, P4 | Property text, amenities, check-in, FAQ, travel times, pricing | `GET /api/property` | read |
+| P1, P3, P4 | Property text, amenities, check-in, FAQ, travel times, pricing, `bookingMode` | `GET /api/property` | read |
 | P1, P2 | Photo gallery | `GET /api/gallery` | read |
 | P1, P5 | Which nights are free + current rates | `GET /api/availability` | read |
-| P1, P5 | Price estimate for chosen dates + car | `POST /api/quote` | read (compute) |
+| P1, P5 | Price breakdown for chosen dates + car | `POST /api/quote` | read (compute) |
 | P3, P5, P12 | Car details + current rental agreement text/version | `GET /api/vehicle` | read |
-| P5 | Submit booking request **+ record acceptances** | `POST /api/bookings` | write (+ side effects: acceptance records, emails) |
+| P5 | Create booking **+ record acceptances** | `POST /api/bookings` | write (+ side effects: acceptance records, emails) |
 | P6, P13 | Booking status lookup | `GET /api/bookings/:reference?email=` | read |
 | P7 | Contact message | `POST /api/contact` | write (+ email) |
 | A0 | Sign in / out / session | `POST /api/admin/auth/login`, `POST /api/admin/auth/logout`, `GET /api/admin/auth/session` | write / read |
@@ -601,8 +646,10 @@ Every item below has a matching endpoint in api-contract.md.
 
 - **Catalog / inventory** -> P1/P3 (the unit + the car) for guests; A4 (dates &
   pricing), A5 (content), A6 (photos), A7 (car) for management.
-- **Payments / checkout** -> deliberately none; P1 §10, P5 rail, P6 §4 present
-  costs as estimate-then-confirmed; car "paid on site" stated on P3/P5.
+- **Payments / checkout** -> deliberately none in v1; P1 §10, P5 rail, P6 §4
+  present costs as estimate-then-confirmed; car "paid on site" stated on
+  P3/P5. **[v1-only copy]** and **[v2 seam]** markers on P1 §10, P1 §12, P5,
+  P6, A11 record where v2 instant-book + payment slot in additively.
 - **Accounts / auth** -> A0 login; session enforced on all `/api/admin/*`; no
   guest accounts (P6 uses reference + email).
 - **Admin / back-office** -> A1–A11.

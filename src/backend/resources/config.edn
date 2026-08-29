@@ -1,0 +1,29 @@
+{:http    {:port #long #or [#env PORT 3000]
+           :host #or [#env HTTP_HOST "0.0.0.0"]}
+
+ :db      {:jdbc-url #or [#env DATABASE_URL "jdbc:sqlite:kigali-keys.db"]
+           ;; SQLite is a single-writer store; keep the pool tiny.
+           :pool-size #long #or [#env DB_POOL_SIZE 1]}
+
+ :media   {:dir #or [#env MEDIA_DIR "media"]
+           :max-upload-bytes 12582912}
+
+ :secrets {;; HMAC secret for guest booking status links. MUST be overridden in
+           ;; every real environment via env var.
+           :token-secret #or [#env TOKEN_SECRET "dev-only-insecure-token-secret-change-me"]}
+
+ :session {:cookie-name "kk_session"
+           :ttl-hours #long #or [#env SESSION_TTL_HOURS 168]
+           :secure? #boolean #or [#env SESSION_COOKIE_SECURE true]}
+
+ :ratelimit {:window-seconds 60
+             :max-requests #long #or [#env RATE_LIMIT_MAX 10]}
+
+ :idempotency {:ttl-hours 24}
+
+ :seed    {:photos-dir #or [#env SEED_PHOTOS_DIR "assets/property-photos"]
+           :admin-email #or [#env ADMIN_INITIAL_EMAIL "owner@kigalikeys.rw"]
+           ;; No default password. Seeding the initial owner is skipped unless
+           ;; this env var is set, so no credential is ever hardcoded.
+           :admin-password #or [#env ADMIN_INITIAL_PASSWORD nil]
+           :admin-name #or [#env ADMIN_INITIAL_NAME "Owner"]}}

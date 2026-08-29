@@ -1,0 +1,81 @@
+/* Kigali Keys — design tokens (brand-brief.md §4, §5; design-spec.md §0) */
+
+:root {
+  /* Brand palette */
+  --c-hill-green: #1F5B4E;
+  --c-hill-green-dark: #164138;
+  --c-clay: #D97A45;          /* large decorative fills only */
+  --c-clay-action: #C25E2C;   /* text-bearing action surfaces — passes 4.5:1 with white bold >=16px */
+  --c-charcoal: #2B2A28;
+  --c-bone: #FAF7F2;
+  --c-white: #FFFFFF;
+
+  /* Functional */
+  --c-text: var(--c-charcoal);
+  --c-text-muted: #5c5a55;
+  --c-link: var(--c-hill-green);
+  --c-border: #e4ded3;
+  --c-border-strong: #cfc7b8;
+  --c-surface: var(--c-white);
+  --c-surface-sunk: #f2ede3;
+  --c-danger: #9b2c2c;
+  --c-danger-bg: #fbeaea;
+  --c-success: #1F5B4E;
+  --c-success-bg: #e5efe9;
+  --c-info-bg: #eef1f5;
+  --c-warning-bg: #fbf1e4;
+
+  /* Status badge accents (text always paired with a word, never colour alone) */
+  --c-status-pending: #8a5a12;
+  --c-status-pending-bg: #f8efdd;
+  --c-status-approved: #1F5B4E;
+  --c-status-approved-bg: #e5efe9;
+  --c-status-rejected: #9b2c2c;
+  --c-status-rejected-bg: #fbeaea;
+  --c-status-neutral: #4a4844;
+  --c-status-neutral-bg: #ece9e2;
+
+  /* Typography */
+  --font-head: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --fs-300: 0.8125rem;
+  --fs-400: 1rem;
+  --fs-500: 1.125rem;
+  --fs-600: 1.375rem;
+  --fs-700: 1.75rem;
+  --fs-800: 2.25rem;
+  --fs-900: 3rem;
+
+  --lh-tight: 1.15;
+  --lh-normal: 1.55;
+
+  /* Spacing scale */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+
+  /* Radii / shadow */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-1: 0 1px 2px rgba(43, 42, 40, 0.06), 0 2px 8px rgba(43, 42, 40, 0.06);
+  --shadow-2: 0 8px 28px rgba(43, 42, 40, 0.14);
+
+  /* Layout */
+  --container: 1120px;
+  --container-narrow: 72ch;
+  --header-h: 64px;
+
+  --focus-ring: 2px solid var(--c-hill-green);
+  --focus-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  :root { --header-h: 72px; }
+}

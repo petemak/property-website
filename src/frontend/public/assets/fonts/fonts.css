@@ -1,0 +1,45 @@
+/* Self-hosted webfonts (design-spec.md §0: "Self-host both (woff2) ... the
+   request must be proxied/served by us, not a client call to a third-party API").
+
+   Drop the woff2 files next to this stylesheet:
+     fraunces-latin-600.woff2, fraunces-latin-400.woff2
+     inter-latin-400.woff2, inter-latin-500.woff2, inter-latin-600.woff2
+
+   Until they are present the fallback stack (Georgia / system-ui, defined in
+   tokens.css) renders — no layout shift, no third-party request. */
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("./fraunces-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("./fraunces-latin-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("./inter-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("./inter-latin-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("./inter-latin-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}

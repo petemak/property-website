@@ -1,0 +1,298 @@
+/**
+ * Click-test the rendered pages (not just "does it build").
+ * Walks the 4 user journeys against a mock API. Starts its own dev server on
+ * PORT below, drives real Chromium, asserts on the rendered DOM.
+ *
+ *   node test/smoke.mjs
+ */
+import { spawn } from "node:child_process";
+import { setTimeout as sleep } from "node:timers/promises";
+import { homedir } from "node:os";
+import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const PW_CANDIDATES = [
+  "playwright-core",
+  "/home/pjm/.npm/_npx/e41f203b7505f1fb/node_modules/playwright-core",
+];
+let chromium;
+for (const c of PW_CANDIDATES) { try { ({ chromium } = require(c)); break; } catch {} }
+if (!chromium) { console.error("playwright-core not found — run `npm i` in src/frontend"); process.exit(2); }
+
+const EXE_CANDIDATES = [
+  `${homedir()}/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell`,
+  `${homedir()}/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome`,
+];
+const executablePath = EXE_CANDIDATES.find(existsSync);
+
+const PORT = 4337;
+const BASE = `http://localhost:${PORT}`;
+let failures = 0;
+const ok = (name) => console.log(`  ok  ${name}`);
+const fail = (name, err) => { failures++; console.error(`FAIL  ${name}\n      ${err}`); };
+
+async function check(name, fn) {
+  try { await fn(); ok(name); }
+  catch (e) { fail(name, e.message || e); }
+}
+
+const server = spawn("node", ["dev-server.mjs", String(PORT)], { cwd: new URL("..", import.meta.url).pathname, stdio: "inherit" });
+await sleep(1200);
+
+const browser = await chromium.launch({ executablePath, args: ["--no-sandbox"] });
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } }); // mobile-first
+const page = await ctx.newPage();
+page.setDefaultTimeout(9000);
+const consoleErrors = [];
+page.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text()); });
+page.on("pageerror", (e) => consoleErrors.push("pageerror: " + e.message + "\n" + (e.stack || "").split("\n").slice(0, 4).join("\n")));
+
+try {
+  // ---- P1 home ----
+  await check("P1 home renders hero + booking widget", async () => {
+    await page.goto(BASE + "/", { waitUntil: "networkidle" });
+    await page.waitForSelector(".hero__title");
+    await page.waitForSelector(".booking-widget button[type=submit]");
+    if (!(await page.locator("text=At a glance").count())) throw new Error("missing At a glance");
+    if (!(await page.locator("text=What's included").count())) throw new Error("missing included table");
+  });
+
+  await check("P1 FAQ accordion toggles", async () => {
+    const trigger = page.locator(".accordion__trigger").first();
+    await trigger.click();
+    if ((await trigger.getAttribute("aria-expanded")) !== "true") throw new Error("accordion did not expand");
+  });
+
+  await check("P1 gallery preview opens lightbox, Esc closes and restores focus", async () => {
+    const firstThumb = page.locator(".gallery-strip button").first();
+    await firstThumb.click();
+    await page.waitForSelector(".lightbox", { state: "visible" });
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Escape");
+    await page.waitForSelector(".lightbox", { state: "hidden" });
+  });
+
+  await check("P1 mobile nav drawer opens", async () => {
+    await page.goto(BASE + "/", { waitUntil: "networkidle" });
+    await page.locator(".nav-toggle").click();
+    await page.waitForSelector(".mobile-drawer.is-open");
+    if ((await page.locator(".mobile-drawer a").count()) < 3) throw new Error("drawer looks empty");
+    if ((await page.locator(".nav-toggle").getAttribute("aria-expanded")) !== "true") throw new Error("toggle not expanded");
+  });
+
+  await check("P2 gallery groups, no Workspace category, real photo loads", async () => {
+    await page.goto(BASE + "/gallery", { waitUntil: "networkidle" });
+    await page.waitForSelector(".gallery-group");
+    const headings = await page.locator(".gallery-group h2").allTextContents();
+    if (headings.some((t) => /workspace/i.test(t))) throw new Error("Workspace category tile still rendered");
+    if (!headings.some((t) => /Living/i.test(t))) throw new Error("expected a Living group");
+    // a real <img> (not the SVG placeholder) resolved
+    const loaded = await page.locator(".gallery-justified img").first().evaluate((img) => img.complete && img.naturalWidth > 0);
+    if (!loaded) throw new Error("first gallery image did not load");
+    await page.locator(".gallery-justified button").first().click();
+    await page.waitForSelector(".lightbox", { state: "visible" });
+    const counter = await page.locator(".lightbox__counter").textContent();
+    if (!/\d+ \/ \d+/.test(counter)) throw new Error("no counter: " + counter);
+    await page.keyboard.press("Escape");
+  });
+
+  await check("P4 location page renders travel times + map disclaimer", async () => {
+    await page.goto(BASE + "/location", { waitUntil: "networkidle" });
+    await page.waitForSelector(".travel-times");
+    if (!(await page.locator("text=exact address").count())) throw new Error("missing address disclaimer");
+  });
+
+  // ---- P3 car -> deep link to /book ----
+  await check("P3 the-car renders and CTA links to /book?car=1", async () => {
+    await page.goto(BASE + "/the-car", { waitUntil: "networkidle" });
+    await page.waitForSelector("h1:has-text('The car')");
+    const href = await page.locator("a.btn--primary", { hasText: "Add the car" }).first().getAttribute("href");
+    if (!href.includes("car=1")) throw new Error("CTA missing car=1: " + href);
+  });
+
+  // ---- Journey 1: full booking WITH the car ----
+  await check("Journey 1 — book the stay + car end to end", async () => {
+    await page.goto(BASE + "/book?car=1", { waitUntil: "networkidle" });
+    await page.waitForSelector(".stepper");
+
+    // Step 1: pick a valid range in the calendar
+    const days = page.locator('.drp__day:not([aria-disabled="true"])');
+    await days.nth(8).click();
+    await days.nth(15).click();
+    await page.locator("button:has-text('Continue')").click();
+
+    // Step 2: car toggle already on -> fill driver
+    await page.waitForSelector("#s2-h");
+    await page.fill("#drv-name", "Lena Okafor");
+    await page.fill("#drv-dob", "1990-04-12");
+    await page.fill("#drv-lic", "A1234567");
+    await page.selectOption("#drv-licc", "NG");
+    await page.check("#drv-meets");
+    await page.locator("button:has-text('Continue')").click();
+
+    // Step 3: guest details
+    await page.waitForSelector("#s3-h");
+    await page.fill("#g-first", "Lena");
+    await page.fill("#g-last", "Okafor");
+    await page.fill("#g-email", "lena@example.com");
+    await page.fill("#g-email2", "lena@example.com");
+    await page.fill("#g-phone", "+2348012345678");
+    await page.selectOption("#g-country", "NG");
+    await page.locator("button:has-text('Continue')").click();
+
+    // Step 4: accept all three, submit
+    await page.waitForSelector("#s4-h");
+    const submit = page.locator(".wizard-submit-bar .btn--primary");
+    if (!(await submit.isDisabled())) throw new Error("submit should be disabled before acceptances");
+    await page.check("#acc-stayTerms");
+    await page.check("#acc-houseRules");
+    await page.check("#agr-block input[type=checkbox]");
+    if (await submit.isDisabled()) throw new Error("submit still disabled after all acceptances");
+    await submit.click();
+
+    await page.waitForURL(/\/booking\/KK-/, { timeout: 5000 });
+    await page.waitForSelector(".status-badge--pending");
+    if (!(await page.locator("text=Documents you accepted").count())) throw new Error("P6 missing accepted documents");
+    if (!(await page.locator(".status-badge--pending").count())) throw new Error("P6 not pending");
+  });
+
+  // ---- P6 gate via reference + email ----
+  await check("P6 gate: wrong email is rejected, right email shows booking", async () => {
+    await page.goto(BASE + "/booking/KK-7F3Q2A", { waitUntil: "networkidle" });
+    await page.fill("#g-ref", "KK-7F3Q2A");
+    await page.fill("#g-email", "wrong@example.com");
+    await page.locator("button:has-text('View booking')").click();
+    await page.waitForSelector(".inline-alert--error");
+    await page.fill("#g-email", "lena@example.com");
+    await page.locator("button:has-text('View booking')").click();
+    await page.waitForSelector(".status-badge");
+  });
+
+  // ---- P13 404 ----
+  await check("P13 unknown route serves 404 page with booking lookup", async () => {
+    const resp = await page.goto(BASE + "/no-such-page", { waitUntil: "networkidle" });
+    if (resp.status() !== 404) throw new Error("expected 404 status, got " + resp.status());
+    await page.waitForSelector("#lookup-form");
+  });
+
+  // ---- Legal pages ----
+  for (const [path, heading] of [["/terms", "Website terms"], ["/privacy", "Privacy"], ["/house-rules", "House rules"], ["/cancellation-policy", "Cancellation"], ["/vehicle-rental-agreement", "Rental Agreement"]]) {
+    await check(`Legal ${path} renders`, async () => {
+      await page.goto(BASE + path, { waitUntil: "networkidle" });
+      await page.waitForSelector(".prose");
+      if (!(await page.locator(`h1:has-text("${heading}")`).count())) throw new Error("wrong heading");
+    });
+  }
+
+  // ---- Contact ----
+  await check("P7 contact form submits", async () => {
+    await page.goto(BASE + "/contact", { waitUntil: "networkidle" });
+    await page.fill("#c-name", "Sam Field");
+    await page.fill("#c-email", "sam@example.com");
+    await page.fill("#c-msg", "Can two people be named as drivers?");
+    await page.locator("button:has-text('Send message')").click();
+    await page.waitForSelector(".inline-alert--success");
+  });
+
+  // ---- Journey 2: admin login -> approve ----
+  await check("Journey 2 — admin logs in and approves a booking", async () => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(BASE + "/admin", { waitUntil: "networkidle" });
+    await page.waitForSelector("#l-email");
+    await page.fill("#l-email", "jean@kigalikeys.rw");
+    await page.fill("#l-pass", "kigali-demo");
+    await page.locator("button:has-text('Sign in')").click();
+    await page.waitForSelector("text=Needs attention");
+    // Journey 2 is Lena's booking (with the car) — go straight to it
+    await page.goto(BASE + "/admin/bookings?status=pending", { waitUntil: "networkidle" });
+    await page.locator(".admin-table tbody tr", { hasText: "KK-7F3Q2A" }).click();
+    await page.waitForSelector("text=Approve");
+    await page.fill("#ap-addr", "House 12, KG 5 Ave, Rebero, Kigali");
+    await page.fill("#ap-ci", "Lockbox code 4821. Gate security has your name.");
+    await page.fill("#ap-car", "Keys at the house on arrival; bring licence + passport.");
+    await page.fill("#ap-host", "Jean — +250 788 000 000");
+    await page.locator("button:has-text('Approve & send email')").click();
+    await page.waitForSelector(".modal");
+    await page.locator("button:has-text('Confirm & send')").click();
+    await page.waitForSelector(".status-badge--approved", { timeout: 5000 });
+  });
+
+  // ---- Journey 3: admin rejects the other seeded booking ----
+  await check("Journey 3 — admin rejects a booking with an explanation", async () => {
+    await page.goto(BASE + "/admin/bookings?status=pending", { waitUntil: "networkidle" });
+    await page.locator(".admin-table tbody tr").first().click();
+    await page.waitForSelector("text=Reject");
+    await page.fill("#rj-exp", "I'm sorry — the house is already committed for those exact dates.");
+    await page.locator("button:has-text('Reject & send email')").click();
+    await page.waitForSelector(".modal");
+    await page.locator("button:has-text('Confirm & send')").click();
+    await page.waitForSelector(".status-badge--rejected", { timeout: 5000 });
+  });
+
+  // ---- Journey 4: admin storefront edits ----
+  await check("Journey 4 — admin raises the nightly rate", async () => {
+    await page.goto(BASE + "/admin/availability", { waitUntil: "networkidle" });
+    await page.waitForSelector("#p-rate");
+    await page.fill("#p-rate", "165");
+    await page.locator("button:has-text('Save pricing')").click();
+    await page.waitForSelector(".inline-alert--success");
+  });
+
+  await check("Journey 4 — admin blocks owner dates", async () => {
+    await page.fill("#b-start", "2026-11-10");
+    await page.fill("#b-end", "2026-11-14");
+    await page.fill("#b-reason", "Owner family visit");
+    await page.locator("button:has-text('Block these dates')").click();
+    await page.waitForSelector('.cal-cell[data-state="blocked"]');
+  });
+
+  await check("Journey 4 — admin publishes a new agreement version", async () => {
+    await page.goto(BASE + "/admin/vehicle", { waitUntil: "networkidle" });
+    await page.waitForSelector("text=Rental agreement versions");
+    await page.fill("#e-body, textarea[placeholder^='# Kia']", "# Kia Sorento Rental Agreement\n\n## 1. Parties\n\n" + "Updated agreement body. ".repeat(20));
+    await page.fill("input[type=date]", "2026-10-01");
+    await page.locator("button:has-text('Publish')").click();
+    await page.waitForSelector(".modal");
+    await page.locator(".modal button:has-text('Publish new version')").click();
+    await page.waitForSelector("text=v5", { timeout: 5000 });
+  });
+
+  await check("Admin — content / gallery / emails / agreements pages render", async () => {
+    await page.goto(BASE + "/admin/content", { waitUntil: "networkidle" });
+    await page.waitForSelector("text=Full description");
+    await page.goto(BASE + "/admin/gallery", { waitUntil: "networkidle" });
+    await page.waitForSelector("text=Upload photos");
+    await page.goto(BASE + "/admin/emails", { waitUntil: "networkidle" });
+    await page.waitForSelector("iframe[title='Email preview']");
+    await page.goto(BASE + "/admin/agreements", { waitUntil: "networkidle" });
+    await page.waitForSelector(".admin-table, .empty-state");
+  });
+
+  await check("Admin — Users page reachable for owner", async () => {
+    await page.goto(BASE + "/admin/users", { waitUntil: "networkidle" });
+    await page.waitForSelector("text=Invite an administrator");
+  });
+
+  await check("Admin — accept-invite page renders from a token link", async () => {
+    await page.goto(BASE + "/admin/accept-invite?token=demo", { waitUntil: "networkidle" });
+    await page.waitForSelector("#ai-pass");
+  });
+
+  await check("No uncaught page errors across the run", async () => {
+    // Genuine JS exceptions only. Expected network non-2xx (favicon; the
+    // deliberate 404 route test; GET /admin/auth/session 401 while signed out)
+    // are surfaced by the browser as resource-load messages, not page errors.
+    const real = consoleErrors.filter((e) =>
+      e.startsWith("pageerror:") ||
+      (/error/i.test(e) && !/Failed to load resource|favicon|net::ERR/i.test(e)));
+    if (real.length) throw new Error(real.slice(0, 6).join(" | "));
+  });
+
+} finally {
+  await browser.close();
+  server.kill("SIGTERM");
+}
+
+console.log(failures ? `\n${failures} check(s) failed.` : "\nAll checks passed.");
+process.exit(failures ? 1 : 0);

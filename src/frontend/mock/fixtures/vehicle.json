@@ -1,0 +1,52 @@
+{
+  "offered": true,
+  "name": "Kia Sorento",
+  "year": 2019,
+  "bodyType": "SUV",
+  "transmission": "Automatic",
+  "seats": 7,
+  "fuel": "Diesel",
+  "luggage": "3 large cases",
+  "dailyRate": 45,
+  "currency": "USD",
+  "pickUpLocation": "On site at the property",
+  "description": "A 2019 Kia Sorento kept on the premises. It is an automatic diesel SUV that seats seven, comfortable on Kigali's hills and fine on the tarmac roads to Musanze and Rubavu. Ground clearance is good for the occasional unpaved stretch; it is not a hardcore off-roader.",
+  "driverRequirements": [
+    "Primary driver at least 23 years old",
+    "Full driving licence held for at least 2 years",
+    "Licence and passport presented at collection",
+    "An International Driving Permit if your licence is not in the Latin alphabet",
+    "Only named drivers on the agreement may drive the car"
+  ],
+  "minDriverAge": 23,
+  "minLicenceYears": 2,
+  "covered": [
+    "Third-party liability insurance",
+    "Local breakdown assistance within Rwanda",
+    "Basic maintenance and servicing"
+  ],
+  "notCovered": [
+    "Damage excess up to USD 500 (your responsibility)",
+    "Fuel — return it at the level you collected it",
+    "Traffic fines and toll charges",
+    "Cross-border travel (not permitted)",
+    "Tyre and windscreen damage from misuse"
+  ],
+  "depositAmount": 500,
+  "geographicLimit": "Within Rwanda only",
+  "agreement": {
+    "type": "vehicleRentalAgreement",
+    "version": 4,
+    "effectiveDate": "2026-07-01",
+    "publishedAt": "2026-06-28T14:00:00Z",
+    "summaryPoints": [
+      "You are responsible for damage up to the USD 500 excess.",
+      "Return the car with the same fuel level you collected it at.",
+      "Rwanda only — no cross-border travel.",
+      "Report any accident to the host and the police within 24 hours.",
+      "Only drivers named on this agreement may drive the car."
+    ],
+    "bodyMarkdown": "# Kia Sorento Rental Agreement\n\n## 1. Parties\n\nThis agreement is between Kigali Keys (the owner) and the guest named on the associated booking (the renter). It applies only when the car add-on is included in an approved booking.\n\n## 2. Vehicle\n\n2019 Kia Sorento, automatic, diesel, seven seats, kept at the property in Rebero, Kigali. The car is handed over clean, roadworthy, and with a full tank unless noted on the handover checklist.\n\n## 3. Rental period and rate\n\nThe rental runs for the pick-up and drop-off dates on the booking, at USD 45 per calendar day. Payment is made on site to the host at collection. Late return without agreement is charged at USD 45 for each additional day started.\n\n## 4. Security deposit and excess\n\nA refundable security deposit of USD 500 is held at collection (cash or card pre-authorisation) and returned after the car is checked back in undamaged. The renter is liable for damage, loss, or theft up to USD 500; the insurance covers amounts above that except where cover is void (see section 8).\n\n## 5. Permitted use and geographic limit\n\nThe car may be driven within Rwanda only. It may not cross any border. It may not be used for hire or reward, motorsport, towing, off-road driving beyond graded roads, or to carry more passengers than seatbelts.\n\n## 6. Driver eligibility\n\nEvery driver must be named on this agreement, be at least 23 years old, and have held a full licence for at least two years. Licence and passport are presented at collection. An International Driving Permit is required where the licence is not in the Latin alphabet.\n\n## 7. Insurance basis\n\nThird-party liability insurance is in place as required by Rwandan law, together with cover for the vehicle above the USD 500 excess. The renter is responsible for the excess on any claim.\n\n## 8. When cover does not apply\n\nCover is void, and the renter is fully liable, if the car is driven by an unnamed driver, driven under the influence of alcohol or drugs, driven outside Rwanda, used for a prohibited purpose, or damaged through wilful or reckless acts.\n\n## 9. Fuel and mileage\n\nMileage is unlimited within Rwanda. Fuel is not included; return the car at the same fuel level shown on the handover checklist or the difference plus a USD 15 refuelling fee is deducted from the deposit.\n\n## 10. Condition on return\n\nReturn the car to the property on the drop-off date, reasonably clean, with all keys and documents. A joint check is done at handover and return using the same checklist.\n\n## 11. Damage, loss and fines\n\nThe renter pays for damage up to the excess, for any traffic fine or toll incurred during the rental, and for the cost of recovering the car if it is left unroadworthy through misuse.\n\n## 12. Breakdown and accident procedure\n\nFor a breakdown, call the number on the key fob card. For any accident: make the scene safe, call the police and obtain a report, photograph the vehicles and location, exchange details, and notify the host within 24 hours. Do not admit liability at the scene.\n\n## 13. Prohibited uses\n\nAs section 5, and additionally: no smoking in the car, no transport of animals without prior agreement, no sub-letting.\n\n## 14. Termination\n\nThe owner may end the rental immediately for a breach of this agreement, and recover the car, with no refund of unused days.\n\n## 15. Liability\n\nThe owner is not liable for indirect or consequential loss (missed flights, lost earnings) arising from a vehicle fault, subject to non-excludable rights under Rwandan law.\n\n## 16. Governing law\n\nThis agreement is governed by the laws of the Republic of Rwanda, and the courts of Kigali have jurisdiction.\n\n## 17. Acceptance\n\nBy checking the acceptance box in the booking flow, the renter confirms they have read this agreement, meet the driver requirements, and accept its terms for the vehicle and period stated.",
+    "bodyHash": "sha256:demo-v4-hash"
+  }
+}

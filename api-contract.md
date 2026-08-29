@@ -6,6 +6,12 @@ file first.
 
 Maps 1:1 to the "Dynamic content map" in design-spec.md §5.
 
+**Versioning intent:** v1 is a booking-request site (a human approves every
+booking, no online payment). v2 will add instant booking + online payment. This
+contract is written so v2 is additive — see "Booking status state machine"
+below and the "Notes for both teams" section. Anything marked *(v2)* is not
+built in v1; it is documented only so the v1 build leaves the seam open.
+
 ---
 
 ## Conventions (apply to every endpoint)
@@ -31,6 +37,10 @@ Maps 1:1 to the "Dynamic content map" in design-spec.md §5.
   `alreadyDecided`, `conflict`, `internalError`. For `validationError` the
   `message` names the offending fields in plain language (a machine-readable
   field list is out of scope for v1 to keep the error shape single).
+  `validationError` is returned with HTTP **422** everywhere (semantic
+  validation failure); the endpoint sections below that say "400
+  validationError" are shorthand for this. Clients branch on `code`, not the
+  numeric status.
 - **Validation:** every field below is validated server-side at the API
   boundary before any business logic runs. Client-side checks are convenience
   only. Lengths/enums noted where they matter.
@@ -48,7 +58,9 @@ Maps 1:1 to the "Dynamic content map" in design-spec.md §5.
   `Idempotency-Replayed: true` and does **not** repeat side effects (no second
   booking, no second email, no second charge-equivalent). Same key with a
   different body -> `409 idempotencyKeyConflict`. Missing header on these routes
-  -> `400 idempotencyKeyMissing`.
+  -> `400 idempotencyKeyMissing`. This is deliberately in from day one: it is
+  exactly the guarantee a *(v2)* payment / instant-confirm step needs to avoid
+  double-charging or double-booking on a retry.
 - **Rate limiting:** `POST /bookings`, `POST /contact`, `POST /admin/auth/login`
   are rate-limited per IP; exceeding -> `429 rateLimited`.
 - **Pagination:** list endpoints take `?page` (1-based, default 1) and
@@ -56,6 +68,61 @@ Maps 1:1 to the "Dynamic content map" in design-spec.md §5.
   `{ page, pageSize, total }`.
 - **Third parties:** email delivery, map tiles/static images and image storage
   are called **only** from the backend. The frontend never holds those keys.
+- **Unknown enum values:** clients must tolerate enum values they don't
+  recognise (especially booking `status`) — render a neutral fallback, never
+  throw. This is what lets a v1 frontend keep working when v2 adds states.
+
+---
+
+## Booking status state machine
+
+`booking.status` is an explicit enumerated state machine. The backend is the
+only writer of `status`; every transition is a specific action.
+
+**v1 states and transitions:**
+
+```
+            submit (POST /bookings)
+                     |
+                     v
+                 [pending] --------------------------> [expired]
+                  |   |   \                    (no decision before check-in,
+        approve   |   |    \  cancel             or a TTL job)
+                  |   |     \ (guest via Contact, or admin)
+                  v   |      \
+           [approved] |       -> [cancelled]
+                  |   |
+                  |   -> reject
+                  |        |
+                  |        v
+                  |   [rejected]
+                  |
+                  -> cancel (admin, after approval) -> [cancelled]
+```
+
+- `pending` — created, awaiting a human decision. (v1 default for every
+  booking.)
+- `approved` — a manager approved it; `approvalDetails` populated; dates
+  optionally blocked.
+- `rejected` — a manager declined it; `decision.explanation` populated.
+- `cancelled` — withdrawn after creation (by admin; guest-initiated cancel is
+  handled off-platform in v1 and recorded by an admin).
+- `expired` — reserved for a future TTL / no-decision cleanup job. v1 may leave
+  this unused, but clients must handle it.
+
+**Reserved future state:**
+
+- `confirmed` *(v2)* — an instant booking that auto-confirmed on successful
+  payment, with no `pending` review step. Transition will be
+  `pending -> confirmed` (payment succeeded) or a direct create-and-confirm.
+  **v1 never emits `confirmed`.** Documented so v1 clients are written to
+  accept it.
+
+**Terminal states:** `rejected`, `cancelled`, `expired` (and `confirmed` in
+v2). `approved` is terminal in v1 except for an admin `cancel`.
+
+Clients: switch on known values, `default:` to a neutral "in progress" render.
+Do not assume the set is closed.
 
 ---
 
@@ -99,6 +166,7 @@ Everything the marketing pages render. Public, cacheable (~5 min).
     "publicPreview": "Self check-in from 14:00. Exact address is shared after approval."
   },
   "houseRulesSummary": ["No smoking indoors", "No parties or events", "Quiet hours 22:00–06:00", "Maximum 4 guests"],
+  "bookingMode": "request",
   "location": {
     "approxLat": -1.9833,
     "approxLng": 30.1028,
@@ -127,6 +195,11 @@ Everything the marketing pages render. Public, cacheable (~5 min).
   "updatedAt": "2026-08-20T09:00:00Z"
 }
 ```
+
+`bookingMode` is `"request"` in v1 (every booking needs human approval). The
+field exists so the frontend can branch its copy and, in v2, a value of
+`"instant"` will tell it to render the payment step and instant-confirm wording
+without any other contract change.
 
 ---
 
@@ -180,14 +253,20 @@ approved booking, or a manual admin block. Pending requests do **not** appear
 here (the manager resolves overlaps at approval). `carUnavailableDates` =
 nights the car is committed to another approved booking or marked off.
 
-**Errors:** `400 validationError` (bad/oversized range).
+**Errors:** `422 validationError` (bad/oversized range).
 
 ---
 
 ### 4. `POST /quote`
 
-Stateless price estimate. No persistence. Used by the booking widget and P5
+Stateless price calculation. No persistence. Used by the booking widget and P5
 rail.
+
+The response is a **structured line-item breakdown with a real total** — it is
+"authoritative-capable." In v1 the UI labels it an *estimate* (the binding
+figure is entered by a human at approval, in §16). In v2, instant booking
+treats the identical payload as the amount to charge; only the copy changes,
+not the shape.
 
 **Request**
 ```json
@@ -219,9 +298,11 @@ if `car.requested`, `pickUp` >= `checkIn` and `dropOff` <= `checkOut` and
 }
 ```
 When `car.requested` is false, the `carRental` line is omitted and `carDays` is
-`0`.
+`0`. (`estimatedSubtotal` / `estimatedTotal` keep the `estimated` prefix in v1;
+a v2 rename to `subtotal` / `total` is the only anticipated change and would be
+additive — keep both for one release.)
 
-**Errors:** `400 validationError`.
+**Errors:** `422 validationError`.
 
 ---
 
@@ -249,6 +330,8 @@ Car details plus the **current** published rental agreement.
     "Full driving licence held for at least 2 years",
     "Licence and passport presented at collection"
   ],
+  "minDriverAge": 23,
+  "minLicenceYears": 2,
   "covered": ["Third-party liability insurance", "Local breakdown assistance"],
   "notCovered": ["Damage excess up to USD 500", "Fuel", "Traffic fines", "Cross-border travel (not permitted)"],
   "depositAmount": 500,
@@ -273,17 +356,35 @@ Car details plus the **current** published rental agreement.
 back in `POST /bookings` when the car is added. `bodyHash` is a SHA-256 of the
 canonical `bodyMarkdown`, used to prove what text was shown.
 
+`minDriverAge` and `minLicenceYears` are the numeric mirrors of the free-text
+`driverRequirements[]` (set via `PUT /admin/vehicle`), exposed so the frontend
+can render/hint the rule and do a soft client-side DOB check. Server-side
+DOB/licence validation in `POST /bookings` remains authoritative. Clients must
+tolerate these fields being absent.
+
 ---
 
 ### 6. `POST /bookings`
 
-Creates a booking **request** (status `pending`) and, as side effects:
+**Creates a booking.** (Not "creates a request" — the same endpoint serves
+instant booking in v2. Whether a booking then waits for human approval or
+auto-confirms is decided server-side from `property.bookingMode`, not by a
+different URL.) In v1, `bookingMode` is `"request"`, so a new booking is created
+with `status: "pending"` and the response reflects that.
+
+As side effects on creation:
 1. writes one **agreement acceptance record** per accepted document (always
    stay terms + house rules; plus the vehicle rental agreement when the car is
    added), each capturing who / when / which version / body hash / IP / user
    agent;
 2. sends the `bookingReceived` email to the guest and the `adminNewBooking`
    alert to the notification recipients.
+
+*(v2)* When `bookingMode` is `"instant"`, creation will instead return a
+booking in a `pendingPayment`-style holding state and the client will call a
+payment sub-resource (see "Notes for both teams" §6). v1 does not implement or
+stub this — it is noted so the response's `status` field and the separation
+between "money fields" and "who approved this" fields are designed for it now.
 
 **Headers:** `Idempotency-Key: <uuid-v4>` (required).
 
@@ -348,8 +449,8 @@ Creates a booking **request** (status `pending`) and, as side effects:
     (frontend should re-fetch and re-present the document).
   - `bodyHash` mismatch -> `409 agreementVersionStale`.
 - `quoteEcho` is advisory only; the server recomputes and stores its own
-  estimate. A mismatch does not fail the request (the estimate is not binding)
-  but is logged.
+  breakdown. A mismatch does not fail the request in v1 (the estimate is not
+  binding) but is logged. *(v2 instant-book would reject a stale quote here.)*
 
 **Response 201**
 ```json
@@ -415,6 +516,9 @@ publish.
 email>`. Neither/ wrong -> `404 notFound` (no distinction, to avoid leaking
 which references exist).
 
+`status` is one of the values in "Booking status state machine." Clients render
+a neutral fallback for any unrecognised value.
+
 **Response 200 — pending**
 ```json
 {
@@ -468,6 +572,9 @@ which references exist).
   }
 }
 ```
+
+`cancelled` / `expired` return the same envelope with `decision.type` set
+accordingly and no `approvalDetails`.
 
 ---
 
@@ -551,10 +658,24 @@ Bad credentials -> `401 unauthorized` (generic message). Rate-limited ->
 // 401 if no valid session
 ```
 
+### 13b. `POST /admin/auth/accept-invite`
+
+Consumes the single-use link from the `adminInvite` email (see §27). No session
+required — this is how a newly invited admin gets one.
+```json
+// request
+{ "token": "raw-token-from-the-email-link", "password": "new-password-min-10" }
+// response 200  (also Set-Cookie: session=...)
+{ "user": { "id": "usr_2", "name": "Aline", "email": "aline@kigalikeys.rw", "role": "admin" } }
+```
+`token` invalid / already used / expired -> `410 conflict` (code `conflict`,
+message distinguishes). `password` fails policy -> `422 validationError`.
+On success the user moves `invited -> active` and the token is burned.
+
 ### 14. `GET /admin/bookings`
-**Query:** `status` (`pending|approved|rejected|all`, default `pending`),
-`from`, `to` (filter on check-in date), `car` (`true|false`), `q` (matches
-name/email/reference), `page`, `pageSize`.
+**Query:** `status` (`pending|approved|rejected|cancelled|expired|all`, default
+`pending`), `from`, `to` (filter on check-in date), `car` (`true|false`), `q`
+(matches name/email/reference), `page`, `pageSize`.
 ```json
 {
   "items": [
@@ -656,12 +777,12 @@ Validation: `lineItems[].amount` numeric; `total` equals the sum;
 `checkInInstructions` and `addressLine` non-empty; `carCollection` required
 when the booking has `car.requested`.
 
-Behaviour: sets `status = approved`, stores `approvalDetails`, if `blockDates`
-marks those nights unavailable (and `blockCarDates` the car), sends the
-`bookingApproved` email. If any requested night is already taken by another
+Behaviour: transitions `pending -> approved`, stores `approvalDetails`, if
+`blockDates` marks those nights unavailable (and `blockCarDates` the car), sends
+the `bookingApproved` email. If any requested night is already taken by another
 **approved** booking -> `409 dateConflict` (with `{ error.message }` naming the
-dates) unless the admin ressubmits with `"blockDates": false` (host takes
-responsibility for the overlap). Booking already decided -> `409 alreadyDecided`
+dates) unless the admin resubmits with `"blockDates": false` (host takes
+responsibility for the overlap). Booking not in `pending` -> `409 alreadyDecided`
 (unless the Idempotency-Key matches the original approve call, which replays the
 stored `200`).
 
@@ -680,12 +801,18 @@ stored `200`).
 `explanation` required, 20..1500 chars — goes verbatim into the
 `bookingRejected` email. `internalNote` optional, not sent to the guest.
 
-Behaviour: `status = rejected`, stores the explanation, sends
-`bookingRejected`. Already decided -> `409 alreadyDecided` (or replay on
+Behaviour: transitions `pending -> rejected`, stores the explanation, sends
+`bookingRejected`. Not in `pending` -> `409 alreadyDecided` (or replay on
 matching key).
 
 **Response 200:** updated booking object with `status: "rejected"` and
 `decision.explanation`.
+
+> An admin `cancel` action (`approved -> cancelled`, or `pending -> cancelled`)
+> is expected but low-priority for v1; if built it follows the same
+> idempotent-POST pattern (`POST /admin/bookings/:id/cancel` with
+> `{ reason }`). Not required for the v1 launch; listed so the state machine is
+> complete.
 
 ### 18. Availability blocks
 ```
@@ -730,8 +857,8 @@ GET /admin/property   // same shape as GET /property plus draft/meta fields
 PUT /admin/property    // full replace of the editable content object
 ```
 `PUT` request body = the editable subset (everything in `GET /property` except
-`pricing`, `termsVersions`, `updatedAt`, which are managed elsewhere).
-Server validates: `maxGuests` 1..16, `bedrooms`/`bathrooms` 0..20,
+`pricing`, `termsVersions`, `bookingMode`, `updatedAt`, which are managed
+elsewhere). Server validates: `maxGuests` 1..16, `bedrooms`/`bathrooms` 0..20,
 `amenities[].key` unique, POI `minutesByCar` >= 0, all prose fields <= 20000
 chars, markdown sanitised to a safe subset server-side. **Response 200:**
 updated object with new `updatedAt`.
@@ -893,7 +1020,8 @@ POST   /admin/users/:id/resend-invite
 ```
 `role` in `owner|admin`. `status` in `active|invited|disabled` (settable:
 `active`/`disabled` only). `POST` creates the user in `invited` state and sends
-`adminInvite` with a single-use set-password link. Guards -> `409 conflict`:
+`adminInvite` with a single-use set-password link; the link is consumed via
+`POST /admin/auth/accept-invite` (§13b). Guards -> `409 conflict`:
 cannot demote or disable or delete the last `owner`; cannot disable/delete
 yourself; duplicate email.
 
@@ -917,7 +1045,8 @@ PUT /admin/settings
 }
 ```
 `currency` ISO 4217; `timezone` IANA; emails all valid. **200:** updated
-object.
+object. *(v2: `bookingMode` would become editable here — `"request"` vs
+`"instant"` — which is the single switch that turns on the payment flow.)*
 
 ---
 
@@ -936,6 +1065,7 @@ object.
 | `auth` | 11, 12, 13, 27 |
 | `notifications` | 26 (+ send calls invoked by `bookings`, `contact`, `auth`) |
 | `settings` | 28 |
+| `payments` *(v2 only — not built in v1)* | would be its own slice; see note 6 |
 
 ---
 
@@ -948,12 +1078,32 @@ object.
    through a real booking submission.
 2. **Idempotency before anything else** on §6, §16, §17 — wire the key store
    first so retries during development don't create duplicate bookings/emails.
-3. **Estimates are never authoritative.** `POST /quote` and the `estimate` on a
-   booking are advisory. The only binding figures are in `approvalDetails`,
-   entered by a human in §16.
+   Same store serves a v2 payment step.
+3. **The breakdown from `POST /quote` is structured and total-bearing.** v1
+   copy calls it an estimate; the only binding v1 figures are in
+   `approvalDetails` (§16), entered by a human. v2 instant-book reuses the quote
+   payload as-is as the charge amount — do not build `quote` as throwaway
+   display text.
 4. **Address privacy.** Exact `addressLine` / real `mapUrl` are only ever in
    `approvalDetails` (§7 approved, §16). Public endpoints expose approximate
    coordinates only.
 5. **Licence data is sensitive.** `driver.licenceNumber` and `dateOfBirth` are
    accepted in §6, stored, shown only in §15 to authenticated admins, and never
    returned on public endpoints. Reflect this in the privacy policy (P9).
+6. **Where the *(v2)* payment step attaches — do NOT build this in v1, no
+   stub, no dead route.** The design leaves room for it as a sub-resource of an
+   existing booking:
+   - `POST /api/bookings/:id/payment` (idempotent, same key mechanism) creates
+     a payment intent against a booking and, on provider success (via a
+     backend webhook — frontend never talks to the processor, per
+     engineering-standards), transitions the booking `pending -> confirmed`.
+   - `GET /api/bookings/:id/payment` for status polling / the confirmation
+     page.
+   - The booking resource is already shaped for this: `status` is an explicit
+     state machine with `confirmed` reserved; money lives in `estimate` /
+     `approvalDetails` line items separate from the `decision` (who-approved)
+     fields; `bookingMode` on the property is the switch. Nothing in v1 needs
+     to change to add this — that is the whole point of the seam.
+7. **Unknown `status` handling** is a client requirement, not a nicety — see
+   "Booking status state machine." A v1 frontend that `throw`s on an
+   unrecognised status will break the day v2 ships `confirmed`.

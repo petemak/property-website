@@ -1,0 +1,40 @@
+{
+  "session": { "user": { "id": "usr_1", "name": "Jean", "email": "jean@kigalikeys.rw", "role": "owner" } },
+  "credentials": [
+    { "email": "jean@kigalikeys.rw", "password": "kigali-demo", "user": { "id": "usr_1", "name": "Jean", "email": "jean@kigalikeys.rw", "role": "owner" } },
+    { "email": "aline@kigalikeys.rw", "password": "kigali-demo", "user": { "id": "usr_2", "name": "Aline", "email": "aline@kigalikeys.rw", "role": "admin" } }
+  ],
+  "pricing": { "currency": "USD", "nightlyRate": 140, "cleaningFee": 35, "minNights": 3 },
+  "settings": {
+    "hostDisplayName": "Jean at Kigali Keys",
+    "publicEmail": "host@kigalikeys.rw",
+    "publicPhone": "+250 788 000 000",
+    "newRequestNotificationEmails": ["jean@kigalikeys.rw", "aline@kigalikeys.rw"],
+    "timezone": "Africa/Kigali",
+    "currency": "USD",
+    "approxLat": -1.9833,
+    "approxLng": 30.1028,
+    "revealExactAddressAfterApproval": true,
+    "guestResponseTimeText": "Typically within 24–48 hours"
+  },
+  "users": [
+    { "id": "usr_1", "name": "Jean", "email": "jean@kigalikeys.rw", "role": "owner", "status": "active", "lastLoginAt": "2026-08-29T07:00:00Z" },
+    { "id": "usr_2", "name": "Aline", "email": "aline@kigalikeys.rw", "role": "admin", "status": "active", "lastLoginAt": "2026-08-27T15:00:00Z" },
+    { "id": "usr_3", "name": "Sam", "email": "sam@kigalikeys.rw", "role": "admin", "status": "invited", "lastLoginAt": null }
+  ],
+  "blocks": [
+    { "id": "blk_owner", "start": "2026-12-20", "end": "2026-12-28", "reason": "Owner family visit", "source": "manual" }
+  ],
+  "agreementVersions": [
+    { "version": 4, "effectiveDate": "2026-07-01", "publishedAt": "2026-06-28T14:00:00Z", "publishedBy": "Jean", "acceptanceCount": 12, "isCurrent": true },
+    { "version": 3, "effectiveDate": "2026-01-01", "publishedAt": "2025-12-20T10:00:00Z", "publishedBy": "Jean", "acceptanceCount": 41, "isCurrent": false }
+  ],
+  "emailTemplates": [
+    { "key": "bookingReceived", "subject": "We've got your Kigali Keys request — {{bookingReference}}", "bodyMarkdown": "Hi {{guestFirstName}},\n\nThanks for your request for {{stayDates}}. The host will review it and reply within 24–48 hours.\n\nTrack it any time: {{statusUrl}}\n\n{{priceBreakdown}}", "availableTokens": ["guestFirstName", "bookingReference", "stayDates", "priceBreakdown", "checkInInstructions", "addressLine", "hostContact", "rejectionExplanation", "statusUrl"], "updatedAt": "2026-08-01T00:00:00Z" },
+    { "key": "bookingApproved", "subject": "Your Kigali Keys stay is confirmed — {{bookingReference}}", "bodyMarkdown": "Hi {{guestFirstName}},\n\nGreat news — your stay for {{stayDates}} is confirmed.\n\n{{priceBreakdown}}\n\nAddress: {{addressLine}}\n\n{{checkInInstructions}}\n\nHost: {{hostContact}}", "availableTokens": ["guestFirstName", "bookingReference", "stayDates", "priceBreakdown", "checkInInstructions", "addressLine", "hostContact", "rejectionExplanation", "statusUrl"], "updatedAt": "2026-08-01T00:00:00Z" },
+    { "key": "bookingRejected", "subject": "About your Kigali Keys request — {{bookingReference}}", "bodyMarkdown": "Hi {{guestFirstName}},\n\nThank you for your request for {{stayDates}}. Unfortunately the host can't take this one:\n\n{{rejectionExplanation}}\n\nYou're welcome to send a new request: {{statusUrl}}", "availableTokens": ["guestFirstName", "bookingReference", "stayDates", "priceBreakdown", "checkInInstructions", "addressLine", "hostContact", "rejectionExplanation", "statusUrl"], "updatedAt": "2026-08-01T00:00:00Z" },
+    { "key": "adminNewBooking", "subject": "New booking request — {{bookingReference}}", "bodyMarkdown": "New request from {{guestFirstName}} for {{stayDates}}.\n\n{{priceBreakdown}}\n\nReview: {{statusUrl}}", "availableTokens": ["guestFirstName", "bookingReference", "stayDates", "priceBreakdown", "statusUrl"], "updatedAt": "2026-08-01T00:00:00Z" },
+    { "key": "contactAck", "subject": "Thanks for contacting Kigali Keys", "bodyMarkdown": "Hi {{guestFirstName}},\n\nThanks for your message — the host replies within a day.", "availableTokens": ["guestFirstName"], "updatedAt": "2026-08-01T00:00:00Z" },
+    { "key": "adminInvite", "subject": "You've been invited to help manage Kigali Keys", "bodyMarkdown": "Hi {{guestFirstName}},\n\nYou've been invited as an administrator. Set your password: {{statusUrl}}", "availableTokens": ["guestFirstName", "statusUrl"], "updatedAt": "2026-08-01T00:00:00Z" }
+  ]
+}

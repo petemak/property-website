@@ -7,6 +7,10 @@ obvious, that is a bug to fix here before a developer builds it.
 Page IDs (P1, A3, ...) and endpoints refer to design-spec.md and
 api-contract.md.
 
+**Scope:** these are the v1 journeys (booking-request, human approval, no online
+payment). Journey 1 carries a short note on how it forks for v2 instant booking,
+so the v1 build leaves that seam open.
+
 The four journeys, in priority order:
 
 1. Guest browses the property and submits a booking request **with the car**
@@ -126,6 +130,23 @@ agreement v5 between step 3 and step 9, `POST /api/bookings` returns
 was updated — please review and accept the current version," and clears only
 that checkbox.
 
+**How this journey forks for v2 (instant booking + online payment) — not built
+in v1:** when the property's `bookingMode` is `"instant"`, steps 1–4 are
+identical (dates -> add the car + driver -> your details -> review & accept the
+same three agreements, with the same recorded acceptance side effect). The
+divergence is only after Step 4: instead of `POST /api/bookings` creating a
+`pending` request and landing on a "we'll get back to you" P6, the wizard adds
+**Step 5 — Pay** (a `Stepper` config entry, not a re-layout), the guest pays via
+a backend-proxied processor, a successful payment webhook transitions the
+booking `pending -> confirmed`, and the guest lands on the *same* P6 showing
+**Confirmed** with the address, check-in instructions and a receipt — no admin
+approval step, no `bookingApproved` email (a `bookingConfirmed` email instead).
+The estimate copy on P1/P5 becomes "total due now." Everything the v1 developer
+builds — the four steps, the single create endpoint, the idempotency key, the
+acceptance write, the P6 status switch with a neutral fallback for unknown
+statuses — is reused unchanged; v2 only inserts the payment step and enables the
+`confirmed` state.
+
 ---
 
 ## Journey 2 — Manager approves a request
@@ -162,8 +183,8 @@ that checkbox.
    **"Confirm & send."**
 7. **Frontend calls** `POST /api/admin/bookings/bkg_88/approve` with an
    `Idempotency-Key` and the line items, total, and all the text fields.
-8. **Server side:** sets status `approved`, stores `approvalDetails`, creates
-   availability blocks for 5–12 Sep (stay) and 6–10 Sep (car), sends the
+8. **Server side:** transitions `pending -> approved`, stores `approvalDetails`,
+   creates availability blocks for 5–12 Sep (stay) and 6–10 Sep (car), sends the
    branded `bookingApproved` email to Lena. Returns `200` with the updated
    booking.
 9. **A3 refreshes** to show the **Approved** badge, the decision timestamp, and
@@ -203,9 +224,9 @@ elsewhere but not yet entered.
    `bookingRejected` email with his explanation quoted in full. He confirms.
 5. **Frontend calls** `POST /api/admin/bookings/:id/reject` with an
    `Idempotency-Key` and `{ explanation, internalNote }`.
-6. **Server side:** status `rejected`, stores the explanation, sends the
-   branded `bookingRejected` email containing his verbatim text. No dates are
-   blocked. Returns `200`.
+6. **Server side:** transitions `pending -> rejected`, stores the explanation,
+   sends the branded `bookingRejected` email containing his verbatim text. No
+   dates are blocked. Returns `200`.
 7. **A3** shows the **Rejected** badge, timestamp, and the explanation
    (guest-visible) plus the internal note (admin-only).
 8. **Guest side:** the applicant's P6 now shows **Rejected** with Jean's
@@ -283,6 +304,9 @@ their document text remain intact and auditable.
 - P6 is reachable **two ways** (email token link, or reference + email on the
   P6 gate) — both must resolve to the same view. A guest who lost the email
   must still get in.
+- P6 must render *every* booking `status` (including `cancelled`, `expired`,
+  and a future `confirmed`) — unknown values get a neutral "in progress" card,
+  never an error.
 - The approval email and P6 "Approved" view render from the **same**
   `approvalDetails` object — never build the email from one source and the page
   from another.
@@ -291,3 +315,6 @@ their document text remain intact and auditable.
 - Every admin action that sends an email shows the rendered email in a
   `ConfirmModal` first (journeys 2 and 3 step "Confirm & send") — no email
   leaves without the manager seeing exactly what the guest gets.
+- The booking wizard's step list and its post-Step-4 submit handler must not
+  assume "exactly four steps ending in one API call" — v2 inserts a payment
+  step there (see Journey 1 fork note).
