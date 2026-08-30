@@ -20,12 +20,29 @@
 .stack-lg > * + * { margin-top: var(--sp-6); }
 
 /* ---- Site header ---- */
+/* The header is pinned to the top of the viewport on every public page. It is
+   `position: fixed` (not `sticky`) because the previous sticky setup had nothing
+   to stick within — its wrapper was only as tall as the header itself, so it
+   scrolled away as soon as the hero passed. The `#site-header` wrapper now
+   reserves the header's height as an in-flow spacer so fixed positioning doesn't
+   hide the first content; the home page opts out of that spacer because its
+   transparent header is meant to overlay the hero (see .hero__inner padding). */
+#site-header { min-height: var(--header-h); }
+body.has-transparent-header #site-header { min-height: 0; }
+
 .site-header {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   top: 0;
   z-index: 100;
   background: var(--c-bone);
   border-bottom: 1px solid var(--c-border);
+  box-shadow: var(--shadow-1);
+  /* colour-only change on the transparent->solid swap; base.css zeroes this
+     under prefers-reduced-motion, leaving an instant (non-animated) swap */
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .site-header__inner {
   display: flex;
@@ -35,6 +52,9 @@
   min-height: var(--header-h);
 }
 .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em; /* scales with the wordmark font-size */
   font-family: var(--font-head);
   font-weight: 700;
   font-size: var(--fs-700); /* mobile: clearly the largest thing in the header, no wrap */
@@ -43,6 +63,13 @@
   color: var(--c-hill-green);
   text-decoration: none;
   white-space: nowrap;
+}
+/* Beehive-house logo mark. Sized off the wordmark font-size (cap-height-to-
+   ascender), so it tracks the responsive .wordmark steps. Inherits `color`. */
+.wordmark__mark {
+  flex: none;
+  width: auto;
+  height: 1.1em;
 }
 /* Public site header: step the wordmark up once there's room for it (nav appears
    at 900px and the bar is taller). Footer + admin sidebar keep the smaller step. */
@@ -78,22 +105,27 @@
   cursor: pointer;
 }
 
-/* Transparent-over-hero variant (design-spec P1 §1) */
+/* Transparent-over-hero variant (design-spec P1 §1): position is unchanged
+   (already fixed above) — only the paint switches, so there is no layout shift. */
 .site-header--transparent {
-  position: fixed;
-  left: 0; right: 0; top: 0;
   background: transparent;
   border-bottom-color: transparent;
+  box-shadow: none;
 }
 .site-header--transparent .wordmark,
 .site-header--transparent .site-nav a { color: var(--c-white); }
 .site-header--transparent .nav-toggle { color: var(--c-white); border-color: rgba(255,255,255,0.6); }
-body.has-transparent-header { /* hero sits under the fixed header by design */ }
 
 .mobile-drawer {
   display: none;
   border-top: 1px solid var(--c-border);
   background: var(--c-bone);
+  /* the header is fixed, so a long open drawer must scroll within the viewport
+     rather than run off the bottom of the screen */
+  max-height: calc(100vh - var(--header-h));
+  max-height: calc(100dvh - var(--header-h));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .mobile-drawer.is-open { display: block; }
 .mobile-drawer ul { list-style: none; margin: 0; padding: var(--sp-3) 0; }

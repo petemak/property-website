@@ -1,6 +1,7 @@
 // SiteHeader + SiteFooter, shared by every public page. (design-spec §0 global chrome)
 
 import { h, $, announce } from "../lib/dom.js";
+import { logoMark } from "./icons.js";
 import { NAV_LINKS } from "../lib/config.js";
 import { bookingCopy } from "../lib/config.js";
 
@@ -43,7 +44,7 @@ export function renderHeader({ transparentOverHero = false, bookingMode = "reque
 
   const header = h("div", { class: "site-header" + (transparentOverHero ? " site-header--transparent" : "") },
     h("div", { class: "container site-header__inner" },
-      h("a", { href: "/", class: "wordmark" }, "Kigali Keys"),
+      h("a", { href: "/", class: "wordmark" }, logoMark(), "Kigali Keys"),
       h("nav", { class: "site-nav", "aria-label": "Site" }, navList),
       h("div", { class: "site-header__actions" },
         h("a", { class: "btn btn--primary btn--sm site-header__cta", href: "/book" }, "Check dates"),

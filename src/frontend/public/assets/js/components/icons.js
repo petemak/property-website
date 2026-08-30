@@ -38,6 +38,29 @@ export function icon(name, { size = 22, className = "fact__icon" } = {}) {
   return svg;
 }
 
+// Brand logo mark — the Rwandan beehive-house (amasakala) silhouette with a
+// keyhole doorway. Source of truth: assets/img/logo.svg (viewBox 0 0 48 48).
+// Inlined (not <img>) so the paths inherit `currentColor` from the wordmark.
+// Decorative: the adjacent "Kigali Keys" link text already names it.
+export function logoMark({ className = "wordmark__mark" } = {}) {
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 48 48");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  if (className) svg.setAttribute("class", className);
+  const ground = document.createElementNS(NS, "path");
+  ground.setAttribute("fill", "currentColor");
+  ground.setAttribute("opacity", "0.28");
+  ground.setAttribute("d", "M0 40c7-5 13-5 21-1 7 3.4 15 3 27-4v9H0z");
+  const hut = document.createElementNS(NS, "path");
+  hut.setAttribute("fill", "currentColor");
+  hut.setAttribute("fill-rule", "evenodd");
+  hut.setAttribute("d", "M7.4 41C6.3 24.6 10.6 8.2 22.7 5.4L24 1 25.3 5.4C37.4 8.2 41.7 24.6 40.6 41 33.5 39.1 14.5 39.1 7.4 41Zm3.6-23.4c3.2-1.6 7.9-2.5 13-2.5s9.8.9 13 2.5c-3.2-1-7.9-1.7-13-1.7s-9.8.7-13 1.7Zm13 6a3.5 3.5 0 0 0-1.4 6.7l-1.2 8.9h5.2l-1.2-8.9A3.5 3.5 0 0 0 24 23.6Z");
+  svg.append(ground, hut);
+  return svg;
+}
+
 export const CATEGORY_ICON = {
   work: "desk", kitchen: "kitchen", comfort: "bed", building: "shield", safety: "shield",
 };

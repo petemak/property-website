@@ -34,8 +34,12 @@ public/                     ← the deployable artifact
   *.html                    ← one file per public route (P1–P13)
   admin.html                ← A0–A11 single-page shell (behind login, noindex)
   _redirects                ← pretty-route rewrites for the host
-  favicon.svg
+  favicon.svg               ← brand mark: Bone beehive-house on a Hill-Green tile
   assets/
+    img/    logo.svg        ← header/sidebar logo mark (beehive-house + keyhole
+                              door, viewBox 0 0 48 48, fill="currentColor" so it
+                              inherits the wordmark colour); inlined via
+                              components/icons.js `logoMark()`, never <img>
     css/    tokens, base, layout, components, admin
     fonts/  fonts.css + fraunces-latin.woff2 / inter-latin.woff2 (self-hosted, SIL OFL)
     js/
@@ -69,7 +73,9 @@ npm run test:smoke   # starts its own server, drives Chromium, asserts on the DO
 ```
 
 `test/smoke.mjs` covers: P1 render + FAQ accordion + lightbox (open, arrow-nav,
-Esc closes and restores focus) + mobile nav drawer; P2 gallery groups; P3 → P5
+Esc closes and restores focus) + mobile nav drawer + header logo mark (inline
+`<svg>` in the `.wordmark`, colour follows the text in both header states, no
+360px overlap with the header actions); P2 gallery groups; P3 → P5
 deep link; **Journey 1** end-to-end (calendar range, car + driver, guest
 details, all three acceptances gate the submit, `POST /bookings`, redirect to a
 pending P6 with the accepted-documents list); P6 email gate (wrong email

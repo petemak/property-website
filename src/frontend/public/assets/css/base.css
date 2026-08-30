@@ -2,7 +2,12 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* keep in-page anchor targets clear of the fixed site header */
+  scroll-padding-top: calc(var(--header-h) + var(--sp-4));
+}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

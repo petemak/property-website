@@ -113,19 +113,22 @@ content comes from `GET /api/property`, `GET /api/gallery`, `GET
 /api/availability`.
 
 1. **Header / nav** (component: `SiteHeader`)
-   - Left: "Kigali Keys" wordmark (Fraunces). It must read clearly as the brand:
-     noticeably larger than the nav links beside it (target ~`--fs-800`, weight
-     600–700), not near-parity with them. Right: links — The home, The car,
-     Location, Contact. On desktop a compact "Check dates" clay button; on
-     mobile a hamburger.
+   - Left: the logo mark then the "Kigali Keys" wordmark (Fraunces), as one
+     link to home. The mark precedes the wordmark: a Rwandan beehive-house
+     silhouette with a keyhole doorway, drawn in `currentColor` (~1.1em tall)
+     so it takes the wordmark's colour in both header states. The wordmark
+     must read clearly as the brand: noticeably larger than the nav links
+     beside it (target ~`--fs-800`, weight 600–700), not near-parity with
+     them. Right: links — The home, The car, Location, Contact. On desktop a
+     compact "Check dates" clay button; on mobile a hamburger.
    - Transparent over the hero, switches to solid Bone with charcoal text once
      scrolled past the hero.
 
 2. **Hero**
    - Purpose: one image, one sentence, the core facts, one action.
    - Content: full-bleed lead photo of the duplex exterior (with the Sorento
-     visible if a good shot exists). Overlaid: tagline "A furnished home in
-     Kigali — with the keys to a car." Sub-line: neighbourhood, "Whole 2-bed
+     visible if a good shot exists). Overlaid: tagline "Keys to a furnished home
+     in Kigali — and to the car outside." Sub-line: neighbourhood, "Whole 2-bed
      duplex · sleeps 4 · gated." A `BookingWidget` card (dates + guests +
      "Check availability").
    - Layout: image fills viewport height on desktop (min 520px), text block
@@ -134,7 +137,8 @@ content comes from `GET /api/property`, `GET /api/gallery`, `GET
 3. **At a glance** (component: `FactRow`)
    - Purpose: Booking.com-style scannable facts.
    - Content: 4–6 icon+label pairs — Bedrooms 2 · Bathrooms 2 · Max guests 4 ·
-     Fast wifi (100 Mbps) · Dedicated desk · Kia Sorento on site ($45/day).
+     Fast fibre wifi (100 Mbps) · Dining table doubles as a workspace · Kia
+     Sorento on site (USD 45 a day).
    - Layout: horizontal wrapping grid of small cells, one row desktop, 2-up
      mobile.
 

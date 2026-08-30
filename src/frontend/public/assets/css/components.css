@@ -94,7 +94,12 @@
   width: 100%;
   display: grid;
   gap: var(--sp-5);
-  padding-block: var(--sp-6);
+  /* The transparent header overlays the hero, so the hero's content must
+     reserve at least the header's height plus breathing room at every
+     breakpoint — otherwise the H1 collides with the wordmark on narrow
+     viewports where the content is taller than the hero and top-aligns. */
+  padding-top: calc(var(--header-h) + var(--sp-6));
+  padding-bottom: var(--sp-6);
 }
 .hero__title { color: var(--c-white); font-size: var(--fs-800); max-width: 16ch; }
 .hero__sub { color: rgba(255,255,255,0.92); font-size: var(--fs-500); max-width: 44ch; }

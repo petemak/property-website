@@ -2,6 +2,7 @@
 // Hiding a menu item is not the access control — the server authorises every call.
 
 import { h, $, trapFocus } from "../lib/dom.js";
+import { logoMark } from "../components/icons.js";
 import { api } from "../lib/api.js";
 
 const NAV = [
@@ -46,7 +47,7 @@ export function renderShell(user, activePath, contentNode) {
   app.replaceChildren(
     h("div", { class: "admin-shell" },
       h("aside", { class: "admin-sidebar" },
-        h("a", { href: "/admin", class: "wordmark", onClick: linkNav }, "Kigali Keys"),
+        h("a", { href: "/admin", class: "wordmark", onClick: linkNav }, logoMark(), "Kigali Keys"),
         nav,
       ),
       h("div", {},

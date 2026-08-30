@@ -121,6 +121,123 @@ try {
     await page.setViewportSize({ width: 390, height: 844 });
   });
 
+  await check("Header wordmark carries the inline logo mark, keeps its text, mark colour follows text, no 360px collision", async () => {
+    await page.setViewportSize({ width: 360, height: 780 });
+    await page.goto(BASE + "/", { waitUntil: "networkidle" });
+    const wm = page.locator(".site-header__inner .wordmark");
+    const shape = await wm.evaluate((el) => {
+      const svg = el.querySelector("svg.wordmark__mark");
+      const cs = svg && getComputedStyle(svg);
+      return {
+        hasSvg: !!svg,
+        text: (el.textContent || "").trim(),
+        markColor: cs && cs.color,
+        wordmarkColor: getComputedStyle(el).color,
+        markHeight: svg && svg.getBoundingClientRect().height,
+      };
+    });
+    if (!shape.hasSvg) throw new Error("no <svg> logo mark inside .wordmark");
+    if (!/Kigali Keys/.test(shape.text)) throw new Error("wordmark lost its text: " + shape.text);
+    if (shape.markColor !== shape.wordmarkColor) throw new Error(`mark colour (${shape.markColor}) does not follow text (${shape.wordmarkColor})`);
+    if (!/255,\s*255,\s*255/.test(shape.markColor)) throw new Error("mark not white over the hero: " + shape.markColor);
+    if (shape.markHeight < 20 || shape.markHeight > 40) throw new Error("mark height out of range at 360px: " + shape.markHeight);
+
+    // no sideways overflow, no overlap with the header actions (hamburger / CTA)
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    if (overflow > 0) throw new Error("header adds horizontal overflow at 360px: +" + overflow + "px");
+    const wmBox = await wm.boundingBox();
+    const actBox = await page.locator(".site-header__actions").boundingBox();
+    if (wmBox.x + wmBox.width > actBox.x + 1) throw new Error("wordmark overlaps the header actions at 360px");
+
+    // scrolled / solid state: mark still matches the (now Hill-Green) text
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight + 400));
+    await page.waitForTimeout(300);
+    const solid = await wm.evaluate((el) => ({
+      mark: getComputedStyle(el.querySelector("svg.wordmark__mark")).color,
+      text: getComputedStyle(el).color,
+    }));
+    if (solid.mark !== solid.text) throw new Error(`solid state: mark (${solid.mark}) != text (${solid.text})`);
+    if (/255,\s*255,\s*255/.test(solid.mark)) throw new Error("mark still white after scrolling past the hero");
+    await page.setViewportSize({ width: 390, height: 844 });
+  });
+
+  // ---- Header/hero layout: clearance + pinning (regression for two bugs) ----
+  await check("P1 hero content clears the transparent header at 360 / 768 / 1280", async () => {
+    const rectsFor = () => page.evaluate(() => {
+      const r = (el) => { const b = el.getBoundingClientRect(); return { top: b.top, right: b.right, bottom: b.bottom, left: b.left }; };
+      const header = document.querySelector(".site-header");
+      const wm = document.querySelector(".site-header__inner .wordmark");
+      const h1 = document.querySelector(".hero__title");
+      const sub = document.querySelector(".hero__sub");
+      const widget = document.querySelector("#hero-widget .booking-widget");
+      return { header: r(header), wm: r(wm), h1: r(h1), sub: r(sub), widget: r(widget) };
+    });
+    const intersects = (a, b) => !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
+    for (const width of [360, 768, 1280]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto(BASE + "/", { waitUntil: "networkidle" });
+      await page.waitForSelector(".hero__title");
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const g = await rectsFor();
+      if (intersects(g.h1, g.wm)) throw new Error(`${width}px: hero H1 box intersects the wordmark box`);
+      for (const [name, box] of [["H1", g.h1], ["sub-line", g.sub], ["booking widget", g.widget]]) {
+        if (box.top < g.header.bottom) throw new Error(`${width}px: hero ${name} (top ${box.top.toFixed(0)}) sits under the header (bottom ${g.header.bottom.toFixed(0)})`);
+      }
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+  });
+
+  await check("P1 header stays pinned + goes solid after scrolling past the hero", async () => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(BASE + "/", { waitUntil: "networkidle" });
+    await page.evaluate(() => window.scrollTo(0, 800));
+    await page.waitForTimeout(350);
+    const s = await page.evaluate(() => {
+      const header = document.querySelector(".site-header");
+      const wm = document.querySelector(".site-header__inner .wordmark");
+      const cs = getComputedStyle(header);
+      return {
+        top: header.getBoundingClientRect().top,
+        transparentClass: header.classList.contains("site-header--transparent"),
+        bg: cs.backgroundColor,
+        wmColor: getComputedStyle(wm).color,
+      };
+    });
+    if (Math.abs(s.top) > 2) throw new Error("header not pinned to viewport top after 800px scroll: top=" + s.top);
+    if (s.transparentClass) throw new Error("header still in transparent state past the hero");
+    if (/rgba\(0,\s*0,\s*0,\s*0\)|transparent/.test(s.bg)) throw new Error("header background not solid after scroll: " + s.bg);
+    if (/255,\s*255,\s*255/.test(s.wmColor)) throw new Error("wordmark still white (light) after scroll: " + s.wmColor);
+    await page.setViewportSize({ width: 390, height: 844 });
+  });
+
+  await check("Interior page (/the-car) header is pinned, solid, and does not hide the first content", async () => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(BASE + "/the-car", { waitUntil: "networkidle" });
+    const before = await page.evaluate(() => {
+      const header = document.querySelector(".site-header");
+      const h1 = document.querySelector("main h1");
+      const cs = getComputedStyle(header);
+      return {
+        top: header.getBoundingClientRect().top,
+        bg: cs.backgroundColor,
+        transparentClass: header.classList.contains("site-header--transparent"),
+        h1Top: h1.getBoundingClientRect().top,
+        headerBottom: header.getBoundingClientRect().bottom,
+      };
+    });
+    if (Math.abs(before.top) > 2) throw new Error("interior header not at viewport top: " + before.top);
+    if (before.transparentClass) throw new Error("interior header should never be transparent (no hero)");
+    if (/rgba\(0,\s*0,\s*0,\s*0\)|transparent/.test(before.bg)) throw new Error("interior header not solid: " + before.bg);
+    if (before.h1Top < before.headerBottom) throw new Error(`first content hidden behind header: h1 top ${before.h1Top.toFixed(0)} < header bottom ${before.headerBottom.toFixed(0)}`);
+    // still pinned after scrolling
+    await page.evaluate(() => window.scrollTo(0, 600));
+    await page.waitForTimeout(200);
+    const after = await page.evaluate(() => document.querySelector(".site-header").getBoundingClientRect().top);
+    if (Math.abs(after) > 2) throw new Error("interior header unpinned after scroll: top=" + after);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(BASE + "/", { waitUntil: "networkidle" }); // leave subsequent checks on P1
+  });
+
   await check("P1 FAQ accordion toggles", async () => {
     const trigger = page.locator(".accordion__trigger").first();
     await trigger.click();

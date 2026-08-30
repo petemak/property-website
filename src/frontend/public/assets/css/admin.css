@@ -10,7 +10,8 @@
   color: var(--c-white);
   padding: var(--sp-4);
 }
-.admin-sidebar .wordmark { color: var(--c-white); display: block; margin-bottom: var(--sp-4); }
+.admin-sidebar .wordmark { color: var(--c-white); display: flex; align-items: center; gap: 0.5em; margin-bottom: var(--sp-4); }
+.admin-sidebar .wordmark__mark { flex: none; width: auto; height: 1.1em; }
 .admin-sidebar nav ul { list-style: none; margin: 0; padding: 0; }
 .admin-sidebar nav a {
   display: block; padding: var(--sp-3); border-radius: var(--radius-sm);
