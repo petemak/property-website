@@ -12,18 +12,21 @@ primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
 [env]
   PORT = "8080"
   HTTP_HOST = "0.0.0.0"
-  # Staging data reset 2026-08-30 (r4): bumped to a fresh db/media path so the
-  # idempotent seeder repopulates property/pricing/legal/gallery with the
-  # latest content pass. r4 adds the public `contact` block to GET /property
-  # (hostDisplayName "Peter", publicEmail info@kigalikeys.rw, publicPhone nil ->
-  # contact.phone null) plus minor copy fixes; carries forward the round-3 pass
-  # (British-English copy, climate/kitchen fixes, cleaningFee 35->30, houseRules
-  # v3 / privacy v3 / websiteTerms v2).
-  # Prior r1 (kigali-keys.db/media), r2 (kigali-keys-r2.db/media-r2) and r3
-  # (kigali-keys-r3.db/media-r3) paths are left on the volume, unused. The DB
-  # holds no real data.
-  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r4.db"
-  MEDIA_DIR = "/data/media-r4"
+  # Staging data reset 2026-08-30 (r6): bumped to a fresh db/media path so the
+  # idempotent seeder repopulates property/pricing/legal/gallery from a clean
+  # slate. r6 extends the r5 QA-blocker fix for PUT /admin/settings to the
+  # guestResponseTimeText field — it is now optional/nullable too (matching
+  # publicPhone), and a blank/whitespace value normalises to nil so the owner
+  # can clear the "response time" line and GET /property's contact projection
+  # returns null rather than "". Carries forward the r5 pass (publicPhone
+  # optional/nullable/clearable, admin-JS placeholder cleanup), the r4 pass
+  # (public `contact` block on GET /property, hostDisplayName "Peter",
+  # publicEmail info@kigalikeys.rw, publicPhone nil -> contact.phone null) and
+  # the round-3 pass (British-English copy, climate/kitchen fixes, cleaningFee
+  # 35->30, houseRules v3 / privacy v3 / websiteTerms v2).
+  # Prior r1..r5 paths are left on the volume, unused. The DB holds no real data.
+  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r6.db"
+  MEDIA_DIR = "/data/media-r6"
   SEED_PHOTOS_DIR = "/app/assets/property-photos"
   SESSION_COOKIE_SECURE = "true"
   DB_POOL_SIZE = "1"

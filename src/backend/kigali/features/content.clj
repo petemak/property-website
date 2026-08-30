@@ -33,7 +33,8 @@
   {:hostName (:hostDisplayName settings)
    :email (:publicEmail settings)
    :phone (public-phone (:publicPhone settings))
-   :responseTimeText (:guestResponseTimeText settings)})
+   :responseTimeText (let [t (:guestResponseTimeText settings)]
+                       (when-not (str/blank? t) t))})
 
 (defn property-response
   "Merges the editable property doc with the managed fields for GET /property."

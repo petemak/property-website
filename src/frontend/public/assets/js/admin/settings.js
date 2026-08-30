@@ -52,12 +52,15 @@ export async function renderSettings(ctx) {
         status.replaceChildren();
         try {
           const updated = await api.adminPutSettings({
-            hostDisplayName: name.value, publicEmail: email.value, publicPhone: phone.value,
+            hostDisplayName: name.value, publicEmail: email.value,
+            // Optional free-text fields: send null (not "") when blank so the
+            // backend stores an absent value rather than an empty string.
+            publicPhone: optional(phone.value),
             newRequestNotificationEmails: notify.value.split("\n").map((x) => x.trim()).filter(Boolean),
             timezone: tz.value, currency: currency.value,
             approxLat: Number(lat.value), approxLng: Number(lng.value),
             revealExactAddressAfterApproval: reveal.checked,
-            guestResponseTimeText: respTime.value,
+            guestResponseTimeText: optional(respTime.value),
           });
           Object.assign(s, updated);
           status.replaceChildren(alertBox("Settings saved.", "success"));
@@ -68,3 +71,10 @@ export async function renderSettings(ctx) {
 }
 
 function inp(value, type = "text") { return h("input", { type, value: value ?? "", style: "width:100%" }); }
+
+// Trim a free-text input; return null when it's empty so the payload omits a
+// real value rather than sending "".
+function optional(value) {
+  const v = (value ?? "").trim();
+  return v === "" ? null : v;
+}

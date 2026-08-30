@@ -195,11 +195,11 @@ function approvePanel(ctx, b) {
   drawLines();
 
   const payInstr = h("textarea", { id: "ap-pay", placeholder: "e.g. 50% bank transfer to confirm within 3 days, balance on arrival." });
-  const address = h("input", { type: "text", id: "ap-addr", placeholder: "House 12, KG 5 Ave, Rebero, Kigali" });
+  const address = h("input", { type: "text", id: "ap-addr", placeholder: "House 00, KG 9 Ave, Gacuriro, Kigali" });
   const mapUrl = h("input", { type: "url", id: "ap-map", placeholder: "https://maps.google.com/…" });
   const checkIn = h("textarea", { id: "ap-ci", placeholder: "Lockbox code, gate instructions, early check-in notes…" });
   const carColl = h("input", { type: "text", id: "ap-car", placeholder: "Keys at the house on arrival; bring licence + passport." });
-  const hostContact = h("input", { type: "text", id: "ap-host", placeholder: "Jean — +250 7xx xxx xxx / host@kigalikeys.rw" });
+  const hostContact = h("input", { type: "text", id: "ap-host", placeholder: "Peter — +250 788 000 000 / info@kigalikeys.rw" });
   const note = h("textarea", { id: "ap-note", placeholder: "Optional personal note to the guest." });
   const blockDates = h("input", { type: "checkbox", id: "ap-block", checked: true });
   const blockCar = h("input", { type: "checkbox", id: "ap-blockcar", checked: true });

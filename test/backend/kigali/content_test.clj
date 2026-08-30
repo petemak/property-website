@@ -29,6 +29,15 @@
   (testing "a real number passes through, trimmed"
     (is (= "+250 788 123 456" (content/public-phone "  +250 788 123 456 ")))))
 
+(deftest contact-response-time-text-is-null-when-blank
+  (testing "nil / blank stored value -> nil (frontend omits the line)"
+    (is (nil? (:responseTimeText (content/contact-projection (assoc settings :guestResponseTimeText nil)))))
+    (is (nil? (:responseTimeText (content/contact-projection (assoc settings :guestResponseTimeText "")))))
+    (is (nil? (:responseTimeText (content/contact-projection (dissoc settings :guestResponseTimeText))))))
+  (testing "a set value passes through"
+    (is (= "Within a day"
+           (:responseTimeText (content/contact-projection (assoc settings :guestResponseTimeText "Within a day")))))))
+
 (deftest property-response-includes-contact
   (let [resp (content/property-response {:name "Kigali Keys"}
                                         {:currency "USD" :nightlyRate 70}

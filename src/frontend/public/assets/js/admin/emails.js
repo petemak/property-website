@@ -56,7 +56,7 @@ export async function renderEmails(ctx) {
 
   async function preview() {
     try {
-      const sample = { guestFirstName: "Lena", bookingReference: "KK-DEMO12", stayDates: "5–12 Sep 2026", statusUrl: "https://kigalikeys.rw/booking/KK-DEMO12", addressLine: "House 12, Rebero", hostContact: "Jean — +250 788 000 000", checkInInstructions: "Lockbox 4821.", priceBreakdown: "Accommodation 980 + Cleaning 35 = USD 1015", rejectionExplanation: "Those dates are taken." };
+      const sample = { guestFirstName: "Lena", bookingReference: "KK-DEMO12", stayDates: "5–12 Sep 2026", statusUrl: "https://kigalikeys.rw/booking/KK-DEMO12", addressLine: "House 00, Gacuriro, Kigali", hostContact: "Peter — +250 788 000 000", checkInInstructions: "Lockbox 4821.", priceBreakdown: "Accommodation 490 + Cleaning 30 = USD 520", rejectionExplanation: "Those dates are taken." };
       const res = await api.adminPreviewEmail(activeKey, sample);
       const frame = h("iframe", { title: "Email preview", srcdoc: res.html });
       mount(previewHost, h("p", {}, h("strong", {}, "Subject: "), res.subject), frame);

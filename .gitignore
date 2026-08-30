@@ -47,3 +47,6 @@ package-lock.json
 *.db
 *.db-journal
 /media/
+# seeder output when MEDIA_DIR is mispointed at the source photo tree
+/assets/property-photos/gallery/
+/assets/property-photos/map/

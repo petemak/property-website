@@ -8,7 +8,7 @@
 import { spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { homedir } from "node:os";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -424,10 +424,10 @@ try {
     await page.goto(BASE + "/admin/bookings?status=pending", { waitUntil: "networkidle" });
     await page.locator(".admin-table tbody tr", { hasText: "KK-7F3Q2A" }).click();
     await page.waitForSelector("text=Approve");
-    await page.fill("#ap-addr", "House 12, KG 5 Ave, Rebero, Kigali");
+    await page.fill("#ap-addr", "House 00, KG 9 Ave, Gacuriro, Kigali");
     await page.fill("#ap-ci", "Lockbox code 4821. Gate security has your name.");
     await page.fill("#ap-car", "Keys at the house on arrival; bring licence + passport.");
-    await page.fill("#ap-host", "Jean — +250 788 000 000");
+    await page.fill("#ap-host", "Peter — +250 788 000 000");
     await page.locator("button:has-text('Approve & send email')").click();
     await page.waitForSelector(".modal");
     await page.locator("button:has-text('Confirm & send')").click();
@@ -508,6 +508,17 @@ try {
     }));
     if (!f.fraunces) throw new Error("Fraunces 700 not loaded (wordmark face)");
     if (!f.inter) throw new Error("Inter 400 not loaded (body face)");
+  });
+
+  await check("Admin JS bundles carry no stale/banned placeholder tokens", async () => {
+    const dir = new URL("../public/assets/js/admin/", import.meta.url).pathname;
+    const banned = ["Rebero", "host@kigalikeys.rw", " Jean ", "7xx xxx xxx"];
+    const hits = [];
+    for (const file of readdirSync(dir).filter((f) => f.endsWith(".js"))) {
+      const src = readFileSync(dir + file, "utf8");
+      for (const token of banned) if (src.includes(token)) hits.push(`${file}: "${token.trim()}"`);
+    }
+    if (hits.length) throw new Error("stale tokens shipped: " + hits.join(", "));
   });
 
   await check("No uncaught page errors across the run", async () => {
