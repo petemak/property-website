@@ -121,7 +121,7 @@
   gap: var(--sp-3);
 }
 .booking-widget h2, .booking-widget h3 { font-size: var(--fs-500); margin-bottom: var(--sp-2); }
-.booking-widget .field-grid { display: grid; gap: var(--sp-3); grid-template-columns: 1fr 1fr; }
+.booking-widget .field-grid { display: grid; gap: var(--sp-3); grid-template-columns: 1fr 1fr; align-items: start; }
 .booking-widget .from-price { font-size: var(--fs-300); color: var(--c-text-muted); }
 
 /* ---- Sticky booking bars ---- */
@@ -344,8 +344,17 @@ legend { font-family: var(--font-head); font-weight: 600; font-size: var(--fs-50
 .field--error input, .field--error select, .field--error textarea { border-color: var(--c-danger); }
 .field-error { color: var(--c-danger); font-size: var(--fs-300); font-weight: 600; }
 .field-error::before { content: "Error: "; }
-.field-row { display: grid; gap: var(--sp-3); grid-template-columns: 1fr; }
+.field-row { display: grid; gap: var(--sp-3); grid-template-columns: 1fr; align-items: start; }
 @media (min-width: 600px) { .field-row { grid-template-columns: 1fr 1fr; } }
+
+/* Fields laid out in a grid get their spacing from the grid `gap`, so the
+   per-field `margin-bottom` must be zeroed here. Left in, it makes the
+   non-last field's border-box taller, and `align-items: stretch` (the grid
+   default) then stretches the shorter cell — including its <input> row — to
+   match, so e.g. the booking widget's Check-out box renders taller than
+   Check-in. `min-width: 0` on .field / inputs is kept (360px overflow guard). */
+.booking-widget .field-grid > .field,
+.field-row > .field { margin-bottom: 0; }
 
 .checkbox-field { display: grid; grid-template-columns: auto 1fr; gap: var(--sp-3); align-items: start; }
 .checkbox-field input { width: 1.25rem; height: 1.25rem; margin-top: 0.15rem; }

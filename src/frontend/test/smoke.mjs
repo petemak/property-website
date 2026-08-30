@@ -28,6 +28,7 @@ const executablePath = EXE_CANDIDATES.find(existsSync);
 
 const PORT = 4337;
 const BASE = `http://localhost:${PORT}`;
+const SHOT_DIR = process.env.SMOKE_SHOT_DIR || "";
 let failures = 0;
 const ok = (name) => console.log(`  ok  ${name}`);
 const fail = (name, err) => { failures++; console.error(`FAIL  ${name}\n      ${err}`); };
@@ -90,6 +91,24 @@ try {
     await page.waitForSelector(".booking-widget button[type=submit]");
     if (!(await page.locator("text=At a glance").count())) throw new Error("missing At a glance");
     if (!(await page.locator("text=What's included").count())) throw new Error("missing included table");
+  });
+
+  await check("Booking widget: Check-in / Check-out date inputs are the same height and bottom-aligned (360px + desktop)", async () => {
+    for (const [label, width, height] of [["360px", 360, 780], ["desktop", 1280, 900]]) {
+      await page.setViewportSize({ width, height });
+      await page.goto(BASE + "/", { waitUntil: "networkidle" });
+      await page.waitForSelector("#hero-widget .booking-widget input[name=checkIn]");
+      const m = await page.evaluate(() => {
+        const w = document.querySelector("#hero-widget .booking-widget");
+        const a = w.querySelector("input[name=checkIn]").getBoundingClientRect();
+        const b = w.querySelector("input[name=checkOut]").getBoundingClientRect();
+        return { ah: a.height, bh: b.height, abot: a.bottom, bbot: b.bottom };
+      });
+      if (Math.abs(m.ah - m.bh) > 1) throw new Error(`${label}: input heights differ — checkIn ${m.ah.toFixed(2)} vs checkOut ${m.bh.toFixed(2)}`);
+      if (Math.abs(m.abot - m.bbot) > 1) throw new Error(`${label}: input bottom edges not aligned — checkIn ${m.abot.toFixed(2)} vs checkOut ${m.bbot.toFixed(2)}`);
+      if (SHOT_DIR) await page.locator("#hero-widget .booking-widget").screenshot({ path: `${SHOT_DIR}/booking-widget-${label}.png` });
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
   });
 
   await check("Header wordmark is the largest header text, both states, no mobile collision", async () => {
