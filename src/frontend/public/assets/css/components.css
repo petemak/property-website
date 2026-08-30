@@ -318,7 +318,7 @@
 .form { display: grid; gap: var(--sp-5); }
 fieldset { border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: var(--sp-5); margin: 0; }
 legend { font-family: var(--font-head); font-weight: 600; font-size: var(--fs-500); padding-inline: var(--sp-2); }
-.field { display: grid; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+.field { display: grid; gap: var(--sp-2); margin-bottom: var(--sp-4); min-width: 0; }
 .field:last-child { margin-bottom: 0; }
 .field > label { font-weight: 600; }
 .field .hint { font-size: var(--fs-300); color: var(--c-text-muted); }
@@ -330,6 +330,9 @@ legend { font-family: var(--font-head); font-weight: 600; font-size: var(--fs-50
   background: var(--c-white);
   color: var(--c-charcoal);
   width: 100%;
+  min-width: 0; /* date/number inputs have a wide intrinsic min-content size;
+                   without this they refuse to shrink and blow out narrow
+                   two-up grids (e.g. the booking widget) past 360px. */
 }
 .field textarea { min-height: 7rem; resize: vertical; }
 .field input:invalid:not(:placeholder-shown) { border-color: var(--c-danger); }

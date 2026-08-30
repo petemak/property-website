@@ -50,7 +50,7 @@
                          :phone "+250788123456" :countryOfResidence "RW" :purposeOfStay "leisure"}
                  :stay {:checkIn "2026-11-05" :checkOut "2026-11-10" :adults 2 :children 0}
                  :acceptances [{:type "stayTerms" :version 3 :accepted true}
-                               {:type "houseRules" :version 2 :accepted true}]}
+                               {:type "houseRules" :version 3 :accepted true}]}
         create (request :post "/api/bookings" :body booking :headers {"idempotency-key" (h/uuid)})
         _ (is (= 201 (:status create)))
         ref (get-in create [:body :reference])
@@ -59,7 +59,7 @@
         id (:id item)]
     (testing "appears in admin queue"
       (is (some? id))
-      (is (= 385 (:estimatedTotal item))))
+      (is (= 380 (:estimatedTotal item))))
     (testing "detail view has PII + acceptances + no conflicts"
       (let [d (request :get (str "/api/admin/bookings/" id) :cookie c)]
         (is (= "sam@example.com" (get-in d [:body :guest :email])))
@@ -81,7 +81,7 @@
                                  :addressLine "House 12, KG 9 Ave, Gacuriro"
                                  :mapUrl "https://maps.example/x"
                                  :checkInInstructions "Lockbox 4821"
-                                 :hostContact "Jean +250"
+                                 :hostContact "Peter +250"
                                  :blockDates true}
                           :headers {"idempotency-key" ak} :cookie c)]
         (is (= 200 (:status appr)))
@@ -97,7 +97,7 @@
                                       :addressLine "House 12, KG 9 Ave, Gacuriro"
                                       :mapUrl "https://maps.example/x"
                                       :checkInInstructions "Lockbox 4821"
-                                      :hostContact "Jean +250"
+                                      :hostContact "Peter +250"
                                       :blockDates true}
                                :headers {"idempotency-key" ak} :cookie c)]
             (is (= 200 (:status again)))
@@ -126,7 +126,7 @@
                          :phone "+250788999888" :countryOfResidence "RW" :purposeOfStay "business"}
                  :stay {:checkIn "2026-12-05" :checkOut "2026-12-09" :adults 1 :children 0}
                  :acceptances [{:type "stayTerms" :version 3 :accepted true}
-                               {:type "houseRules" :version 2 :accepted true}]}
+                               {:type "houseRules" :version 3 :accepted true}]}
         create (request :post "/api/bookings" :body booking :headers {"idempotency-key" (h/uuid)})
         ref (get-in create [:body :reference])
         id (->> (request :get "/api/admin/bookings" :query {:status "pending"} :cookie c)
@@ -163,7 +163,7 @@
                        :driver {:fullName "Cal R" :dateOfBirth "1985-01-01"
                                 :licenceNumber "KEN99" :licenceCountry "KE" :meetsRequirements true}}
                  :acceptances [{:type "stayTerms" :version 3 :accepted true}
-                               {:type "houseRules" :version 2 :accepted true}
+                               {:type "houseRules" :version 3 :accepted true}
                                {:type "vehicleRentalAgreement" :version 4 :bodyHash vh :accepted true}]}
         _ (request :post "/api/bookings" :body booking :headers {"idempotency-key" (h/uuid)})
         log (request :get "/api/admin/agreement-acceptances" :query {:type "vehicleRentalAgreement"} :cookie c)]
@@ -183,14 +183,14 @@
                             :summaryPoints ["Be kind"]}
                      :cookie c)]
     (is (= 201 (:status pub)))
-    (is (= 3 (:version (:body pub))))
-    (is (= 3 (get-in (request :get "/api/property") [:body :termsVersions :houseRules])))
+    (is (= 4 (:version (:body pub))))
+    (is (= 4 (get-in (request :get "/api/property") [:body :termsVersions :houseRules])))
     (testing "a booking accepting the old house-rules version is now stale"
       (let [b {:guest {:firstName "Old" :lastName "V" :email "old@example.com"
                        :phone "+250788000111" :countryOfResidence "RW" :purposeOfStay "other"}
                :stay {:checkIn "2026-11-01" :checkOut "2026-11-05" :adults 1 :children 0}
                :acceptances [{:type "stayTerms" :version 3 :accepted true}
-                             {:type "houseRules" :version 2 :accepted true}]}
+                             {:type "houseRules" :version 3 :accepted true}]}
             {:keys [status body]} (request :post "/api/bookings" :body b
                                            :headers {"idempotency-key" (h/uuid)})]
         (is (= 409 status))

@@ -27,7 +27,7 @@ const root = $("#car-root");
         h("div", {}, smartImage({ url: carPhotos[0]?.url, alt: carPhotos[0]?.alt || "The Kia Sorento at the property", ratio: "4 / 3", label: "The Kia Sorento" })),
         h("div", {},
           h("h1", {}, "The car"),
-          h("p", {}, "The keys are included in the deal — the car is the add-on. A Kia Sorento SUV, kept on the premises, yours to collect at the house."),
+          h("p", {}, "The house keys come with every stay; the car is the optional extra. A Kia Sorento SUV, kept on the premises, yours to collect at the house."),
           h("ul", { class: "chips" },
             h("li", { class: "chip" }, `${money(vehicle.dailyRate, cur)} / day`),
             h("li", { class: "chip" }, "Collected at the property"),

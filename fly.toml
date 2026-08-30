@@ -12,12 +12,18 @@ primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
 [env]
   PORT = "8080"
   HTTP_HOST = "0.0.0.0"
-  # Staging data reset 2026-08-29: bumped to a fresh db/media path so the
+  # Staging data reset 2026-08-30 (r4): bumped to a fresh db/media path so the
   # idempotent seeder repopulates property/pricing/legal/gallery with the
-  # owner's corrected values (Rebero->Gacuriro/Kagugu, nightly 140->70).
-  # Old /data/kigali-keys.db + /data/media are left on the volume, unused.
-  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r2.db"
-  MEDIA_DIR = "/data/media-r2"
+  # latest content pass. r4 adds the public `contact` block to GET /property
+  # (hostDisplayName "Peter", publicEmail info@kigalikeys.rw, publicPhone nil ->
+  # contact.phone null) plus minor copy fixes; carries forward the round-3 pass
+  # (British-English copy, climate/kitchen fixes, cleaningFee 35->30, houseRules
+  # v3 / privacy v3 / websiteTerms v2).
+  # Prior r1 (kigali-keys.db/media), r2 (kigali-keys-r2.db/media-r2) and r3
+  # (kigali-keys-r3.db/media-r3) paths are left on the volume, unused. The DB
+  # holds no real data.
+  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r4.db"
+  MEDIA_DIR = "/data/media-r4"
   SEED_PHOTOS_DIR = "/app/assets/property-photos"
   SESSION_COOKIE_SECURE = "true"
   DB_POOL_SIZE = "1"

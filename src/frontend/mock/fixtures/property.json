@@ -99,5 +99,11 @@
     "carNote": "The Kia Sorento is USD 45/day, arranged with your booking and paid on site."
   },
   "termsVersions": { "stayTerms": 3, "houseRules": 2 },
+  "contact": {
+    "hostName": "Peter",
+    "email": "info@kigalikeys.rw",
+    "phone": null,
+    "responseTimeText": "Typically within 24–48 hours"
+  },
   "updatedAt": "2026-08-20T09:00:00Z"
 }

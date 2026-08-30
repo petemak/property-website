@@ -22,7 +22,7 @@ export const BOOKING_COPY = {
   request: {
     widgetAction: "Check availability",
     ctaAction: "Request to book",
-    ctaReassurance: "Send a request — no charge until the host confirms.",
+    ctaReassurance: "Send a request — nothing is charged until the host confirms your dates.",
     submitAction: "Send booking request",
     estimateLabel: "Estimate",
     estimateSubLabel: "Estimate — the host confirms the final amount",

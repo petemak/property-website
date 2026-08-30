@@ -16,33 +16,33 @@
 
 (def property-content
   {:name "Kigali Keys"
-   :tagline "A furnished home in Kigali — with the keys to a car."
-   :summary "Whole 2-bedroom duplex in a gated Kigali neighbourhood. Sleeps 4."
-   :description "Kigali Keys is the whole of a two-bedroom duplex on a quiet gated street on the Gacuriro–Kagugu border (Kinyinya sector), about fifteen minutes from the city centre. The ground floor has an open kitchen, a dining table for four and a living room that opens to a small planted terrace. Upstairs are two bedrooms — a king and a queen — each with its own bathroom, blackout curtains and a ceiling fan. Fast fibre runs throughout, and the dining table works well as a desk for anyone working from Kigali.\n\nThe house comes with backup power, 24/7 gated security, weekly linen and towel changes, and a starter supply of coffee, tea and basics. Parked in the driveway is a 2019 Kia Sorento that guests can add to their stay for USD 45 a day, arranged with the booking and paid on site."
+   :tagline "Keys to a furnished home in Kigali — and to the car outside."
+   :summary "The whole of a two-bedroom duplex on a quiet gated street in Kigali. Sleeps four."
+   :description "Kigali Keys is the whole of a two-bedroom duplex on a quiet gated street on the Gacuriro–Kagugu border, in the Kinyinya sector, about fifteen minutes from the city centre. The ground floor has an open kitchen, a dining table that seats four, and an air-conditioned living room that opens onto a small planted terrace. Upstairs are two en-suite bedrooms — one with a king bed, one with a queen — each with blackout curtains and a standing fan. Fast fibre runs throughout, and the dining table doubles as a desk for anyone working from Kigali.\n\nThe house comes with automatic backup power, 24-hour gated security, a weekly linen and towel change, and a starter supply of coffee, tea, sugar, salt, oil and spices. A 2019 Kia Sorento is kept in the driveway; you can add it to your stay for USD 45 a day, arranged with your booking and paid on site."
    :neighbourhood "Gacuriro / Kagugu, Kigali"
-   :neighbourhoodText "A quiet, upmarket residential pocket on the Gacuriro–Kagugu border in the Kinyinya sector (Gasabo district). Gated streets, embassies and family homes, about 15 minutes from the CBD, with a supermarket and a couple of cafés a short drive away."
+   :neighbourhoodText "A quiet, upmarket residential pocket on the Gacuriro–Kagugu border, in the Kinyinya sector of Gasabo district — gated streets, embassies and family homes, about fifteen minutes from the city centre, with a supermarket and a couple of cafés a short drive away."
    :maxGuests 4
    :bedrooms 2
    :bathrooms 2
    :beds [{:room "Primary bedroom" :type "King"}
           {:room "Second bedroom" :type "Queen"}]
-   :amenities [{:key "wifi" :label "Fast fibre wifi (100 Mbps)" :category "work" :icon "wifi"}
+   :amenities [{:key "wifi" :label "Fast fibre wifi, about 100 Mbps" :category "work" :icon "wifi"}
                {:key "desk" :label "Dining table doubles as a workspace" :category "work" :icon "desk"}
                {:key "backupPower" :label "Automatic backup power" :category "building" :icon "power"}
-               {:key "kitchen" :label "Full kitchen with oven and filter coffee" :category "kitchen" :icon "kitchen"}
+               {:key "kitchen" :label "Full kitchen with oven, hob and a coffee machine" :category "kitchen" :icon "kitchen"}
                {:key "washer" :label "Washing machine" :category "comfort" :icon "washer"}
-               {:key "aircon" :label "Ceiling fans and AC in both bedrooms" :category "comfort" :icon "aircon"}
-               {:key "security" :label "24/7 gated security" :category "safety" :icon "shield"}
+               {:key "aircon" :label "Air conditioning in the living room, standing fans in the bedrooms" :category "comfort" :icon "aircon"}
+               {:key "security" :label "24-hour gated security" :category "safety" :icon "shield"}
                {:key "parking" :label "Private off-street parking" :category "building" :icon "parking"}
                {:key "car" :label "Kia Sorento on site (USD 45/day add-on)" :category "building" :icon "car"}]
-   :included ["Water and electricity" "Automatic backup power" "Weekly linen and towel change" "24/7 gated security" "Starter coffee, tea and pantry basics"]
+   :included ["Water and electricity" "Automatic backup power" "Weekly linen and towel change" "24-hour gated security" "A starter supply of coffee, tea, sugar, salt, oil and spices"]
    :notIncluded ["Daily housekeeping" "Airport pickup unless arranged" "The car unless added to your booking" "Guaranteed early check-in"]
    :checkIn {:fromTime "14:00"
              :untilTime "21:00"
              :method "Self check-in with a lockbox"
-             :processSteps ["The host emails the exact address and lockbox code once your request is approved."
+             :processSteps ["Peter, the host, emails you the exact address and lockbox code once your request is approved."
                             "Let the gate security know the name the booking is under."
-                            "Collect the keys from the lockbox by the front door and text the host that you have arrived."]
+                            "Collect the keys from the lockbox by the front door, and message Peter to let him know you have arrived."]
              :publicPreview "Self check-in from 14:00 via a lockbox. The exact address is shared once your request is approved."}
    :houseRulesSummary ["No smoking indoors" "No parties or events" "Quiet hours 22:00–06:00" "Maximum 4 guests"]
    ;; Approximate area coordinates for the Gacuriro/Kagugu border; the owner
@@ -59,16 +59,16 @@
                                  {:name "Lake Kivu (Rubavu)" :minutesByCar 180 :km 155 :category "trip"}]}
    :arrivalGuide "Most guests arrive at Kigali International Airport (KGL). A metered taxi or a pre-arranged transfer to Gacuriro/Kagugu (Kinyinya) is roughly USD 20–25 and takes about 20 minutes; the host can arrange a trusted driver if you send your flight details. Buy a local SIM (MTN or Airtel) at the airport for a few dollars, or set up an eSIM before you fly. Mobile money is used everywhere; cards work in larger shops and hotels. The currency is the Rwandan franc; plugs are type C/J at 230V. Kigali is calm and safe to walk in daytime; normal city sense at night."
    :gettingAroundWithoutCar "Moto-taxis (helmet provided) are the fastest way around and cost roughly RWF 1,000–2,000 for a short hop; use the Move or YegoMoto apps for a metered fare. Ride-hail cars via the same apps cost about RWF 3,000–6,000 across town. The house is a 5-minute drive from a small supermarket and two cafés."
-   :faq [{:question "How fast is the wifi?" :answer "Fibre, about 100 Mbps down, with a mobile backup line that fails over automatically."}
-         {:question "Is there a proper workspace?" :answer "There is fast fibre throughout and the dining table works well as a desk. A dedicated desk and chair are being added."}
-         {:question "Can I do laundry?" :answer "There is a washing machine in the house. Weekly linen and towel changes are included."}
-         {:question "Are pets allowed?" :answer "Not in this house, to keep it comfortable for guests with allergies."}
-         {:question "Are children welcome?" :answer "Yes. The maximum is 4 guests total including children. A travel cot can be arranged."}
-         {:question "How is payment handled?" :answer "No payment is taken on this site. The host confirms the final amount and the payment method (usually a bank transfer to confirm, balance on arrival) when approving your request."}
-         {:question "What is the cancellation policy?" :answer "See the cancellation and stay terms page. In short: free to cancel up to 14 days before check-in."}]})
+   :faq [{:question "How fast is the wifi?" :answer "Fibre, about 100 Mbps download, with a mobile backup line that takes over automatically if it drops."}
+         {:question "Is there a proper workspace?" :answer "Fast fibre runs throughout and the dining table works well as a desk. A dedicated desk and chair are being added."}
+         {:question "Can I do laundry?" :answer "Yes — there is a washing machine, and a weekly linen and towel change is included."}
+         {:question "Are pets allowed?" :answer "No — the household is allergy-sensitive, so we are not able to allow pets."}
+         {:question "Are children welcome?" :answer "Yes. The maximum is four guests in total, including children, and a travel cot can be arranged."}
+         {:question "How is payment handled?" :answer "No payment is taken on this site. Peter confirms the final amount and how to pay — usually a bank transfer to hold the dates, with the balance on arrival — when he approves your request."}
+         {:question "What is the cancellation policy?" :answer "See the cancellation and stay terms page. In short, you can cancel free of charge up to 14 days before check-in."}]})
 
 (def pricing
-  {:currency "USD" :nightlyRate 70 :cleaningFee 35 :minNights 3})
+  {:currency "USD" :nightlyRate 70 :cleaningFee 30 :minNights 3})
 
 (def vehicle
   {:offered true
@@ -94,13 +94,15 @@
    :geographicLimit "Within Rwanda only"})
 
 (def settings
-  ;; Placeholder host contact details — the owner overwrites publicEmail,
-  ;; publicPhone and newRequestNotificationEmails in the admin Settings screen.
+  ;; Guest-facing contact is Peter, the host. Grace is internal only (admin
+  ;; login, booking queue) and is never named on the public site or in guest
+  ;; emails. The owner can still overwrite publicEmail, publicPhone and
+  ;; newRequestNotificationEmails in the admin Settings screen.
   ;; approxLat/approxLng are the Gacuriro/Kagugu border area, fine-tuned in admin.
-  {:hostDisplayName "Jean at Kigali Keys"
-   :publicEmail "host@kigalikeys.rw"
-   :publicPhone "+250 788 000 000"
-   :newRequestNotificationEmails ["host@kigalikeys.rw"]
+  {:hostDisplayName "Peter"
+   :publicEmail "info@kigalikeys.rw"
+   :publicPhone nil ;; TODO real number — until then GET /property exposes contact.phone as null
+   :newRequestNotificationEmails ["info@kigalikeys.rw"]
    :timezone "Africa/Kigali"
    :currency "USD"
    :approxLat -1.9300
@@ -118,23 +120,23 @@
               "The final amount and payment method are set in the approval email."]
     :body "# Booking & Stay Terms (v3)\n\n## 1. What a booking is\nSubmitting the form on this site creates a **booking request**. It is not confirmed until the host approves it by email. The host may decline any request.\n\n## 2. Price and payment\nThe figures shown on the site are an estimate. The binding amount, the deposit (if any) and the payment method are stated in the approval email. No payment is taken on this website.\n\n## 3. Cancellation\nYou may cancel at no cost up to 14 days before check-in. Inside 14 days the first night is non-refundable. No-shows are charged the first night. If the host cancels, you receive a full refund of anything paid.\n\n## 4. Changes\nDate changes are subject to availability and are treated as a new request.\n\n## 5. During your stay\nThe house rules (published separately and versioned) form part of these terms. Maximum occupancy is 4 guests.\n\n## 6. Liability\nThe host is not liable for loss caused by circumstances outside their reasonable control. Nothing in these terms limits liability that cannot be limited by Rwandan law.\n\n## 7. Governing law\nThese terms are governed by the law of Rwanda."}
 
-   {:type "houseRules" :version 2 :effective-date "2026-01-01"
+   {:type "houseRules" :version 3 :effective-date "2026-01-01"
     :summary ["No smoking indoors and no parties or events."
               "Quiet hours 22:00–06:00."
               "Maximum 4 guests; register visitors with gate security."]
-    :body "# House Rules (v2)\n\n- **Occupancy:** maximum 4 guests. Only guests named on the booking may stay overnight.\n- **Smoking:** no smoking or vaping indoors. Smoking is allowed on the terrace.\n- **Parties and events:** not permitted.\n- **Quiet hours:** 22:00–06:00. The neighbourhood is residential and gated.\n- **Visitors:** daytime visitors are welcome; please register them with gate security.\n- **Pets:** not allowed in this house.\n- **Damage:** please tell the host about any breakage. Accidental damage is usually covered; deliberate or negligent damage is charged at cost.\n- **Check-out:** by 11:00. Start the dishwasher, bag rubbish, and leave the keys in the lockbox.\n- **Energy and water:** please switch off the AC when you go out."}
+    :body "# House Rules (v3)\n\n- **Occupancy:** maximum 4 guests. Only guests named on the booking may stay overnight.\n- **Smoking:** no smoking or vaping indoors. Smoking is allowed on the terrace.\n- **Parties and events:** not permitted.\n- **Quiet hours:** 22:00–06:00. The neighbourhood is residential and gated.\n- **Visitors:** daytime visitors are welcome; please register them with gate security.\n- **Pets:** not allowed in this house.\n- **Damage:** please tell the host about any breakage. Accidental damage is usually covered; deliberate or negligent damage is charged at cost.\n- **Check-out:** by 11:00. Wash up, bag rubbish, and leave the keys in the lockbox.\n- **Energy and water:** please switch off the AC when you go out."}
 
-   {:type "websiteTerms" :version 1 :effective-date "2025-06-01"
+   {:type "websiteTerms" :version 2 :effective-date "2025-06-01"
     :summary ["Use the site lawfully and for genuine booking enquiries."
               "Content is provided in good faith without warranty of accuracy."
               "Rwandan law governs your use of the site."]
-    :body "# Website Terms of Use (v1)\n\n## 1. Acceptable use\nThis site is for reading about the property and making genuine booking enquiries. Do not attempt to disrupt the service, scrape it at scale, or submit false information.\n\n## 2. Accuracy\nDescriptions, photos, travel times and prices are provided in good faith but may change. Nothing on the site is a binding offer until the host confirms a booking in writing.\n\n## 3. Intellectual property\nThe text and photographs on this site belong to the property owner and may not be reused without permission.\n\n## 4. Liability\nThe site is provided \"as is\". To the extent permitted by law the owner is not liable for indirect or consequential loss arising from use of the site.\n\n## 5. Governing law\nRwandan law applies. Contact: host@kigalikeys.rw."}
+    :body "# Website Terms of Use (v2)\n\n## 1. Acceptable use\nThis site is for reading about the property and making genuine booking enquiries. Do not attempt to disrupt the service, scrape it at scale, or submit false information.\n\n## 2. Accuracy\nDescriptions, photos, travel times and prices are provided in good faith but may change. Nothing on the site is a binding offer until the host confirms a booking in writing.\n\n## 3. Intellectual property\nThe text and photographs on this site belong to the property owner and may not be reused without permission.\n\n## 4. Liability\nThe site is provided \"as is\". To the extent permitted by law the owner is not liable for indirect or consequential loss arising from use of the site.\n\n## 5. Governing law\nRwandan law applies. Contact: info@kigalikeys.rw."}
 
-   {:type "privacy" :version 2 :effective-date "2026-01-01"
+   {:type "privacy" :version 3 :effective-date "2026-01-01"
     :summary ["We collect the contact and trip details you enter, plus driver licence details if you add the car."
               "We store the IP address and browser string recorded when you accept an agreement."
               "Data is used to process your booking and kept for up to 24 months."]
-    :body "# Privacy Policy (v2)\n\n## What we collect\n- **Contact and trip details:** name, email, phone, country of residence, purpose of stay, your message, dates and party size.\n- **Driver details (only if you add the car):** driver full name, date of birth, licence number and issuing country.\n- **Agreement acceptance metadata:** which document versions you accepted, the timestamp, and the IP address and browser user-agent recorded at that moment.\n- **Operational data:** emails we send you about your booking.\n\n## Why, and lawful basis\nWe use this data to assess and process your booking request (steps taken at your request prior to a contract) and to meet our records obligations for the vehicle rental agreement (legitimate interest / legal obligation).\n\n## Retention\nBooking and acceptance records are kept for up to 24 months after the stay, then deleted or anonymised. Driver licence numbers are removed sooner, once the rental is closed out.\n\n## Third parties\nWe use an email delivery provider to send booking emails and a map/image host to render location images. We do not sell your data. Payment is handled off-platform by the host.\n\n## Your rights\nYou can ask for a copy of your data, correction, or deletion by emailing host@kigalikeys.rw. If you are in the EU/EEA you may also complain to your local supervisory authority.\n\n## Controller\nThe property owner, Kigali. Contact: host@kigalikeys.rw."}
+    :body "# Privacy Policy (v3)\n\n## What we collect\n- **Contact and trip details:** name, email, phone, country of residence, purpose of stay, your message, dates and party size.\n- **Driver details (only if you add the car):** driver full name, date of birth, licence number and issuing country.\n- **Agreement acceptance metadata:** which document versions you accepted, the timestamp, and the IP address and browser user-agent recorded at that moment.\n- **Operational data:** emails we send you about your booking.\n\n## Why, and lawful basis\nWe use this data to assess and process your booking request (steps taken at your request prior to a contract) and to meet our records obligations for the vehicle rental agreement (legitimate interest / legal obligation).\n\n## Retention\nBooking and acceptance records are kept for up to 24 months after the stay, then deleted or anonymised. Driver licence numbers are removed sooner, once the rental is closed out.\n\n## Third parties\nWe use an email delivery provider to send booking emails and a map/image host to render location images. We do not sell your data. Payment is handled off-platform by the host.\n\n## Your rights\nYou can ask for a copy of your data, correction, or deletion by emailing info@kigalikeys.rw. If you are in the EU/EEA you may also complain to your local supervisory authority.\n\n## Controller\nThe property owner, Kigali. Contact: info@kigalikeys.rw."}
 
    {:type "cancellationPolicy" :version 3 :effective-date "2026-01-01"
     :summary ["Free cancellation up to 14 days before check-in."
@@ -155,19 +157,19 @@
 (def email-templates
   [{:key "bookingReceived"
     :subject "We've got your Kigali Keys request — {{bookingReference}}"
-    :body "Hi {{guestFirstName}},\n\nThanks for your request to stay at Kigali Keys for {{stayDates}}. It's a request for now — the host reviews every booking personally and will reply, usually within 24–48 hours.\n\nHere is what you asked for:\n\n{{priceBreakdown}}\n\nYou can check the status of your request any time here: {{statusUrl}}\n\nTalk soon."}
+    :body "Hi {{guestFirstName}},\n\nThank you for your request to stay at Kigali Keys for {{stayDates}}. It is a request for now — the host, Peter, reviews every booking personally and will reply, usually within 24–48 hours.\n\nHere is what you asked for:\n\n{{priceBreakdown}}\n\nYou can check the status of your request at any time here: {{statusUrl}}\n\nWe will be in touch soon."}
    {:key "bookingApproved"
     :subject "Your Kigali Keys stay is confirmed — {{bookingReference}}"
-    :body "Hi {{guestFirstName}},\n\nGreat news — your stay for {{stayDates}} is confirmed.\n\n{{priceBreakdown}}\n\n**Address:** {{addressLine}}\n\n**Check-in:** {{checkInInstructions}}\n\n**Host contact:** {{hostContact}}\n\nSee your booking any time: {{statusUrl}}"}
+    :body "Hi {{guestFirstName}},\n\nGreat news — your stay for {{stayDates}} is confirmed.\n\n{{priceBreakdown}}\n\n**Address:** {{addressLine}}\n\n**Check-in:** {{checkInInstructions}}\n\n**Your host:** {{hostContact}}\n\nSee your booking at any time: {{statusUrl}}"}
    {:key "bookingRejected"
     :subject "About your Kigali Keys request — {{bookingReference}}"
-    :body "Hi {{guestFirstName}},\n\nThank you for your request for {{stayDates}}. Unfortunately the host can't host this one:\n\n{{rejectionExplanation}}\n\nYou're welcome to send a new request for different dates. Details: {{statusUrl}}"}
+    :body "Hi {{guestFirstName}},\n\nThank you for your request for {{stayDates}}. Unfortunately the host is not able to take this booking:\n\n{{rejectionExplanation}}\n\nYou are welcome to send a new request for different dates. Details: {{statusUrl}}"}
    {:key "adminNewBooking"
     :subject "New booking request — {{bookingReference}} ({{stayDates}})"
     :body "A new request has come in.\n\nGuest: {{guestFirstName}}\nDates: {{stayDates}}\nReference: {{bookingReference}}\n\n{{priceBreakdown}}\n\nReview it: {{statusUrl}}"}
    {:key "contactAck"
     :subject "Thanks for contacting Kigali Keys"
-    :body "Hi {{guestFirstName}},\n\nThanks for your message — the host will get back to you, usually within a day.\n\nIf it's about an existing request, quote your reference {{bookingReference}}."}
+    :body "Hi {{guestFirstName}},\n\nThank you for your message — the host will get back to you, usually within a day.\n\nIf it is about an existing request, quote your reference {{bookingReference}}."}
    {:key "adminInvite"
     :subject "You've been invited to help manage Kigali Keys"
     :body "Hi {{guestFirstName}},\n\nYou've been invited as an administrator for the Kigali Keys site. Set your password here: {{statusUrl}}\n\nThe link can be used once."}])

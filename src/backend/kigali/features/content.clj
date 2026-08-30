@@ -1,7 +1,8 @@
 (ns kigali.features.content
   "Property marketing content (§1, §20) and versioned legal documents
    (§9, §24). Vertical slice: public reads + admin edit/publish."
-  (:require [kigali.middleware :as mw]
+  (:require [clojure.string :as str]
+            [kigali.middleware :as mw]
             [kigali.respond :as respond]
             [kigali.sanitize :as sanitize]
             [kigali.store :as store]
@@ -10,15 +11,40 @@
 ;; ---------------------------------------------------------------------------
 ;; Assembly (pure)
 
+(def ^:private placeholder-phone-re
+  "Matches obvious non-real numbers used as scaffolding in seed/spec data,
+   e.g. '+250 788 000 000' or '+250 7xx xxx xxx'."
+  #"(?i)x{2,}|(?<!\d)0{3}(?:\D+0{3})+(?!\d)")
+
+(defn public-phone
+  "Owner-editable publicPhone -> the value to expose publicly, or nil when it is
+   blank or an obvious placeholder. Pure."
+  [s]
+  (when (and (string? s)
+             (not (str/blank? s))
+             (not (re-find placeholder-phone-re s)))
+    (str/trim s)))
+
+(defn contact-projection
+  "The public `contact` block for GET /property: a projection of the
+   owner-editable Settings. `phone` is JSON null when no real public number is
+   set (never a placeholder string). Pure."
+  [settings]
+  {:hostName (:hostDisplayName settings)
+   :email (:publicEmail settings)
+   :phone (public-phone (:publicPhone settings))
+   :responseTimeText (:guestResponseTimeText settings)})
+
 (defn property-response
   "Merges the editable property doc with the managed fields for GET /property."
-  [property pricing terms-versions updated-at]
+  [property pricing settings terms-versions updated-at]
   (assoc property
          :pricing (merge pricing
                          {:paymentNote "No payment is taken on this site. The host confirms the final amount and payment method when approving your request."
                           :carNote "The Kia Sorento is USD 45/day, arranged with your booking and paid on site."})
          :termsVersions terms-versions
          :bookingMode "request"
+         :contact (contact-projection settings)
          :updatedAt updated-at))
 
 ;; ---------------------------------------------------------------------------
@@ -103,13 +129,15 @@
   (let [db (:db ctx)]
     (respond/ok (property-response (store/property-doc db)
                                    (store/pricing db)
+                                   (store/settings db)
                                    (store/terms-versions db)
                                    (store/doc-updated-at db "property")))))
 
 (defn- admin-get-property [ctx _req]
   (let [db (:db ctx)
         base (property-response (store/property-doc db) (store/pricing db)
-                                (store/terms-versions db) (store/doc-updated-at db "property"))]
+                                (store/settings db) (store/terms-versions db)
+                                (store/doc-updated-at db "property"))]
     (respond/ok (assoc base :editable true))))
 
 (defn- admin-put-property [ctx req]
@@ -120,6 +148,7 @@
     (let [clean (sanitize-property body)
           saved (store/put-doc! db "property" clean)]
       (respond/ok (property-response saved (store/pricing db)
+                                    (store/settings db)
                                     (store/terms-versions db)
                                     (store/doc-updated-at db "property"))))))
 

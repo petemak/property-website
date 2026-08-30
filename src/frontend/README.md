@@ -37,7 +37,7 @@ public/                     ← the deployable artifact
   favicon.svg
   assets/
     css/    tokens, base, layout, components, admin
-    fonts/  fonts.css  (self-hosted @font-face; drop the .woff2 files in — see below)
+    fonts/  fonts.css + fraunces-latin.woff2 / inter-latin.woff2 (self-hosted, SIL OFL)
     js/
       lib/         api client, config (v2 seams), dom/format/markdown/countries
       components/  SiteHeader/Footer, BookingWidget, DateRangePicker,
@@ -124,11 +124,23 @@ mock explicitly falls back to a placeholder for it. Any category with no photo
 stays in the API enum. `smartImage()` still falls back to a brand-palette SVG if
 a URL 404s.
 
+## Webfonts
+
+Self-hosted, committed under `assets/fonts/`:
+
+| File | Family | Axis | Source |
+|---|---|---|---|
+| `fraunces-latin.woff2` (~66 KB) | Fraunces | variable weight 400–700, opsz 9–144 | Google Fonts latin subset |
+| `inter-latin.woff2` (~47 KB) | Inter | variable weight 400–700 | Google Fonts latin subset |
+
+Both families ship from Google as a single variable woff2 per subset (the
+per-weight `css2` URLs resolve to the same file), so `fonts.css` declares one
+`@font-face` per family with a `font-weight: 400 700` range rather than six
+identical-content files. `font-display: swap`; if a file fails to load,
+`tokens.css` falls back to Georgia (headings) / system-ui (body) with no layout
+block and no third-party request. Licences: `OFL-Fraunces.txt`, `OFL-Inter.txt`
+(SIL OFL 1.1) in the same directory. `test/smoke.mjs` asserts no
+`/assets/fonts/*.woff2` request 404s and that both faces load.
+
 ## Before launch (not blocking — noted per backend)
-- **Webfonts.** `assets/fonts/fonts.css` declares `@font-face` for Fraunces and
-  Inter pointing at local `.woff2` files that aren't committed. Until they're
-  added the page renders in the defined fallback stack (Georgia / system-ui)
-  with no layout shift and zero third-party requests. Drop the `.woff2` files
-  next to `fonts.css` to enable the brand faces (Fraunces 400/600/700 — 700 is
-  used by the enlarged header wordmark — and Inter 400/500/600).
 - Wire the platform-level `/api/*` proxy and the `_redirects` rules on the host.

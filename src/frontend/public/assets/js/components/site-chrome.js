@@ -64,13 +64,26 @@ function isCurrent(href, path) {
 export function renderFooter(property) {
   const host = $("#site-footer");
   if (!host) return;
-  const email = property?.pricing ? null : null; // host contact comes from settings; property has publicPreview only
-  const contactEmail = property?.hostContact?.email || property?.publicEmail || "host@kigalikeys.rw";
-  const contactPhone = property?.hostContact?.phone || property?.publicPhone || "+250 7xx xxx xxx";
-  const owner = property?.hostDisplayName || "Jean at Kigali Keys";
+  // Public contact block from GET /property (api-contract §1). No hardcoded
+  // fallback address — if it's missing (API error) we omit the contact line.
+  const contact = property?.contact || null;
+  const hostName = (contact?.hostName || "").trim() || null;
+  const contactEmail = (contact?.email || "").trim() || null;
+  const contactPhone = typeof contact?.phone === "string" && contact.phone.trim() ? contact.phone.trim() : null;
+  const owner = hostName || "its owner";
 
   const col = (title, links) =>
     h("div", {}, h("h2", {}, title), h("ul", {}, ...links.map(([href, label]) => h("li", {}, h("a", { href }, label)))));
+
+  const year = new Date().getFullYear();
+  const metaLine = contactEmail
+    ? h("p", { class: "footer-meta" },
+        `Contact: ${hostName ? hostName + ", the host" : "the host"} · `,
+        h("a", { href: `mailto:${contactEmail}` }, contactEmail),
+        contactPhone ? ` · ${contactPhone}` : null,
+        h("br"), `© ${year} Kigali Keys. A privately owned home in Kigali, managed by ${owner}.`)
+    : h("p", { class: "footer-meta" },
+        `© ${year} Kigali Keys. A privately owned home in Kigali${hostName ? `, managed by ${owner}` : ""}.`);
 
   const footer = h("footer", { class: "site-footer" },
     h("div", { class: "container" },
@@ -78,7 +91,7 @@ export function renderFooter(property) {
         h("div", {},
           h("a", { href: "/", class: "wordmark", style: "color:#fff" }, "Kigali Keys"),
           h("p", { style: "margin-top:.5rem;max-width:32ch;opacity:.9" },
-            "A furnished 2-bedroom duplex in a gated Kigali neighbourhood — with the keys to a car on site."),
+            "A furnished two-bedroom duplex in a gated Kigali neighbourhood, with a car on site."),
         ),
         col("Explore", [["/", "The home"], ["/the-car", "The car"], ["/location", "Location"], ["/gallery", "Gallery"]]),
         col("Book", [["/book", "Check dates"], ["/contact", "Contact the host"], ["/booking", "Booking status lookup"]]),
@@ -88,10 +101,7 @@ export function renderFooter(property) {
           ["/vehicle-rental-agreement", "Vehicle rental agreement"],
         ]),
       ),
-      h("p", { class: "footer-meta" },
-        `Host: ${owner} · `, h("a", { href: `mailto:${contactEmail}` }, contactEmail), ` · ${contactPhone}`,
-        h("br"), `© ${new Date().getFullYear()} Kigali Keys. Managed by ${owner}.`
-      )
+      metaLine
     )
   );
   host.replaceChildren(footer);

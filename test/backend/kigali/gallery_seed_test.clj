@@ -50,7 +50,7 @@
     (is (not (re-find #"(?i)dedicated desk" (:description body))))
     (is (re-find #"(?i)dining table" (:description body)))
     (is (not (re-find #"(?i)for six|seats six" (:description body))))
-    (is (re-find #"(?i)for four" (:description body)))
+    (is (re-find #"(?i)seats four" (:description body)))
     (is (not (re-find #"(?i)dedicated desk" (:label desk))))
     (is (not (re-find #"(?i)ergonomic" (:answer faq))))
     (is (re-find #"(?i)fibre|fiber" (:answer faq)))))

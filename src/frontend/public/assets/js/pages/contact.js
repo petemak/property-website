@@ -21,6 +21,14 @@ const root = $("#contact-root");
   const msgEl = h("textarea", { id: "c-msg", name: "message", required: true, maxlength: "2000", placeholder: "How can the host help?" });
   if (params.get("ref")) { topicEl.value = "existingRequest"; }
 
+  // Public contact block from GET /property (api-contract §1). Email-only when
+  // phone is null/empty; no hardcoded fallback address if contact is missing.
+  const contact = property?.contact || null;
+  const contactEmail = (contact?.email || "").trim() || null;
+  const contactPhone = typeof contact?.phone === "string" && contact.phone.trim() ? contact.phone.trim() : null;
+  const contactHost = (contact?.hostName || "").trim() || null;
+  const responseTime = (contact?.responseTimeText || "").trim() || null;
+
   const status = h("div", { "aria-live": "polite" });
   const submit = h("button", { class: "btn btn--primary", type: "submit" }, "Send message");
 
@@ -75,9 +83,13 @@ const root = $("#contact-root");
       h("aside", { class: "stack" },
         h("div", { class: "card stack" },
           h("h2", {}, "Other ways to reach us"),
-          h("p", {}, "Email: ", h("a", { href: `mailto:${property?.publicEmail || "host@kigalikeys.rw"}` }, property?.publicEmail || "host@kigalikeys.rw")),
-          h("p", {}, "Phone / WhatsApp: ", property?.publicPhone || "+250 788 000 000"),
-          h("p", { class: "price-breakdown__note" }, property?.guestResponseTimeText || "Typically within 24–48 hours."),
+          contactEmail
+            ? h("p", {},
+                contactHost ? `Write to ${contactHost}, the host: ` : "Email: ",
+                h("a", { href: `mailto:${contactEmail}` }, contactEmail))
+            : h("p", {}, "Send the form above and the host will reply to you by email."),
+          contactPhone ? h("p", {}, "Phone / WhatsApp: ", contactPhone) : null,
+          responseTime ? h("p", { class: "price-breakdown__note" }, responseTime) : null,
         ),
         h("div", { class: "card stack" },
           h("h2", {}, "Quick answers"),

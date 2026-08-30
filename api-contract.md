@@ -192,9 +192,22 @@ Everything the marketing pages render. Public, cacheable (~5 min).
     "carNote": "The Kia Sorento is USD 45/day, arranged with your booking and paid on site."
   },
   "termsVersions": { "stayTerms": 3, "houseRules": 2 },
+  "contact": {
+    "hostName": "Peter",
+    "email": "info@kigalikeys.rw",
+    "phone": null,
+    "responseTimeText": "Typically within 24–48 hours"
+  },
   "updatedAt": "2026-08-20T09:00:00Z"
 }
 ```
+
+`contact` is the **public** contact block for the Contact page and the site
+footer — a projection of the owner-editable Settings (`hostDisplayName`,
+`publicEmail`, `publicPhone`, `guestResponseTimeText`). `phone` is `null` when no
+public number is set; the frontend must render email-only in that case and must
+not fall back to a hardcoded address. This is distinct from `GET
+/admin/settings`, which stays owner-only and carries the full settings object.
 
 `bookingMode` is `"request"` in v1 (every booking needs human approval). The
 field exists so the frontend can branch its copy and, in v2, a value of

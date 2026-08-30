@@ -48,7 +48,41 @@ const consoleErrors = [];
 page.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text()); });
 page.on("pageerror", (e) => consoleErrors.push("pageerror: " + e.message + "\n" + (e.stack || "").split("\n").slice(0, 4).join("\n")));
 
+// Self-hosted webfont requests must all resolve (no 404s) on every page.
+const fontResponses = [];
+page.on("response", (r) => {
+  if (/\/assets\/fonts\/.*\.woff2(\?|$)/.test(r.url())) fontResponses.push({ file: r.url().split("/").pop(), status: r.status() });
+});
+
+const PUBLIC_ROUTES = ["/", "/gallery", "/the-car", "/location", "/book", "/book?car=1",
+  "/contact", "/terms", "/privacy", "/house-rules", "/cancellation-policy",
+  "/vehicle-rental-agreement", "/booking/KK-7F3Q2A", "/no-such-page"];
+
 try {
+  // ---- No horizontal document overflow at 360px on any public page ----
+  await check("No horizontal document overflow at 360px on every public page", async () => {
+    await page.setViewportSize({ width: 360, height: 780 });
+    const offenders = [];
+    for (const route of PUBLIC_ROUTES) {
+      await page.goto(BASE + route, { waitUntil: "networkidle" });
+      const info = await page.evaluate(() => {
+        const de = document.documentElement;
+        const overflow = de.scrollWidth - de.clientWidth;
+        let worst = null;
+        if (overflow > 0) {
+          for (const el of document.querySelectorAll("*")) {
+            const b = el.getBoundingClientRect();
+            if (b.right > de.clientWidth + 1) { worst = el.tagName.toLowerCase() + "." + String(el.className || "").split(/\s+/).join("."); break; }
+          }
+        }
+        return { overflow, worst };
+      });
+      if (info.overflow > 0) offenders.push(`${route} +${info.overflow}px (${info.worst})`);
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    if (offenders.length) throw new Error("page scrolls sideways: " + offenders.join("; "));
+  });
+
   // ---- P1 home ----
   await check("P1 home renders hero + booking widget", async () => {
     await page.goto(BASE + "/", { waitUntil: "networkidle" });
@@ -215,6 +249,23 @@ try {
   }
 
   // ---- Contact ----
+  await check("P7 contact page shows the public contact email from GET /property, no phone line", async () => {
+    await page.goto(BASE + "/contact", { waitUntil: "networkidle" });
+    const mail = page.locator('#contact-root a[href="mailto:info@kigalikeys.rw"]');
+    if ((await mail.count()) !== 1) throw new Error("expected the info@kigalikeys.rw mailto link from the contact block");
+    if (await page.locator("#contact-root", { hasText: "host@kigalikeys.rw" }).count()) throw new Error("stale hardcoded email still rendered");
+    if (await page.locator("#contact-root", { hasText: "Phone / WhatsApp" }).count()) throw new Error("phone line rendered even though contact.phone is null");
+    if (!(await page.locator("#contact-root", { hasText: "within 24" }).count())) throw new Error("response-time text missing");
+  });
+
+  await check("Footer shows the public contact block (name, host email), no fake fallback", async () => {
+    const meta = page.locator(".site-footer .footer-meta").first();
+    const text = await meta.textContent();
+    if (!/Contact: Peter, the host/.test(text)) throw new Error("footer contact line wrong: " + text);
+    if ((await meta.locator('a[href="mailto:info@kigalikeys.rw"]').count()) !== 1) throw new Error("footer missing the contact email link");
+    if (/host@kigalikeys\.rw|7xx xxx xxx/.test(text)) throw new Error("footer still shows a hardcoded placeholder: " + text);
+  });
+
   await check("P7 contact form submits", async () => {
     await page.goto(BASE + "/contact", { waitUntil: "networkidle" });
     await page.fill("#c-name", "Sam Field");
@@ -306,6 +357,21 @@ try {
   await check("Admin — accept-invite page renders from a token link", async () => {
     await page.goto(BASE + "/admin/accept-invite?token=demo", { waitUntil: "networkidle" });
     await page.waitForSelector("#ai-pass");
+  });
+
+  await check("Self-hosted webfonts load on every page (no /assets/fonts/*.woff2 404s)", async () => {
+    if (!fontResponses.length) throw new Error("no woff2 requests seen at all — fonts.css not linked or @font-face unused");
+    const failed = fontResponses.filter((r) => r.status >= 400);
+    if (failed.length) throw new Error("font requests failed: " + failed.map((r) => `${r.status} ${r.file}`).join(", "));
+    // headings render in Fraunces, body in Inter
+    await page.goto(BASE + "/", { waitUntil: "networkidle" });
+    await page.evaluate(() => document.fonts.ready);
+    const f = await page.evaluate(() => ({
+      fraunces: document.fonts.check("700 24px Fraunces"),
+      inter: document.fonts.check("400 16px Inter"),
+    }));
+    if (!f.fraunces) throw new Error("Fraunces 700 not loaded (wordmark face)");
+    if (!f.inter) throw new Error("Inter 400 not loaded (body face)");
   });
 
   await check("No uncaught page errors across the run", async () => {

@@ -13,7 +13,7 @@
          :driver {:fullName "Lena Okafor" :dateOfBirth "1990-04-12"
                   :licenceNumber "A1234567" :licenceCountry "NG" :meetsRequirements true}}
    :acceptances [{:type "stayTerms" :version 3 :accepted true}
-                 {:type "houseRules" :version 2 :accepted true}
+                 {:type "houseRules" :version 3 :accepted true}
                  {:type "vehicleRentalAgreement" :version 4
                   :bodyHash "PLACEHOLDER" :accepted true}]})
 
@@ -29,7 +29,16 @@
       (is (= 200 status))
       (is (= "request" (:bookingMode body)))
       (is (= 3 (get-in body [:termsVersions :stayTerms])))
-      (is (= 70 (get-in body [:pricing :nightlyRate])))))
+      (is (= 70 (get-in body [:pricing :nightlyRate])))
+      (testing "public contact block is a projection of settings"
+        (let [contact (:contact body)]
+          (is (= #{:hostName :email :phone :responseTimeText}
+                 (set (keys contact))))
+          (is (= "Peter" (:hostName contact)))
+          (is (= "info@kigalikeys.rw" (:email contact)))
+          (is (= "Typically within 24–48 hours" (:responseTimeText contact)))
+          (is (contains? contact :phone))
+          (is (nil? (:phone contact)) "no real public number seeded -> JSON null")))))
   (testing "GET /vehicle exposes minDriverAge + agreement"
     (let [{:keys [body]} (request :get "/api/vehicle")]
       (is (= 23 (:minDriverAge body)))
@@ -53,8 +62,8 @@
                     :headers {"idempotency-key" key})]
     (is (= 201 (:status r1)))
     (is (= "pending" (get-in r1 [:body :status])))
-    ;; 7 nights x USD 70 + USD 35 cleaning + 4 car days x USD 45 = 705
-    (is (= 705 (get-in r1 [:body :estimate :estimatedTotal])))
+    ;; 7 nights x USD 70 + USD 30 cleaning + 4 car days x USD 45 = 700
+    (is (= 700 (get-in r1 [:body :estimate :estimatedTotal])))
     (is (= 3 (count (get-in r1 [:body :acceptancesRecorded]))))
     (is (nil? (get-in r1 [:body :car :driver])) "licence data never echoed")
     (let [ref (get-in r1 [:body :reference])
