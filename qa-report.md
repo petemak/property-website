@@ -1,11 +1,13 @@
 # QA Report — Kigali Keys
 
-**Date:** 2026-08-30 (re-verified 2026-08-30 — see "Re-verification" note at end)
-**Commit:** `2c04fa6` + working-tree fixes (settings.clj / settings.js / content.clj / bookings.js / emails.js)
-**Verdict:** **PASS — ready for production promotion.** The one blocker (owner
-could not save the admin Settings screen; a public phone once set could not be
-cleared) is fixed and re-verified live, end to end. Finding 2 (banned placeholder
-strings in admin JS) is also resolved. No new issues found in the regression sweep.
+**Date:** 2026-08-30, re-verified 2026-08-30 (settings blocker) and 2026-09-01
+(calendar fix + Sent log feature) — see "Re-verification" notes at end.
+**Commit:** through `7581afb` + the working-tree Sent-log feature
+(sent_emails.clj + migration, email.clj, emails.js, api.js, fixtures, eslint).
+**Verdict:** **PASS — ready for production promotion.** The settings blocker is
+fixed and re-verified; Finding 2 (banned placeholder strings) resolved; the
+calendar month-anchor bug and the missing email-outbox viewer are both fixed and
+verified. No open issues.
 
 **Method:** `src/frontend/public/` served by a static file server with `/api`
 proxied to the **real Clojure backend** run from this repo (`clojure -M:run`,
@@ -47,6 +49,7 @@ installed).
 | §24 legal document versions | PASS — publish houseRules → v4, `termsVersions` in GET /property bumped |
 | §25 GET /admin/agreement-acceptances (+ :id) | PASS — read-only list + filters; `:id` returns immutable `documentSnapshot`; no write endpoint |
 | §26 email templates | PASS — GET/GET:key/PUT/preview/test; PUT with unknown `{{token}}`→422; test→202 |
+| §26b sent-email log (outbox) | PASS (added 2026-09-01) — GET /admin/sent-emails [owner+admin]: unauth→401, real non-owner admin→200, owner→200; newest-first; item shape exact {id,toAddress,templateKey,subject,bookingReference,status,createdAt}; status=="stored" every row; templateKey / q (subject+ref+to) / templateKey=none / from / to (bare-date = end-of-day) / page+pageSize all filter correctly and non-overlapping. GET /admin/sent-emails/:id → brand-wrapped html for templated rows, raw stored body for the untemplated direct notice; unknown id→404 notFound; unauth→401. bookingApproved row carries bookingReference; contactAck + direct notice null. Migration 20260901000001 adds status + booking_reference cleanly on a fresh DB. |
 | §27 admin users [owner] | PASS — create→invited + adminInvite email row; demote/delete last owner→409; delete self→409 |
 | §28 GET/PUT /admin/settings [owner] | **PASS (was PUT FAIL).** GET owner-only (401 unauth / 403 non-owner). PUT full matrix re-verified live: `publicPhone` omitted / `null` / `""` → 200 stored `null` (GET /admin/settings **and** GET /property `contact.phone` both return JSON `null`); real value stored trimmed and reflected in GET /property; 41-char → 422, 40-char → 200. Same matrix for `guestResponseTimeText` (omit/null/"" → 200 null; real text → 200; 201-char → 422, 200-char → 200). Normal save changing only `hostDisplayName` with no phone set → 200, not 422. |
 
@@ -63,7 +66,7 @@ accept-invite) session: `/admin/settings` (GET **and** PUT) → 403;
 | Catalog / inventory (small) | PASS — date + car calendars are live; admin blocks & pricing mutate real data reflected in `/availability` and `/quote` |
 | Accounts / auth (admin only) | PASS — owner vs admin enforced server-side; invite → accept-invite → session works; no guest accounts |
 | Admin / back-office | **PASS (was FAIL).** Booking queue, property text, gallery, availability, pricing, vehicle, agreement versioning, acceptance log, users, email templates all work end to end; **the owner Settings screen now saves** — cleared and re-set the public phone through the rendered UI, Save succeeded each time (no 422), reload persisted, and the public /contact page + footer tracked the change. |
-| Notifications (email) | PASS — `sent_emails` rows written for bookingReceived/adminNewBooking/bookingApproved/bookingRejected/contactAck/adminInvite; approve & reject show the rendered email in a confirm modal before sending |
+| Notifications (email) | PASS — `sent_emails` rows written for bookingReceived/adminNewBooking/bookingApproved/bookingRejected/contactAck/adminInvite + the untemplated direct host notice; approve & reject show the rendered email in a confirm modal before sending. The A9 "Sent log" outbox viewer now exists (GET /admin/sent-emails + /:id): filterable table, "Stored" badge, row opens the stored html in a sandboxed iframe modal, null templateKey → "Direct message". Scope's "applies only when that view exists" condition is now met. |
 | Legal / compliance | PASS — stayTerms v3, houseRules v3, websiteTerms v2, privacy v3, cancellationPolicy v3 served publicly and versioned via admin |
 | Customer agreement (Kia Sorento) | PASS — full agreement text shown at Step 4 **only when the car is added**; submit writes a `vehicleRentalAgreement` acceptance row with version + bodyHash + snapshot pointer, visible in §15 and §25; the two secondary agreements (stay terms, house rules) are recorded the same way |
 
@@ -214,3 +217,33 @@ footer → back to settings → clear → Save → `/contact` back to email-only
 **Likely-owner of the changes:** backend engineer (`settings.clj`, `content.clj`)
 and frontend engineer (`settings.js`, `bookings.js`, `emails.js`). All verified
 good — no further action needed. Cleared for production.
+
+## Re-verification — 2026-09-01 · Sent log (§26b / A9)
+
+Focused end-to-end verification of the new admin "Sent log" (email outbox viewer)
+plus a light regression sweep. Real Clojure backend from this repo, fresh SQLite,
+owner seeded from ADMIN_INITIAL_PASSWORD; public/ served with /api proxied;
+Playwright/Chromium for browser steps. Backend unit suite: 45 tests / 268
+assertions / 0 failures.
+
+Sent log — PASS. Migration 20260901000001 clean; sent_emails.status +
+booking_reference present. 8 realistic outbox rows generated (booking submit +
+approve, second booking submit + reject, contact form). GET /admin/sent-emails:
+401 unauth / 200 non-owner admin / 200 owner; newest-first; exact item shape;
+status "stored" on every row; bookingApproved row has bookingReference, contactAck
++ direct notice null; templateKey / q (subject, reference, to-address) /
+templateKey=none / from / to (bare date = end of day) / pagination all correct and
+non-overlapping. GET /admin/sent-emails/:id: brand-wrapped html for templated
+rows, raw stored body for the direct notice, 404 notFound for unknown id, 401
+unauth. Browser: owner -> /admin/emails -> two tabs; Sent log columns
+sent-at/to/template/subject/booking-ref/status; template + "Direct message"
+filters narrow the table; row opens a modal with a sandboxed iframe rendering the
+stored html; "Stored" badge in table and modal; Templates tab preview + Save +
+Send-test (202) still work.
+
+Light regression — PASS. §1 contact block shape unchanged (phone null); §4
+7-night no-car quote = 520; §6 booking still records exactly 3 acceptance rows;
+§28 settings saves with publicPhone null; /book calendar opens on the
+pre-selected current month; no .woff2 404s; header + logo render; no page errors.
+
+Verdict: PASS — the Sent log feature ships correctly, no regressions. Cleared.

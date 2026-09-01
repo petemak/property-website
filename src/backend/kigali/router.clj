@@ -11,6 +11,7 @@
             [kigali.features.media :as media]
             [kigali.features.notifications :as notifications]
             [kigali.features.quote :as quote]
+            [kigali.features.sent-emails :as sent-emails]
             [kigali.features.settings :as settings]
             [kigali.features.vehicle :as vehicle]
             [kigali.middleware :as mw]
@@ -34,6 +35,7 @@
            (contact/routes ctx)
            (auth/routes ctx)
            (notifications/routes ctx)
+           (sent-emails/routes ctx)
            (settings/routes ctx)
            (media/routes ctx)]))
 

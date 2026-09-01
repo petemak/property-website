@@ -1014,6 +1014,66 @@ otherwise `422 validationError`. The brand wrapper (logo, colours, footer) is
 applied server-side and is not part of `bodyMarkdown`. `test` sends the
 rendered email to the signed-in admin's address, `202`.
 
+### 26b. Sent-email log (outbox)
+
+Read-only view of every email the system has generated. In v1 the transport is
+"store & log" — the backend writes each message to a `sent_emails` table and does
+not transmit it; a real provider slots in later behind the same interface and
+then also reports delivery. This log is how an admin confirms what went out (and,
+in v2 with a real provider, whether it was delivered).
+
+```
+GET /admin/sent-emails
+GET /admin/sent-emails/:id
+```
+
+**`GET /admin/sent-emails`** — **[owner + admin]**
+**Query:** `templateKey` — one of the §26 keys, or the sentinel `none` to filter
+to messages with no template (`templateKey: null` in the response) — `q` (matches
+`toAddress` / `subject` / `bookingReference`), `from`, `to` (ISO date, filter on
+`createdAt`), `page`, `pageSize`.
+```json
+{
+  "items": [
+    {
+      "id": "eml_8Q2A7F",
+      "toAddress": "lena@example.com",
+      "templateKey": "bookingApproved",
+      "subject": "Your Kigali Keys stay is confirmed — KK-7F3Q2A",
+      "bookingReference": "KK-7F3Q2A",
+      "status": "stored",
+      "createdAt": "2026-09-01T10:30:00Z"
+    }
+  ],
+  "page": 1, "pageSize": 20, "total": 42
+}
+```
+`bookingReference` is `null` for emails not tied to a booking (e.g.
+`contactAck`, `adminInvite`). `templateKey` is `null` for messages sent without a
+template (the direct new-request notification to the host's own address) — render
+these with a neutral label such as "Direct message". `status` is an open enum —
+v1 only ever emits
+`"stored"` (written to the outbox, not transmitted). Reserved for a real
+provider: `queued | sent | delivered | bounced | failed`. Clients must render an
+unrecognised status as a neutral label, never throw.
+
+**`GET /admin/sent-emails/:id`** — **[owner + admin]**
+```json
+{
+  "id": "eml_8Q2A7F",
+  "toAddress": "lena@example.com",
+  "templateKey": "bookingApproved",
+  "bookingReference": "KK-7F3Q2A",
+  "subject": "Your Kigali Keys stay is confirmed — KK-7F3Q2A",
+  "html": "<!doctype html>… fully rendered, brand-wrapped …",
+  "status": "stored",
+  "createdAt": "2026-09-01T10:30:00Z"
+}
+```
+`html` is the exact rendered body that was stored (brand wrapper applied). No
+write endpoints — the log is a side effect of the system sending mail, never
+created directly. Unknown `:id` → `404 notFound`.
+
 ### 27. Administrator accounts **[owner]**
 ```
 GET    /admin/users

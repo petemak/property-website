@@ -9,6 +9,7 @@
     "test:smoke": "node test/smoke.mjs"
   },
   "devDependencies": {
+    "eslint": "^9.0.0",
     "playwright": "^1.55.0"
   }
 }

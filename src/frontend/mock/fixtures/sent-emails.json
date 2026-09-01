@@ -1,0 +1,74 @@
+{
+  "items": [
+    {
+      "id": "eml_1001",
+      "toAddress": "lena@example.com",
+      "templateKey": "bookingReceived",
+      "bookingReference": "KK-7F3Q2A",
+      "subject": "We've got your Kigali Keys request — KK-7F3Q2A",
+      "status": "stored",
+      "createdAt": "2026-08-29T12:00:05Z",
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>We've got your Kigali Keys request</title><style>body{font-family:Georgia,'Times New Roman',serif;background:#FAF7F2;margin:0;padding:24px;color:#2B2A28}.wrap{max-width:560px;margin:0 auto;background:#fff;border:1px solid #E7DFD2;border-radius:12px;overflow:hidden}.head{background:#1F5B4E;color:#fff;padding:16px 24px;font-size:20px;font-weight:700}.body{padding:24px;line-height:1.6}.body h1{font-size:19px;color:#1F5B4E}.foot{padding:16px 24px;font-size:12px;color:#6b675f;border-top:1px solid #eee}</style></head><body><div class=\"wrap\"><div class=\"head\">Kigali Keys</div><div class=\"body\"><h1>Request received</h1><p>Hi Lena,</p><p>Thanks for your request for 5–12 September 2026 (7 nights) with the Kia Sorento. The host reviews every request personally and will reply within 24–48 hours.</p><p>Track your request any time: <a href=\"https://kigalikeys.rw/booking/KK-7F3Q2A?token=demo\">kigalikeys.rw/booking/KK-7F3Q2A</a></p><p>Estimate: accommodation USD 980 + cleaning USD 35 + car USD 180 = <strong>USD 1,195</strong>. The host confirms the final amount on approval; the car is paid on site.</p></div><div class=\"foot\">Kigali Keys · Kigali, Rwanda · You are receiving this because you sent a booking request.</div></div></body></html>"
+    },
+    {
+      "id": "eml_1002",
+      "toAddress": "jean@kigalikeys.rw",
+      "templateKey": "adminNewBooking",
+      "bookingReference": "KK-7F3Q2A",
+      "subject": "New booking request — KK-7F3Q2A",
+      "status": "stored",
+      "createdAt": "2026-08-29T12:00:06Z",
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>New booking request</title><style>body{font-family:Georgia,serif;background:#FAF7F2;margin:0;padding:24px;color:#2B2A28}.wrap{max-width:560px;margin:0 auto;background:#fff;border:1px solid #E7DFD2;border-radius:12px;overflow:hidden}.head{background:#1F5B4E;color:#fff;padding:16px 24px;font-size:20px;font-weight:700}.body{padding:24px;line-height:1.6}.foot{padding:16px 24px;font-size:12px;color:#6b675f;border-top:1px solid #eee}</style></head><body><div class=\"wrap\"><div class=\"head\">Kigali Keys</div><div class=\"body\"><p>New request from <strong>Lena Okafor</strong> for 5–12 September 2026, 2 guests, with the car.</p><p>Estimate USD 1,195. Review and decide: <a href=\"https://kigalikeys.rw/admin/bookings\">the booking queue</a>.</p></div><div class=\"foot\">Kigali Keys admin notification</div></div></body></html>"
+    },
+    {
+      "id": "eml_1003",
+      "toAddress": "tomas@example.com",
+      "templateKey": "bookingReceived",
+      "bookingReference": "KK-4M2P1B",
+      "subject": "We've got your Kigali Keys request — KK-4M2P1B",
+      "status": "stored",
+      "createdAt": "2026-08-30T09:15:00Z",
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>We've got your Kigali Keys request</title><style>body{font-family:Georgia,serif;background:#FAF7F2;margin:0;padding:24px;color:#2B2A28}.wrap{max-width:560px;margin:0 auto;background:#fff;border:1px solid #E7DFD2;border-radius:12px;overflow:hidden}.head{background:#1F5B4E;color:#fff;padding:16px 24px;font-size:20px;font-weight:700}.body{padding:24px;line-height:1.6}.foot{padding:16px 24px;font-size:12px;color:#6b675f;border-top:1px solid #eee}</style></head><body><div class=\"wrap\"><div class=\"head\">Kigali Keys</div><div class=\"body\"><p>Hi Tomas,</p><p>Thanks for your request for 12–18 September 2026. The host will reply within 24–48 hours.</p><p>Track it: <a href=\"https://kigalikeys.rw/booking/KK-4M2P1B\">kigalikeys.rw/booking/KK-4M2P1B</a></p></div><div class=\"foot\">Kigali Keys · Kigali, Rwanda</div></div></body></html>"
+    },
+    {
+      "id": "eml_1004",
+      "toAddress": "sam@example.com",
+      "templateKey": "contactAck",
+      "bookingReference": null,
+      "subject": "Thanks for contacting Kigali Keys",
+      "status": "stored",
+      "createdAt": "2026-08-31T14:20:00Z",
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Thanks for contacting Kigali Keys</title><style>body{font-family:Georgia,serif;background:#FAF7F2;margin:0;padding:24px;color:#2B2A28}.wrap{max-width:560px;margin:0 auto;background:#fff;border:1px solid #E7DFD2;border-radius:12px;overflow:hidden}.head{background:#1F5B4E;color:#fff;padding:16px 24px;font-size:20px;font-weight:700}.body{padding:24px;line-height:1.6}.foot{padding:16px 24px;font-size:12px;color:#6b675f;border-top:1px solid #eee}</style></head><body><div class=\"wrap\"><div class=\"head\">Kigali Keys</div><div class=\"body\"><p>Hi Sam,</p><p>Thanks for your message — the host replies within a day. If your question is about an existing request, keep your reference handy.</p></div><div class=\"foot\">Kigali Keys · Kigali, Rwanda</div></div></body></html>"
+    },
+    {
+      "id": "eml_1005",
+      "toAddress": "lena@example.com",
+      "templateKey": "bookingApproved",
+      "bookingReference": "KK-7F3Q2A",
+      "subject": "Your Kigali Keys stay is confirmed — KK-7F3Q2A",
+      "status": "stored",
+      "createdAt": "2026-08-31T16:45:00Z",
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Your Kigali Keys stay is confirmed</title><style>body{font-family:Georgia,serif;background:#FAF7F2;margin:0;padding:24px;color:#2B2A28}.wrap{max-width:560px;margin:0 auto;background:#fff;border:1px solid #E7DFD2;border-radius:12px;overflow:hidden}.head{background:#1F5B4E;color:#fff;padding:16px 24px;font-size:20px;font-weight:700}.body{padding:24px;line-height:1.6}.body h1{font-size:19px;color:#1F5B4E}table{width:100%;border-collapse:collapse;margin:12px 0}td{padding:6px 0;border-bottom:1px solid #eee}.foot{padding:16px 24px;font-size:12px;color:#6b675f;border-top:1px solid #eee}</style></head><body><div class=\"wrap\"><div class=\"head\">Kigali Keys</div><div class=\"body\"><h1>Your stay is confirmed</h1><p>Hi Lena,</p><p>Great news — your stay for 5–12 September 2026 is confirmed.</p><table><tr><td>Accommodation (USD 140 × 7)</td><td>USD 980</td></tr><tr><td>Cleaning fee</td><td>USD 35</td></tr><tr><td>Kia Sorento × 4 days (paid on site)</td><td>USD 180</td></tr><tr><td><strong>Total</strong></td><td><strong>USD 1,195</strong></td></tr></table><p><strong>Address:</strong> House 12, KG 5 Ave, Rebero, Kigali.</p><p><strong>Check-in:</strong> Lockbox code 4821. Gate security has your name. Early check-in at 12:30 is fine.</p><p><strong>Car:</strong> Keys handed over at the house on arrival; bring your licence and passport.</p><p>Host: Jean — +250 7xx xxx xxx</p></div><div class=\"foot\">Kigali Keys · Kigali, Rwanda</div></div></body></html>"
+    },
+    {
+      "id": "eml_1007",
+      "toAddress": "jean@kigalikeys.rw",
+      "templateKey": null,
+      "bookingReference": "KK-4M2P1B",
+      "subject": "New request needs a decision — KK-4M2P1B",
+      "status": "stored",
+      "createdAt": "2026-08-30T09:15:02Z",
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>New request needs a decision</title><style>body{font-family:Georgia,serif;background:#FAF7F2;margin:0;padding:24px;color:#2B2A28}.wrap{max-width:560px;margin:0 auto;background:#fff;border:1px solid #E7DFD2;border-radius:12px;overflow:hidden}.head{background:#1F5B4E;color:#fff;padding:16px 24px;font-size:20px;font-weight:700}.body{padding:24px;line-height:1.6}.foot{padding:16px 24px;font-size:12px;color:#6b675f;border-top:1px solid #eee}</style></head><body><div class=\"wrap\"><div class=\"head\">Kigali Keys</div><div class=\"body\"><p>Direct notification (no template): booking <strong>KK-4M2P1B</strong> from Tomas Herrera is waiting for a decision. 12–18 September 2026, 2 guests, no car.</p></div><div class=\"foot\">Kigali Keys admin notification</div></div></body></html>"
+    },
+    {
+      "id": "eml_1006",
+      "toAddress": "aline@kigalikeys.rw",
+      "templateKey": "adminInvite",
+      "bookingReference": null,
+      "subject": "You've been invited to help manage Kigali Keys",
+      "status": "queued",
+      "createdAt": "2026-09-01T08:00:00Z",
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>You've been invited to help manage Kigali Keys</title><style>body{font-family:Georgia,serif;background:#FAF7F2;margin:0;padding:24px;color:#2B2A28}.wrap{max-width:560px;margin:0 auto;background:#fff;border:1px solid #E7DFD2;border-radius:12px;overflow:hidden}.head{background:#1F5B4E;color:#fff;padding:16px 24px;font-size:20px;font-weight:700}.body{padding:24px;line-height:1.6}.foot{padding:16px 24px;font-size:12px;color:#6b675f;border-top:1px solid #eee}</style></head><body><div class=\"wrap\"><div class=\"head\">Kigali Keys</div><div class=\"body\"><p>Hi Aline,</p><p>You've been invited as an administrator for Kigali Keys. Set your password to get started: <a href=\"https://kigalikeys.rw/admin/accept-invite?token=demo\">accept the invitation</a>. The link is single-use and expires in 7 days.</p></div><div class=\"foot\">Kigali Keys admin</div></div></body></html>"
+    }
+  ]
+}

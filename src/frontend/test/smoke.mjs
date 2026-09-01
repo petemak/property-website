@@ -532,6 +532,44 @@ try {
     await page.waitForSelector(".admin-table, .empty-state");
   });
 
+  // ---- A9 Sent log (outbox) — api-contract §26b ----
+  await check("A9 Sent log — tab renders fixture rows, template filter narrows, row opens the rendered email", async () => {
+    await page.goto(BASE + "/admin/emails", { waitUntil: "networkidle" });
+    // Templates tab is the default; a Sent log tab sits beside it.
+    await page.locator(".admin-tabs .admin-tab", { hasText: "Sent log" }).click();
+    await page.waitForSelector(".admin-table tbody tr");
+    const allRows = await page.locator(".admin-table tbody tr").count();
+    if (allRows < 3) throw new Error("expected several sent-email rows from the fixture, got " + allRows);
+
+    // a null templateKey (direct host notification) renders as a neutral label, never blank
+    if (!(await page.locator(".admin-table tbody tr td:nth-child(3)", { hasText: "Direct message" }).count())) {
+      throw new Error("null templateKey row not shown as 'Direct message'");
+    }
+
+    // filter by template narrows the list
+    await page.selectOption("#se-tpl", "bookingReceived");
+    await page.locator(".admin-filters button:has-text('Apply')").click();
+    await page.waitForSelector(".admin-table tbody tr");
+    const templateCells = await page.locator(".admin-table tbody tr td:nth-child(3)").allTextContents();
+    if (!templateCells.length || templateCells.length >= allRows) throw new Error(`template filter did not narrow: ${allRows} -> ${templateCells.length}`);
+    if (!templateCells.every((t) => /Booking received/i.test(t))) throw new Error("filtered rows include other templates: " + templateCells.join(", "));
+    if (!/templateKey=bookingReceived/.test(page.url())) throw new Error("filter not reflected in the URL: " + page.url());
+
+    // row click opens the stored, brand-wrapped email in a sandboxed iframe
+    await page.locator(".admin-table tbody tr").first().click();
+    await page.waitForSelector(".modal .email-preview iframe");
+    const frame = page.locator(".modal .email-preview iframe");
+    const srcdoc = await frame.getAttribute("srcdoc");
+    if (!srcdoc || !/<!doctype html>/i.test(srcdoc)) throw new Error("modal iframe has no full-document srcdoc");
+    if ((await frame.getAttribute("sandbox")) === null) throw new Error("rendered-email iframe is not sandboxed");
+    if (!(await page.locator(".modal .detail-list", { hasText: "Subject" }).count())) throw new Error("modal missing subject/to/sent-at header");
+    await page.locator(".modal button:has-text('Close')").click();
+    await page.waitForSelector(".modal", { state: "detached" });
+
+    // status badge: v1 'stored' shows a neutral 'Stored' label with helptext
+    if (!(await page.locator(".admin-table tbody .status-badge--neutral", { hasText: "Stored" }).count())) throw new Error("no neutral 'Stored' status badge");
+  });
+
   await check("Admin — Users page reachable for owner", async () => {
     await page.goto(BASE + "/admin/users", { waitUntil: "networkidle" });
     await page.waitForSelector("text=Invite an administrator");

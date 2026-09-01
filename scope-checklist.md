@@ -71,7 +71,12 @@ No money is taken online anywhere on the site in v1 (see Payments below, and
   rejection email including the manager's explanation. Plus operationally
   necessary: (4) new-request alert to the manager/admins; (5) contact-form
   acknowledgement; (6) administrator invite / password-set email. Email only —
-  no SMS or push in scope.
+  no SMS or push in scope. The v1 mailer is "store & log" (writes every message
+  to an outbox table, does not transmit); a real provider is a deployment-time
+  config swap. The admin can inspect the outbox — every generated email, its
+  rendered body, and (with a real provider later) its delivery status — on the
+  A9 "Sent log" tab (`GET /admin/sent-emails`). "Applies" is only satisfied when
+  that view exists, not merely when rows are written.
 
 - **Legal / compliance — APPLIES.** Needs a privacy policy (guest contact data
   is collected and stored, audience includes the EU so GDPR-style disclosure is

@@ -33,6 +33,7 @@ const vehicle = await load("vehicle.json");
 const gallery = await load("gallery.json");
 const documents = await load("documents.json");
 const admin = await load("admin.json");
+const sentEmails = await load("sent-emails.json");
 documents.vehicleRentalAgreement.bodyMarkdown = vehicle.agreement.bodyMarkdown;
 
 // ---- mutable in-memory state ----
@@ -405,6 +406,29 @@ async function handleAdmin(req, res, p, q, m) {
   }
   const ett = p.match(/^\/admin\/email-templates\/([^/]+)\/test$/);
   if (ett && m === "POST") return send(res, 202, { sent: true });
+
+  // sent-email log (outbox) — api-contract §26b. Read-only, newest first.
+  if (p === "/admin/sent-emails" && m === "GET") {
+    let items = sentEmails.items.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    if (q.get("templateKey") === "none") items = items.filter((e) => e.templateKey == null);
+    else if (q.get("templateKey")) items = items.filter((e) => e.templateKey === q.get("templateKey"));
+    const qq = (q.get("q") || "").toLowerCase();
+    if (qq) items = items.filter((e) => `${e.toAddress} ${e.subject} ${e.bookingReference || ""}`.toLowerCase().includes(qq));
+    if (q.get("from")) items = items.filter((e) => e.createdAt.slice(0, 10) >= q.get("from"));
+    if (q.get("to")) items = items.filter((e) => e.createdAt.slice(0, 10) <= q.get("to"));
+    const page = Number(q.get("page")) || 1, pageSize = Number(q.get("pageSize")) || 20;
+    const rows = items.slice((page - 1) * pageSize, page * pageSize)
+      .map(({ id, toAddress, templateKey, subject, bookingReference, status, createdAt }) =>
+        ({ id, toAddress, templateKey, subject, bookingReference, status, createdAt }));
+    return send(res, 200, { items: rows, page, pageSize, total: items.length });
+  }
+  const se = p.match(/^\/admin\/sent-emails\/([^/]+)$/);
+  if (se && m === "GET") {
+    const e = sentEmails.items.find((x) => x.id === se[1]);
+    if (!e) return err(res, 404, "notFound", "No such email.");
+    const { id, toAddress, templateKey, bookingReference, subject, html, status, createdAt } = e;
+    return send(res, 200, { id, toAddress, templateKey, bookingReference, subject, html, status, createdAt });
+  }
 
   // users + settings
   if (p === "/admin/users" && m === "GET") return send(res, 200, { users: admin.users });

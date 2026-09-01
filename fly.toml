@@ -12,6 +12,14 @@ primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
 [env]
   PORT = "8080"
   HTTP_HOST = "0.0.0.0"
+  # Staging data reset 2026-09-01 (r7): bumped to a fresh db/media path so the
+  # idempotent seeder repopulates property/pricing/legal/gallery from a clean
+  # slate, and the new §26b migration
+  # (20260901000001-sent-emails-status-reference: adds status +
+  # booking_reference columns and two indexes to sent_emails) applies cleanly
+  # as part of the initial migration set on the fresh DB. Carries forward the
+  # r6 reset below.
+  #
   # Staging data reset 2026-08-30 (r6): bumped to a fresh db/media path so the
   # idempotent seeder repopulates property/pricing/legal/gallery from a clean
   # slate. r6 extends the r5 QA-blocker fix for PUT /admin/settings to the
@@ -24,9 +32,9 @@ primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
   # publicEmail info@kigalikeys.rw, publicPhone nil -> contact.phone null) and
   # the round-3 pass (British-English copy, climate/kitchen fixes, cleaningFee
   # 35->30, houseRules v3 / privacy v3 / websiteTerms v2).
-  # Prior r1..r5 paths are left on the volume, unused. The DB holds no real data.
-  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r6.db"
-  MEDIA_DIR = "/data/media-r6"
+  # Prior r1..r6 paths are left on the volume, unused. The DB holds no real data.
+  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r7.db"
+  MEDIA_DIR = "/data/media-r7"
   SEED_PHOTOS_DIR = "/app/assets/property-photos"
   SESSION_COOKIE_SECURE = "true"
   DB_POOL_SIZE = "1"

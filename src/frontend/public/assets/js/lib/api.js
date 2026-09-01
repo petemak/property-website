@@ -127,6 +127,10 @@ export const api = {
   adminPreviewEmail: (key, sampleContext) => request("POST", `/admin/email-templates/${key}/preview`, { body: { sampleContext } }).then((r) => r.data),
   adminTestEmail: (key) => request("POST", `/admin/email-templates/${key}/test`).then((r) => r.data),
 
+  // ---- Admin: sent-email log (outbox) — api-contract §26b ----
+  adminSentEmails: (query) => get("/admin/sent-emails", { query }),
+  adminSentEmail: (id) => get(`/admin/sent-emails/${encodeURIComponent(id)}`),
+
   // ---- Admin: users + settings (owner) ----
   adminUsers: () => get("/admin/users"),
   adminCreateUser: (payload) => request("POST", "/admin/users", { body: payload }).then((r) => r.data),

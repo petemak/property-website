@@ -555,7 +555,10 @@ control.
   if it is empty after bookings exist with the car, the acceptance write is not
   wired up.
 
-### A9 — `/admin/emails` Templates
+### A9 — `/admin/emails` Templates & sent log
+Two tabs (or two sub-sections on one page):
+
+**Templates**
 - Editable templates (subject + body, with a token list like `{{guestFirstName}}`,
   `{{stayDates}}`, `{{priceBreakdown}}`, `{{checkInInstructions}}`,
   `{{rejectionExplanation}}`, `{{bookingReference}}`, `{{statusUrl}}`):
@@ -564,6 +567,17 @@ control.
 - Per template: live HTML preview with sample data, "send test to me" button.
 - Brand-locked wrapper (logo, colours, footer) is not editable here — only the
   message body — so every email stays styled per brand-brief.
+
+**Sent log (outbox)** — `AdminTable` from `GET /admin/sent-emails`
+- Columns: sent-at, to, template, subject, booking reference (link to A3 when
+  present), status. Filters: template, free-text (`q`), date range. Paginated.
+- Row → opens the exact rendered email that was stored (`GET
+  /admin/sent-emails/:id` → `html`), read-only, in a panel/modal.
+- Status column renders `stored` in v1 (nothing is actually transmitted — the
+  v1 mailer only writes to the outbox); an unrecognised status renders as a
+  neutral label. A real provider will populate `queued|sent|delivered|
+  bounced|failed` here later.
+- No create/edit/delete — the log is a byproduct of the system sending mail.
 
 ### A10 — `/admin/users` (owner only)
 - Table: name, email, role (owner / admin), status (active / invited /

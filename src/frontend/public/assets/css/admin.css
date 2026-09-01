@@ -47,6 +47,18 @@
 .admin-panel { background: var(--c-white); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: var(--sp-5); margin-bottom: var(--sp-4); }
 .admin-panel h2 { font-size: var(--fs-600); }
 
+/* Tab strip inside a single admin route (A9 Templates / Sent log). */
+.admin-tabs { display: flex; flex-wrap: wrap; gap: var(--sp-2); border-bottom: 1px solid var(--c-border); margin: var(--sp-3) 0 var(--sp-4); }
+.admin-tabs .admin-tab {
+  padding: var(--sp-3) var(--sp-4);
+  text-decoration: none; font-weight: 600;
+  color: var(--c-text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.admin-tabs .admin-tab:hover { color: var(--c-charcoal); }
+.admin-tabs .admin-tab[aria-current="page"] { color: var(--c-hill-green); border-bottom-color: var(--c-hill-green); }
+
 .login-wrap { display: grid; place-items: center; min-height: 100vh; padding: var(--sp-5); }
 .login-card { background: var(--c-white); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: var(--sp-6); max-width: 380px; width: 100%; box-shadow: var(--shadow-1); }
 
