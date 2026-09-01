@@ -50,3 +50,10 @@ Rules:
   and one line on why you picked it.
 
 Report which files you created or changed when done.
+
+hooks:
+  PostToolUse:
+    - matcher: "Edit|Write"
+      hooks:
+        - type: command
+          command: "npx eslint src/frontend --max-warnings 0"

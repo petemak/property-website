@@ -356,6 +356,53 @@ try {
     if (!(await page.locator(".status-badge--pending").count())) throw new Error("P6 not pending");
   });
 
+  // ---- Date-range picker opens on the month of a pre-selected check-in ----
+  await check("DateRangePicker: /book with a pre-selected range opens on the check-in's month, both endpoints visible", async () => {
+    const ci = new Date(); ci.setHours(0, 0, 0, 0); ci.setDate(ci.getDate() + 55);
+    const co = new Date(ci); co.setDate(co.getDate() + 7);
+    const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const ciIso = iso(ci), coIso = iso(co);
+    const wantLabel = ci.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    const todayLabel = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    if (wantLabel === todayLabel) throw new Error("test setup: check-in date is still in the current month");
+
+    await page.goto(`${BASE}/book?checkIn=${ciIso}&checkOut=${coIso}`, { waitUntil: "networkidle" });
+    await page.waitForSelector(".drp__nav-label");
+
+    const navLabel = (await page.locator(".drp__nav-label").textContent()).trim();
+    if (navLabel !== wantLabel) throw new Error(`nav label is "${navLabel}", expected the check-in's month "${wantLabel}" (not today's "${todayLabel}")`);
+
+    const ciCell = page.locator(`.drp__day[data-date="${ciIso}"]`);
+    const coCell = page.locator(`.drp__day[data-date="${coIso}"]`);
+    if (!(await ciCell.count())) throw new Error(`check-in day cell ${ciIso} is not in the rendered grids`);
+    if (!(await coCell.count())) throw new Error(`check-out day cell ${coIso} is not in the rendered grids`);
+    if (!(await ciCell.isVisible()) || !(await coCell.isVisible())) throw new Error("a selected endpoint is rendered but not visible");
+    if (!(await ciCell.evaluate((el) => el.classList.contains("is-selected")))) throw new Error("check-in cell is not marked is-selected");
+    if (!(await coCell.evaluate((el) => el.classList.contains("is-selected")))) throw new Error("check-out cell is not marked is-selected");
+    if (SHOT_DIR) await page.locator(".card:has(.drp)").screenshot({ path: `${SHOT_DIR}/book-calendar-preselected.png` });
+  });
+
+  await check("DateRangePicker: /book with no dates still opens on the current month", async () => {
+    await page.goto(BASE + "/book", { waitUntil: "networkidle" });
+    await page.waitForSelector(".drp__nav-label");
+    const navLabel = (await page.locator(".drp__nav-label").textContent()).trim();
+    const todayLabel = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    if (navLabel !== todayLabel) throw new Error(`nav label is "${navLabel}", expected the current month "${todayLabel}"`);
+  });
+
+  await check("DateRangePicker: a lone checkOut param (no checkIn) does not throw and opens on the current month", async () => {
+    const co = new Date(); co.setDate(co.getDate() + 40);
+    const coIso = `${co.getFullYear()}-${String(co.getMonth() + 1).padStart(2, "0")}-${String(co.getDate()).padStart(2, "0")}`;
+    const errsBefore = consoleErrors.length;
+    await page.goto(`${BASE}/book?checkOut=${coIso}`, { waitUntil: "networkidle" });
+    await page.waitForSelector(".drp__nav-label");
+    const todayLabel = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    const navLabel = (await page.locator(".drp__nav-label").textContent()).trim();
+    if (navLabel !== todayLabel) throw new Error(`nav label is "${navLabel}", expected "${todayLabel}"`);
+    const newErrs = consoleErrors.slice(errsBefore).filter((e) => e.startsWith("pageerror:"));
+    if (newErrs.length) throw new Error("page error raised: " + newErrs[0]);
+  });
+
   // ---- P6 gate via reference + email ----
   await check("P6 gate: wrong email is rejected, right email shows booking", async () => {
     await page.goto(BASE + "/booking/KK-7F3Q2A", { waitUntil: "networkidle" });

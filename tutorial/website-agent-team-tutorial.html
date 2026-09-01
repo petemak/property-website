@@ -76,6 +76,51 @@
   .filerow .fname{ font-family:'JetBrains Mono', monospace; color: var(--amber); font-size:13px; font-weight:600; }
   .filerow .fmeta{ font-family:'JetBrains Mono', monospace; color: var(--cyan); font-size:10.5px; margin-left:8px; border:1px solid var(--cyan-dim); border-radius:3px; padding:1px 5px; white-space:nowrap; }
   .filerow p{ margin:5px 0 0; font-size:12.5px; color: var(--paper-dim); }
+
+  /* Deployment walkthrough */
+  .walkthrough{ list-style:none; padding:0; margin:22px 0; counter-reset:wk; }
+  .walkthrough li{ position:relative; padding:6px 0 20px 46px; }
+  .walkthrough li::before{
+    counter-increment:wk; content: counter(wk);
+    position:absolute; left:0; top:0; width:30px; height:30px;
+    border:1.5px solid var(--amber); color:var(--amber); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace; font-weight:700; font-size:13px;
+  }
+  .walkthrough li::after{
+    content:''; position:absolute; left:14px; top:32px; bottom:0; width:1px;
+    background: var(--blue-line);
+  }
+  .walkthrough li:last-child::after{ display:none; }
+  .walkthrough h4{ margin:2px 0 5px; font-size:14.5px; color: var(--paper); }
+  .walkthrough p{ margin:0; font-size:13px; color: var(--paper-dim); line-height:1.5; }
+
+  /* Two-pane layout */
+  .page-layout{ display:flex; align-items:flex-start; }
+  .sidenav{
+    display:none;
+    width: 250px; flex-shrink:0; box-sizing:border-box;
+    position: sticky; top:0; height:100vh; overflow-y:auto;
+    padding: 22px 14px; border-right: 1px solid var(--blue-line);
+  }
+  .sidenav .side-title{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color: var(--paper-dim); margin:0 0 10px 6px; }
+  .sidenav ol{ list-style:none; margin:0 0 4px; padding:0; }
+  .sidenav li a{
+    display:flex; gap:10px; align-items:baseline; padding:7px 6px; border-radius:4px;
+    color: var(--paper-dim); text-decoration:none; font-size:13px; line-height:1.35;
+  }
+  .sidenav li a:hover{ background: rgba(255,255,255,0.05); color: var(--paper); }
+  .sidenav li a.active{ color: var(--amber); background: rgba(242,166,90,0.09); }
+  .sidenav .toc-num{ font-family:'JetBrains Mono', monospace; font-weight:700; font-size:11.5px; width:20px; flex-shrink:0; color:inherit; }
+  .main-content{ flex:1; min-width:0; }
+
+  @media (min-width: 900px){
+    .sidenav{ display:block; }
+    .main-content .wrap{ margin: 0 auto; max-width: min(1000px, 92%); }
+  }
+  @media (min-width: 1500px){
+    .main-content .wrap{ max-width: min(1200px, 88%); }
+  }
   h2{ font-family:'JetBrains Mono', monospace; font-size: 20px; margin: 0 0 4px; color: var(--paper); }
   .sec-sub{ color: var(--paper-dim); font-size:14px; margin: 0 0 18px; }
   p{ color: var(--paper); font-size:15px; }
@@ -198,6 +243,27 @@
     </marker>
   </defs>
 </svg>
+
+<div class="page-layout">
+<nav class="sidenav">
+  <div class="side-title">Contents</div>
+  <ol>
+    <li><a href="#sec01" class="side-link"><span class="toc-num">01</span>Get Claude Code running</a></li>
+    <li><a href="#sec02" class="side-link"><span class="toc-num">02</span>Two ways Claude can delegate</a></li>
+    <li><a href="#sec03" class="side-link"><span class="toc-num">03</span>Meet the crew</a></li>
+    <li><a href="#sec04" class="side-link"><span class="toc-num">04</span>Not everyone runs at once</a></li>
+    <li><a href="#sec05" class="side-link"><span class="toc-num">05</span>Build the roster</a></li>
+    <li><a href="#sec06" class="side-link"><span class="toc-num">06</span>The contract</a></li>
+    <li><a href="#sec07" class="side-link"><span class="toc-num">07</span>Constraints every agent respects</a></li>
+    <li><a href="#sec08" class="side-link"><span class="toc-num">08</span>Run the whole crew</a></li>
+    <li><a href="#sec09" class="side-link"><span class="toc-num">09</span>Choosing where it lives</a></li>
+    <li><a href="#sec10" class="side-link"><span class="toc-num">10</span>Cloudflare, Render, Wrangler</a></li>
+    <li><a href="#sec11" class="side-link"><span class="toc-num">11</span>Make it scale</a></li>
+    <li><a href="#sec12" class="side-link"><span class="toc-num">12</span>Build checklist</a></li>
+    <li><a href="#sec13" class="side-link"><span class="toc-num">13</span>Quick reference</a></li>
+  </ol>
+</nav>
+<div class="main-content">
 
 <div class="hero">
   <div class="wrap">
@@ -591,8 +657,9 @@ user-journeys.md, and api-contract.md. Also check for
 engineering-standards.md in the project root — if present, read
 it before making any technology choice; anything marked
 non-negotiable is a hard constraint, not a preference. Build
-semantic HTML5, CSS, and vanilla or lightly-framework'd JS
-matching the design.
+semantic HTML5 and CSS. Default to vanilla or lightly-framework'd
+JS unless engineering-standards.md specifies a frontend
+framework, in which case use that instead.
 
 Build to the journeys, not just the pages: user-journeys.md
 describes the sequence a real user follows across pages and
@@ -915,21 +982,28 @@ PHASE 1 — Staging
 3. Write whatever config the chosen host needs (Dockerfile,
    render.yaml, vercel.json, etc.) — do not touch application
    source code to do this.
-4. Deploy to a staging or preview environment, not the final
+4. Wire the frontend to this environment's backend URL — almost
+   always an environment variable read at build time (e.g.
+   API_BASE_URL). The staging frontend build must call the
+   staging backend's URL, not a hardcoded production one that
+   doesn't exist yet. Verify this yourself before moving on;
+   don't let the user discover it's wrong by clicking around a
+   staging site where nothing loads.
+5. Deploy to a staging or preview environment, not the final
    production domain — most hosts (Vercel, Netlify, Cloudflare
-   Pages, Render) offer a free preview URL distinct from
+   Pages, Render, Fly.io) offer a free preview URL distinct from
    production; use one.
-5. Report the staging URL and STOP. Wait for the user to
+6. Report the staging URL and STOP. Wait for the user to
    explicitly say the design and functionality look right
    before continuing to Phase 2.
 
 PHASE 2 — Production (only after explicit approval)
-6. Promote the approved staging deployment to production, or
+7. Promote the approved staging deployment to production, or
    redeploy to the production tier/domain.
-7. This will usually require stopping to ask the user to
+8. This will usually require stopping to ask the user to
    create an account, add a payment method, or paste in a
    token — you cannot and should not do these steps yourself.
-8. Once live, report the URL, and list anything the user still
+9. Once live, report the URL, and list anything the user still
    needs to do manually (custom domain, environment secrets,
    DNS records).</pre>
       <div class="callout">The pause between phases is the point. A staging URL costs nothing and nobody sees it but you — that's exactly when to catch a wrong color, a broken mobile layout, or a tone that doesn't match the brand brief, before it's live.</div>
@@ -1067,6 +1141,8 @@ unmarked defaults to non-negotiable.]</pre>
 - Guideline, may deviate with a stated reason: vertical-slice
   folder structure, the specific error shape, the date format</pre>
     <p class="dim">Vertical slices and "no micro-frontends" are both architectural-boundary items above, not separate categories — a systems-design rule always belongs under one of the same four headers, however specific it gets.</p>
+
+    <div class="callout">Two different levers, easy to conflate: <b>which subagent you spawn</b> (<code>frontend-html</code> vs <code>frontend-cljs</code>, <code>backend-node</code> vs <code>backend-clojure</code>) picks the language and runtime — set that by name in the spawn prompt in Section 08. <b>Technology restrictions</b> above picks specific frameworks and libraries <i>within</i> that choice — React instead of vanilla JS inside <code>frontend-html</code>, Fastify instead of Express inside <code>backend-node</code>. Get the language from the agent type; get everything more specific from this file.</div>
 
     <p>Add this line to <code>ux-designer</code>, <code>frontend-html</code>, <code>frontend-cljs</code>, <code>backend-node</code>, <code>backend-clojure</code>, and <code>deployment-engineer</code> — anywhere a design or technology decision actually gets made:</p>
     <pre>Also check for engineering-standards.md in the project root.
@@ -1288,7 +1364,37 @@ one, and deploy the site to a staging environment.</pre>
       <button class="step-head"><span class="num">7</span>Approve and promote to production<span class="chev">›</span></button>
       <div class="step-body">
         <pre>Staging looks correct. Promote it to production.</pre>
-        <p>Only say this once you mean it — it's the explicit approval <code>deployment-engineer</code> is waiting for before it touches the production domain.</p>
+        <p>Only say this once you mean it — it's the explicit approval <code>deployment-engineer</code> is waiting for before it touches production.</p>
+        <p>"Production" here just means the host's own free subdomain (something like <code>yoursite.pages.dev</code> or <code>yourapi.onrender.com</code>) — that goes live the moment you approve, no registration needed. A custom domain you own is a separate, optional step you can add afterward.</p>
+
+        <p style="margin-top:18px;"><b>If you already own a custom domain</b>, here's the actual procedure — worth knowing before you start, since it isn't one step, it's several, split across two hosts:</p>
+
+        <ol class="walkthrough">
+          <li>
+            <h4>Ask deployment-engineer for your exact records</h4>
+            <p>Something like: <i>"I have a custom domain, yourbusiness.com — what DNS records do I need, and where do I add them?"</i> It already knows which hosts it picked during Phase 1, so it can give you exact record types and values for those specific hosts, not generic advice that might not fit.</p>
+          </li>
+          <li>
+            <h4>Expect the domain to split across two hosts, not one</h4>
+            <p>Your frontend and backend are on entirely different services, so one domain name can't point at both. The usual pattern: the root or <code>www</code> (<code>yourbusiness.com</code>) goes to the frontend host, and a subdomain (<code>api.yourbusiness.com</code>) goes to the backend host. Two hosts, two pieces of the domain, both pointing at the same overall site.</p>
+          </li>
+          <li>
+            <h4>Add the DNS records yourself</h4>
+            <p>Wherever your domain's DNS is managed — your registrar, or a separate DNS provider if you've pointed nameservers elsewhere. This is exactly the kind of account-credential step <code>deployment-engineer</code> deliberately won't do for you, the same reason it won't create hosting accounts or enter payment details. It tells you what to add; you log in and add it.</p>
+          </li>
+          <li>
+            <h4>Register the domain in each host's own dashboard too</h4>
+            <p>DNS alone isn't enough — each host also needs to be told, in its own settings, that this domain belongs to your project. That's what lets it accept traffic for that name and automatically issue an SSL certificate for it.</p>
+          </li>
+          <li>
+            <h4>Update the frontend's backend URL if you gave the backend a custom subdomain too</h4>
+            <p>Recall from Section 10: the frontend calls the backend through a build-time URL. If the backend now also answers at <code>api.yourbusiness.com</code>, the frontend is still calling the host's raw URL until you ask <code>deployment-engineer</code> to switch it. Both work either way — this is about consistency, not correctness.</p>
+          </li>
+          <li>
+            <h4>Wait for DNS to propagate and the certificate to issue</h4>
+            <p>Usually minutes, occasionally longer. <code>deployment-engineer</code> can check whether it's resolved yet, but can't speed up a wait that's outside its control.</p>
+          </li>
+        </ol>
       </div>
     </div>
   </div>
@@ -1372,9 +1478,41 @@ one, and deploy the site to a staging environment.</pre>
       <div class="role"><div class="tag" style="border-color:#e08fb0;color:#e08fb0;">CF</div><div class="body"><h3>Cloudflare (Pages)</h3><p>A company best known for a huge global network of servers. Its Pages product takes your built frontend files and copies them onto that network, so a visitor in Kigali and one in Toronto both load the site from a nearby copy instead of one distant server. Fits static frontends specifically — it doesn't run your backend's code, only serves files.</p></div></div>
       <div class="role"><div class="tag" style="border-color:#a9bccf;color:#a9bccf;">WR</div><div class="body"><h3>Wrangler</h3><p>Not a host itself — it's Cloudflare's command-line tool, the thing that actually uploads your files when someone runs <code>wrangler deploy</code>. Every hosting company needs some way to receive your code; some use a "connect your GitHub repo" web page, Cloudflare's is a CLI you or an agent runs directly.</p></div></div>
       <div class="role"><div class="tag" style="border-color:#7fd99a;color:#7fd99a;">RN</div><div class="body"><h3>Render</h3><p>Hosts your <b>backend</b> instead — a real, continuously-running Node.js or Clojure process, not files. It provisions a small server, starts your process on it, restarts it automatically if it crashes, and gives your API a stable URL even though the underlying server can change.</p></div></div>
+      <div class="role"><div class="tag" style="border-color:#7fd99a;color:#7fd99a;">FL</div><div class="body"><h3>Fly.io</h3><p>The same job as Render, different company — also runs a continuously-alive backend process for you. If your <code>deployment-engineer</code> picks this instead, nothing about the picture below changes; only the name of the box on the right does.</p></div></div>
     </div>
 
     <div class="callout">The pattern generalizes past this specific pairing: whatever hosting names your <code>deployment-engineer</code> picks in a year, they'll split along this same line — one service copying static files to many locations, another keeping one program alive. Recognizing which job a new name is doing is more durable than memorizing the name itself.</div>
+
+    <p style="margin-top:26px;">That's the "what." Here's the "how" — what <code>deployment-engineer</code> is actually doing, step by step, during the Phase 1 staging deploy from Section 08:</p>
+
+    <ol class="walkthrough">
+      <li>
+        <h4>Reads your stack, then researches live</h4>
+        <p>It checks <code>package.json</code> or <code>deps.edn</code> to see what it's dealing with, then searches the web for current hosting options rather than using memorized pricing. This is why the specific names here might not match what you see in your own run — the pairing it lands on depends on what's current when you run it, not on this document.</p>
+      </li>
+      <li>
+        <h4>Provisions two separate homes, not one</h4>
+        <p>A Cloudflare Pages project (or whatever it picked) for your built frontend files, and a Render or Fly.io service (or whatever it picked) for your always-on backend process. These are two unrelated accounts under the hood, each with its own dashboard and its own URL — nothing connects them automatically.</p>
+      </li>
+      <li>
+        <h4>Writes host-specific config, not application code</h4>
+        <p>A <code>Dockerfile</code>, <code>render.yaml</code>, or <code>wrangler.toml</code> — instructions the host reads to know how to build and run what your frontend/backend teammates already wrote. This step never touches your actual source files.</p>
+      </li>
+      <li>
+        <h4>Wires the frontend to <i>this environment's</i> backend URL</h4>
+        <p>This is the step it's easy to assume happens by magic — it doesn't. The frontend's code needs to know where the backend actually lives, and that's normally an environment variable (e.g. <code>API_BASE_URL</code>) baked in at build time. The staging frontend build gets the staging backend's URL; later, the production build gets the production URL. Skip this and staging deploys successfully but silently calls nothing, which looks like a broken site rather than a config problem.</p>
+      </li>
+      <li>
+        <h4>Uploads each piece to its own host</h4>
+        <p>For a static host, typically a CLI push (<code>wrangler deploy</code>) that copies files onto an edge network in many cities at once. For a backend host, typically a git push or CLI deploy that builds a container and starts a single running process somewhere. Each returns its own URL, scoped to "staging" or "preview" — separate from whatever production domain shows up later.</p>
+      </li>
+      <li>
+        <h4>Reports the staging URL, then stops</h4>
+        <p>Nothing promotes automatically. This is the pause from Section 08 Step 6 — the point where you click through the actual staging URL yourself before anything reaches a real visitor.</p>
+      </li>
+    </ol>
+
+    <p>Phase 2 is shorter mechanically, but "promote to production" means something slightly different per host, which is worth not glossing over: for a static host it's often literally redeploying the same already-built files to a production alias or branch; for a backend host it's often flipping a service from "preview" to the one bound to your real domain, or deploying that same container to a production-tier service. Either way, no code gets regenerated at this point — only which environment serves the build that already passed your review. If it needs an account, a payment method, or a token from you to do this, it will stop and ask, the same as Phase 1.</p>
   </div>
 </section>
 
@@ -1484,6 +1622,9 @@ one, and deploy the site to a staging environment.</pre>
 
 <footer>Agent teams are an experimental Claude Code feature and may change.</footer>
 
+</div>
+</div>
+
 <script>
   document.querySelectorAll('.tabbar').forEach(bar=>{
     const btns = bar.querySelectorAll('.tabbtn');
@@ -1525,6 +1666,23 @@ one, and deploy the site to a staging environment.</pre>
       updateProgress();
     });
   });
+
+  const sideLinks = document.querySelectorAll('.side-link');
+  const sections = Array.from(document.querySelectorAll('section[id^="sec"]'));
+  if (sideLinks.length && sections.length && 'IntersectionObserver' in window) {
+    const linkFor = id => document.querySelector('.side-link[href="#' + id + '"]');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const link = linkFor(entry.target.id);
+        if (!link) return;
+        if (entry.isIntersecting) {
+          sideLinks.forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+    sections.forEach(s => observer.observe(s));
+  }
 </script>
 
 </body>

@@ -19,8 +19,16 @@ export function dateRangePicker({
 } = {}) {
   const unavailable = new Set(unavailableDates);
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  let viewYear = today.getFullYear();
-  let viewMonth = today.getMonth();
+  // Open the grid on the month of the pre-selected check-in (arriving at /book
+  // with dates already chosen), not always on today's month. Never open earlier
+  // than the current month — a past/edge date shouldn't scroll the view back.
+  const anchor = value.checkIn ? parseDate(value.checkIn) : new Date(today);
+  let viewYear = anchor.getFullYear();
+  let viewMonth = anchor.getMonth();
+  if (viewYear < today.getFullYear() || (viewYear === today.getFullYear() && viewMonth < today.getMonth())) {
+    viewYear = today.getFullYear();
+    viewMonth = today.getMonth();
+  }
   let focusDate = value.checkIn ? parseDate(value.checkIn) : new Date(today);
   let checkIn = value.checkIn || null;
   let checkOut = value.checkOut || null;
