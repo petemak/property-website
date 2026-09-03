@@ -40,10 +40,27 @@ function ensureDom() {
 function render() {
   const item = images[index];
   const stage = el.querySelector(".lightbox__img");
-  stage.replaceChildren(smartImage({ url: item.url, alt: item.alt || "", ratio: "3 / 2", loading: "eager" }));
+  // The full-size `url` is fetched here — only when the lightbox is open for this
+  // image, never by the grid.
+  stage.replaceChildren(smartImage({ url: item.url, alt: item.alt || "", ratio: "3 / 2", loading: "eager", fetchpriority: "high" }));
   el.querySelector(".lightbox__counter").textContent = `${index + 1} / ${images.length}`;
   el.querySelector(".lightbox__caption").textContent = item.caption || item.alt || "";
   announce(`Photo ${index + 1} of ${images.length}. ${item.caption || item.alt || ""}`);
+  preloadNeighbours();
+}
+
+// Warm only the immediate prev/next full-size images so arrow-nav is instant,
+// without pulling all N originals.
+const preloaded = new Set();
+function preloadNeighbours() {
+  for (const i of [index - 1, index + 1]) {
+    const item = images[(i + images.length) % images.length];
+    if (!item || !item.url || preloaded.has(item.url)) continue;
+    preloaded.add(item.url);
+    const img = document.createElement("img");
+    img.decoding = "async";
+    img.src = item.url;
+  }
 }
 
 function step(dir) {

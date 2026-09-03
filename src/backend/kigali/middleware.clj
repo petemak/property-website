@@ -30,6 +30,45 @@
         (respond/error :internalError "Something went wrong on our side.")))))
 
 ;; ---------------------------------------------------------------------------
+;; Cache-Control
+;;
+;; Contract "Caching" bullet + engineering-standards "Performance & delivery":
+;; only a small allow-list of read-only GETs is CDN-cacheable. Everything else —
+;; every admin route, every mutation, guest-specific reads — defaults to
+;; `no-store`. The default is the safe one: a route is cached only by opting in
+;; here, never by omission.
+
+(def ^:private cacheable-swr
+  "public, max-age=300, stale-while-revalidate=86400")
+
+(defn- static-cacheable-uri? [uri]
+  (or (= uri "/api/property")
+      (= uri "/api/gallery")
+      (= uri "/api/vehicle")
+      ;; GET /api/documents/:type/:version
+      (some? (re-matches #"/api/documents/[^/]+/[^/]+" uri))))
+
+(defn cache-control-for
+  "Pure: the Cache-Control value for a request. GET-only; anything else is
+   no-store."
+  [{:keys [request-method uri]}]
+  (if (not= :get request-method)
+    "no-store"
+    (cond
+      (static-cacheable-uri? uri)              cacheable-swr
+      (= uri "/api/availability")              "public, max-age=120"
+      (str/starts-with? (str uri) "/api/media/") "public, max-age=31536000, immutable"
+      :else                                    "no-store")))
+
+(defn wrap-cache-control
+  "Stamps every response with a Cache-Control header derived from the request.
+   Runs outermost so it also covers error and default-handler responses."
+  [handler]
+  (fn [req]
+    (let [resp (handler req)]
+      (assoc-in resp [:headers "Cache-Control"] (cache-control-for req)))))
+
+;; ---------------------------------------------------------------------------
 ;; Validation at the API boundary
 
 (defn validate!

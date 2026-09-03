@@ -68,6 +68,30 @@ built in v1; it is documented only so the v1 build leaves the seam open.
   `{ page, pageSize, total }`.
 - **Third parties:** email delivery, map tiles/static images and image storage
   are called **only** from the backend. The frontend never holds those keys.
+- **Caching:** read-only GETs whose data changes rarely — `GET /property`,
+  `GET /gallery`, `GET /vehicle`, `GET /documents/:type/:version` — send
+  `Cache-Control: public, max-age=300, stale-while-revalidate=86400` so the CDN
+  edge serves them. `GET /availability` sends `public, max-age=120`. Everything
+  authenticated, mutating, or guest-specific (`/bookings/:reference`, all
+  `/admin/*`, `POST` routes) sends `Cache-Control: no-store`. Clients tolerate a
+  few minutes' staleness on the cacheable set.
+- **Media URLs:** image `url` / `thumbnailUrl` / `staticMapUrl` fields are
+  CDN-relative. Seed images resolve to `/media/...` (served at rest from the
+  frontend deploy's CDN, never proxied through the backend). Admin-uploaded
+  images resolve to `/api/media/...` (proxied, long-cached) until image storage
+  moves to an object store. The frontend uses whatever URL the API returns.
+  `GET /gallery` may therefore return a mix of both prefixes in one list.
+  - **Seed media filenames** (frontend bundles these under `public/media/`):
+    - Gallery: `/media/gallery/<basename>.jpg` (full) and
+      `/media/gallery/<basename>_thumb.jpg` (thumb), where `<basename>` is the
+      owner's original stem, e.g. `front-yard.jpg` / `front-yard_thumb.jpg`.
+      25 images. All re-encoded (progressive JPEG, <= 2000px / <= ~300 KB full,
+      <= 800px / <= ~60 KB thumb).
+    - Map: `/media/map/approx.jpg`. **CHANGED from `approx.png`** — the source
+      map re-encodes ~10x smaller as a JPEG (856 KB PNG -> ~107 KB JPEG) and the
+      standards' per-image budget is non-negotiable. Flagged for the frontend.
+    - The backend produces these via `clojure -X:export-media` (writes straight
+      into `src/frontend/public/media/`); the frontend commits + deploys them.
 - **Unknown enum values:** clients must tolerate enum values they don't
   recognise (especially booking `status`) — render a neutral fallback, never
   throw. This is what lets a v1 frontend keep working when v2 adds states.
@@ -171,7 +195,7 @@ Everything the marketing pages render. Public, cacheable (~5 min).
     "approxLat": -1.9833,
     "approxLng": 30.1028,
     "showExactAddress": false,
-    "staticMapUrl": "/api/media/map/approx.png",
+    "staticMapUrl": "/media/map/approx.jpg",
     "pointsOfInterest": [
       { "name": "Kigali International Airport", "minutesByCar": 20, "km": 12, "category": "transport" },
       { "name": "City centre / CBD", "minutesByCar": 12, "km": 6, "category": "transport" },
@@ -225,21 +249,34 @@ without any other contract change.
   "images": [
     {
       "id": "img_01",
-      "url": "/api/media/gallery/img_01.jpg",
-      "thumbnailUrl": "/api/media/gallery/img_01_thumb.jpg",
+      "url": "/media/gallery/front-yard.jpg",
+      "thumbnailUrl": "/media/gallery/front-yard_thumb.jpg",
       "alt": "Duplex exterior at dusk with the Kia Sorento parked in the gated driveway",
       "caption": "The house and the car, on the premises",
       "category": "Exterior & grounds",
-      "width": 2400,
-      "height": 1600,
+      "width": 2000,
+      "height": 1333,
       "position": 1
+    },
+    {
+      "id": "img_44",
+      "url": "/api/media/gallery/img_9f3a1c22.jpg",
+      "thumbnailUrl": "/api/media/gallery/img_9f3a1c22_thumb.jpg",
+      "alt": "Newly added photo uploaded by an admin",
+      "caption": "Uploaded via the admin gallery screen",
+      "category": "Living",
+      "width": 2000,
+      "height": 1333,
+      "position": 26
     }
   ]
 }
 ```
 `category` is one of a fixed set defined in content: `Exterior & grounds`,
 `Living`, `Kitchen`, `Bedroom 1`, `Bedroom 2`, `Bathrooms`, `Workspace`,
-`The car`. `images` are sorted by `position` ascending.
+`The car`. `images` are sorted by `position` ascending. `url` prefix reflects
+origin: seed images are `/media/...` (frontend CDN bundle), admin-uploaded
+images are `/api/media/...` (backend-proxied) — see the "Media URLs" convention.
 
 ---
 
@@ -638,11 +675,17 @@ Public read of a versioned legal/agreement document body (backs P8–P12 and the
 
 ---
 
-### 10. `GET /media/...`
+### 10. `GET /api/media/...`
 
-Backend-served static assets: gallery images, thumbnails, static map images.
-Plain HTTP GET, cacheable, no JSON. Listed so the frontend knows image URLs
-come from our origin, not a third-party bucket URL.
+Backend-served static assets for **admin-uploaded** gallery images + thumbnails
+only. Plain HTTP GET, no JSON. Sends `Cache-Control: public, max-age=31536000,
+immutable` (filenames are content-unique `img_<hex>.jpg`). Listed so the
+frontend knows these image URLs come from our origin, not a third-party bucket.
+
+Seed images and the static map are **not** served here — they resolve to
+`/media/...` and are served at rest from the frontend deploy's CDN (see "Media
+URLs"). The application origin is not an image server for public traffic
+(engineering-standards, "Performance & delivery").
 
 ---
 
@@ -886,11 +929,15 @@ PUT    /admin/gallery/order    // { "orderedIds": ["img_03","img_01",...] }
 POST   /admin/gallery/lead     // { "imageId": "img_03" }
 ```
 `POST`: `file` must be jpg/png/webp, max 12 MB (enforced server-side), `alt`
-required 1..250, `category` in the fixed set. Server stores the original,
-generates a thumbnail, reads `width`/`height`, appends at the end of `position`
-order, uploads to storage from the backend. **201** returns the created image
-object (§2 shape). `PATCH`/`lead` -> `200`. `DELETE` -> `204` (refuses if it is
-the only image or the lead image without a replacement -> `409 conflict`).
+required 1..250, `category` in the fixed set. Server **re-encodes on ingest** —
+the camera-original is never served: it is downscaled (<= ~2000px long edge) and
+written as a progressive JPEG within the ~300 KB budget, with a <= ~800px /
+~60 KB thumbnail. Server reads final `width`/`height`, appends at the end of
+`position` order. The stored files are served from the backend under
+`/api/media/gallery/...` (origin `upload`). **201** returns the created image
+object (§2 shape, with the `/api/media/...` prefix). `PATCH`/`lead` -> `200`.
+`DELETE` -> `204` (refuses if it is the only image or the lead image without a
+replacement -> `409 conflict`).
 
 ### 22. Vehicle details
 ```

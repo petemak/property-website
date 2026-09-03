@@ -20,10 +20,17 @@
 ;; ---------------------------------------------------------------------------
 ;; Assembly (pure)
 
+(defn media-prefix
+  "URL prefix for a gallery row (api-contract.md 'Media URLs').
+   Seed images are served at rest from the frontend deploy's CDN (/media/...);
+   admin-uploaded images are proxied through the backend (/api/media/...)."
+  [row]
+  (if (= "seed" (:origin row)) "/media/gallery/" "/api/media/gallery/"))
+
 (defn image->json [row]
   {:id (:id row)
-   :url (str "/api/media/gallery/" (:filename row))
-   :thumbnailUrl (str "/api/media/gallery/" (:thumb_filename row))
+   :url (str (media-prefix row) (:filename row))
+   :thumbnailUrl (str (media-prefix row) (:thumb_filename row))
    :alt (:alt row)
    :caption (:caption row)
    :category (:category row)
@@ -71,22 +78,22 @@
       (not (allowed-mime (:content-type file))) (respond/error :validationError "file must be jpg, png or webp.")
       (> (:size file 0) max-bytes) (respond/error :validationError "file exceeds the 12 MB limit.")
       :else
-      (let [ext (allowed-mime (:content-type file))
-            id (util/short-id "img")
-            fname (str id "." ext)
+      (let [id (util/short-id "img")
+            ;; Re-encode on ingest: the stored file is always a web-optimised
+            ;; progressive JPEG within budget — never the camera-original the
+            ;; client sent. (engineering-standards 'Performance & delivery'.)
+            fname (str id ".jpg")
             thumb (str id "_thumb.jpg")
             full-path (io/file media-dir "gallery" fname)
-            thumb-path (io/file media-dir "gallery" thumb)]
-        (io/make-parents full-path)
-        (io/copy (:tempfile file) full-path)
-        (let [{:keys [width height]} (images/dimensions (images/read-image full-path))]
-          (images/write-thumbnail! full-path thumb-path)
-          (db/exec! db ["INSERT INTO gallery_images
-                         (id, filename, thumb_filename, alt, caption, category, width, height, position, is_lead, created_at)
-                         VALUES (?,?,?,?,?,?,?,?,?,?,?)"
-                        id fname thumb alt caption category width height
-                        (inc (max-position db)) 0 (util/now-iso)])
-          (respond/created (image->json (one-image db id))))))))
+            thumb-path (io/file media-dir "gallery" thumb)
+            {:keys [width height]} (images/write-web-image! (:tempfile file) full-path)]
+        (images/write-thumbnail! full-path thumb-path)
+        (db/exec! db ["INSERT INTO gallery_images
+                       (id, filename, thumb_filename, alt, caption, category, width, height, position, is_lead, origin, created_at)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+                      id fname thumb alt caption category width height
+                      (inc (max-position db)) 0 "upload" (util/now-iso)])
+        (respond/created (image->json (one-image db id)))))))
 
 (def patch-schema
   [:map

@@ -24,7 +24,7 @@ const root = $("#car-root");
   mount(root,
     h("section", { class: "page-hero" },
       h("div", { class: "container split" },
-        h("div", {}, smartImage({ url: carPhotos[0]?.url, alt: carPhotos[0]?.alt || "The Kia Sorento at the property", ratio: "4 / 3", label: "The Kia Sorento" })),
+        h("div", {}, smartImage({ url: carPhotos[0]?.url, alt: carPhotos[0]?.alt || "The Kia Sorento at the property", ratio: "4 / 3", label: "The Kia Sorento", loading: "eager", fetchpriority: "high", width: carPhotos[0]?.width, height: carPhotos[0]?.height })),
         h("div", {},
           h("h1", {}, "The car"),
           h("p", {}, "The house keys come with every stay; the car is the optional extra. A Kia Sorento SUV, kept on the premises, yours to collect at the house."),

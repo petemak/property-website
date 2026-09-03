@@ -29,13 +29,22 @@ function escapeText(s) {
 }
 
 // Returns an <img> that swaps itself for a placeholder SVG on error / when no url.
-export function smartImage({ url, alt, ratio = "4 / 3", label, className, loading = "lazy" }) {
+// - `loading`: "lazy" (default) for anything below the fold; "eager" for the LCP hero.
+// - `fetchpriority`: pass "high" on the hero image so it is not queued behind other work.
+// - `width`/`height`: the image's intrinsic pixels (from GET /gallery) — set as
+//   attributes so the browser reserves the right box and there is no layout shift
+//   even before CSS `aspect-ratio` resolves.
+export function smartImage({ url, alt, ratio = "4 / 3", label, className, loading = "lazy", fetchpriority, width, height }) {
   const wrap = h("span", { class: "smart-image" + (className ? " " + className : ""), style: `display:block;aspect-ratio:${ratio}` });
   if (!url) {
     wrap.appendChild(placeholderSvg(label || alt || "Photo coming soon", { ratio }));
     return wrap;
   }
-  const img = h("img", { src: url, alt: alt || "", loading, decoding: "async" });
+  const attrs = { src: url, alt: alt || "", loading, decoding: "async" };
+  if (fetchpriority) attrs.fetchpriority = fetchpriority;
+  if (width) attrs.width = String(width);
+  if (height) attrs.height = String(height);
+  const img = h("img", attrs);
   img.style.width = "100%";
   img.style.height = "100%";
   img.style.objectFit = "cover";

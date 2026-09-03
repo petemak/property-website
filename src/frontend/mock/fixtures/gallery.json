@@ -1,37 +1,281 @@
 {
-  "_note": "Mock fixture for GET /gallery. Real owner photos per assets/property-photos/MAPPING.md. URLs are /api/media/photos/<category-dir>/<file> — the dev-server serves the real files from assets/property-photos/; the production backend serves the same photos under its own /api/media/... paths. COUNT DISCREPANCY (flagged to coordinator): MAPPING.md's summary line says '22 images' but its own table enumerates 25 real files that all exist on disk (Exterior 4, Living 5, Kitchen 2, Bedroom 1 x4, Bedroom 2 x3, Bathrooms 5, The car 2). This fixture wires all 25 enumerated-and-present files. washcorner.jpg is the dining-room hand-wash corner and sits in Living, not Bathrooms.",
+  "_note": "Mock fixture for GET /gallery. Seed images ship as static files in the frontend deploy (src/frontend/public/media/, produced by the backend via `clojure -X:export-media`), so url/thumbnailUrl are CDN-relative \"/media/...\" and are NOT proxied through the backend; admin uploads would be \"/api/media/...\". 25 images / 7 categories (no Workspace), lead = front-yard. washcorner.jpg is the dining-room hand-wash corner (Living). NOTE: seed extension scheme is the backend teammates to finalise — the exporter normalises every file to .jpg; kigali.seed/seed-gallery! currently stores the raw basename (so the two Sorento .jpeg sources would be sorento*.jpeg in GET /gallery). This fixture follows the exporter (.jpg for all).",
   "leadImageId": "img_ext_frontyard",
   "images": [
-    { "id": "img_ext_frontyard", "url": "/api/media/photos/exterior-and-grounds/front-yard.jpg", "thumbnailUrl": "/api/media/photos/exterior-and-grounds/front-yard.jpg", "alt": "The duplex seen from the front yard, a two-storey house behind a low garden wall", "caption": "The house from the front yard", "category": "Exterior & grounds", "width": 2048, "height": 1365, "position": 1 },
-    { "id": "img_ext_frontyard2", "url": "/api/media/photos/exterior-and-grounds/front-yard2.jpg", "thumbnailUrl": "/api/media/photos/exterior-and-grounds/front-yard2.jpg", "alt": "Front of the duplex from the side of the yard, showing the upper balcony and planted borders", "caption": "Front yard and upper balcony", "category": "Exterior & grounds", "width": 2048, "height": 3072, "position": 2 },
-    { "id": "img_ext_frontyard3", "url": "/api/media/photos/exterior-and-grounds/fonrt-yard3.jpg", "thumbnailUrl": "/api/media/photos/exterior-and-grounds/fonrt-yard3.jpg", "alt": "Full-height view of the house frontage with the driveway and gate", "caption": "Frontage, driveway and gate", "category": "Exterior & grounds", "width": 2048, "height": 3072, "position": 3 },
-    { "id": "img_ext_backyard", "url": "/api/media/photos/exterior-and-grounds/backyard.jpg", "thumbnailUrl": "/api/media/photos/exterior-and-grounds/backyard.jpg", "alt": "The back yard with a paved area and planted terrace behind the house", "caption": "The back yard and planted terrace", "category": "Exterior & grounds", "width": 2048, "height": 3072, "position": 4 },
-
-    { "id": "img_liv_sitting1", "url": "/api/media/photos/living/sitting-room1.jpg", "thumbnailUrl": "/api/media/photos/living/sitting-room1.jpg", "alt": "Sitting room with a sofa, armchairs and a coffee table on a patterned rug", "caption": "The sitting room", "category": "Living", "width": 2048, "height": 1365, "position": 5 },
-    { "id": "img_liv_sitting2", "url": "/api/media/photos/living/sitting-room2.jpg", "thumbnailUrl": "/api/media/photos/living/sitting-room2.jpg", "alt": "Sitting room from the opposite corner, looking towards the windows", "caption": "Sitting room, towards the windows", "category": "Living", "width": 2048, "height": 1365, "position": 6 },
-    { "id": "img_liv_sitting3", "url": "/api/media/photos/living/sitting-room3.jpg", "thumbnailUrl": "/api/media/photos/living/sitting-room3.jpg", "alt": "Wider view of the sitting room showing the TV and the route through to the dining area", "caption": "Sitting room and the way through to the dining area", "category": "Living", "width": 2048, "height": 1365, "position": 7 },
-    { "id": "img_liv_dining", "url": "/api/media/photos/dining/dinning.jpg", "thumbnailUrl": "/api/media/photos/dining/dinning.jpg", "alt": "Dining table set for four beside the kitchen, which also serves as a work desk", "caption": "The dining area — the table seats four and doubles as a desk", "category": "Living", "width": 2048, "height": 1583, "position": 8 },
-    { "id": "img_liv_washcorner", "url": "/api/media/photos/dining/washcorner.jpg", "thumbnailUrl": "/api/media/photos/dining/washcorner.jpg", "alt": "Hand-wash corner in the dining room with a basin and mirror", "caption": "Hand-wash corner off the dining area", "category": "Living", "width": 2048, "height": 3072, "position": 9 },
-
-    { "id": "img_kit_1", "url": "/api/media/photos/kitchen/kitchen1.jpg", "thumbnailUrl": "/api/media/photos/kitchen/kitchen1.jpg", "alt": "Kitchen with fitted units, a gas hob and an oven", "caption": "The kitchen", "category": "Kitchen", "width": 2048, "height": 1365, "position": 10 },
-    { "id": "img_kit_2", "url": "/api/media/photos/kitchen/kitchen2.jpg", "thumbnailUrl": "/api/media/photos/kitchen/kitchen2.jpg", "alt": "Kitchen from the other end, showing the fridge and worktop space", "caption": "Kitchen — fridge and worktop", "category": "Kitchen", "width": 2048, "height": 1365, "position": 11 },
-
-    { "id": "img_bd1_1", "url": "/api/media/photos/bedroom-1/master-bedroom1.jpg", "thumbnailUrl": "/api/media/photos/bedroom-1/master-bedroom1.jpg", "alt": "Primary bedroom with a king bed and bedside lamps", "caption": "Primary bedroom — king bed", "category": "Bedroom 1", "width": 2048, "height": 1365, "position": 12 },
-    { "id": "img_bd1_2", "url": "/api/media/photos/bedroom-1/master-bedroom2.jpg", "thumbnailUrl": "/api/media/photos/bedroom-1/master-bedroom2.jpg", "alt": "Primary bedroom from the window side, showing the wardrobe", "caption": "Primary bedroom and wardrobe", "category": "Bedroom 1", "width": 2048, "height": 1365, "position": 13 },
-    { "id": "img_bd1_3", "url": "/api/media/photos/bedroom-1/master-bedroom3.jpg", "thumbnailUrl": "/api/media/photos/bedroom-1/master-bedroom3.jpg", "alt": "Full-height view of the primary bedroom with natural light from the window", "caption": "Primary bedroom", "category": "Bedroom 1", "width": 2048, "height": 3072, "position": 14 },
-    { "id": "img_bd1_4", "url": "/api/media/photos/bedroom-1/master-bedroom4.jpg", "thumbnailUrl": "/api/media/photos/bedroom-1/master-bedroom4.jpg", "alt": "Primary bedroom detail with the headboard and bedding", "caption": "Primary bedroom detail", "category": "Bedroom 1", "width": 2048, "height": 1365, "position": 15 },
-
-    { "id": "img_bd2_1", "url": "/api/media/photos/bedroom-2/second-bedroom1.jpg", "thumbnailUrl": "/api/media/photos/bedroom-2/second-bedroom1.jpg", "alt": "Second bedroom with a queen bed and a window", "caption": "Second bedroom — queen bed", "category": "Bedroom 2", "width": 2048, "height": 1365, "position": 16 },
-    { "id": "img_bd2_2", "url": "/api/media/photos/bedroom-2/second-bedroom2.jpg", "thumbnailUrl": "/api/media/photos/bedroom-2/second-bedroom2.jpg", "alt": "Second bedroom from the doorway, showing the full room", "caption": "Second bedroom", "category": "Bedroom 2", "width": 2048, "height": 2560, "position": 17 },
-    { "id": "img_bd2_3", "url": "/api/media/photos/bedroom-2/second-bedroom3.jpg", "thumbnailUrl": "/api/media/photos/bedroom-2/second-bedroom3.jpg", "alt": "Second bedroom detail with the bedside table", "caption": "Second bedroom detail", "category": "Bedroom 2", "width": 2048, "height": 1365, "position": 18 },
-
-    { "id": "img_bath_master1", "url": "/api/media/photos/bathrooms/masster-bathroom1.jpg", "thumbnailUrl": "/api/media/photos/bathrooms/masster-bathroom1.jpg", "alt": "En-suite bathroom with a walk-in shower and vanity", "caption": "En-suite bathroom", "category": "Bathrooms", "width": 2048, "height": 3072, "position": 19 },
-    { "id": "img_bath_master2", "url": "/api/media/photos/bathrooms/master-bathroom2.jpg", "thumbnailUrl": "/api/media/photos/bathrooms/master-bathroom2.jpg", "alt": "En-suite bathroom showing the shower enclosure", "caption": "En-suite shower", "category": "Bathrooms", "width": 2048, "height": 3072, "position": 20 },
-    { "id": "img_bath_master3", "url": "/api/media/photos/bathrooms/master-bathroom3.jpg", "thumbnailUrl": "/api/media/photos/bathrooms/master-bathroom3.jpg", "alt": "En-suite bathroom vanity with mirror and basin", "caption": "En-suite vanity", "category": "Bathrooms", "width": 2048, "height": 1365, "position": 21 },
-    { "id": "img_bath_second1", "url": "/api/media/photos/bathrooms/secondary-bathroom1.jpg", "thumbnailUrl": "/api/media/photos/bathrooms/secondary-bathroom1.jpg", "alt": "Second bathroom with a shower over the bath", "caption": "Second bathroom", "category": "Bathrooms", "width": 2048, "height": 3072, "position": 22 },
-    { "id": "img_bath_second2", "url": "/api/media/photos/bathrooms/secondaty-bathroom2.jpg", "thumbnailUrl": "/api/media/photos/bathrooms/secondaty-bathroom2.jpg", "alt": "Second bathroom from the doorway, showing the basin and toilet", "caption": "Second bathroom", "category": "Bathrooms", "width": 2048, "height": 3072, "position": 23 },
-
-    { "id": "img_car_ext", "url": "/api/media/photos/the-car/sorento1.jpeg", "thumbnailUrl": "/api/media/photos/the-car/sorento1.jpeg", "alt": "The Kia Sorento parked on the property, three-quarter front view", "caption": "The Kia Sorento, kept on the premises", "category": "The car", "width": 1280, "height": 720, "position": 24 },
-    { "id": "img_car_int", "url": "/api/media/photos/the-car/sorento2.jpeg", "thumbnailUrl": "/api/media/photos/the-car/sorento2.jpeg", "alt": "Interior of the Kia Sorento showing the dashboard and front seats", "caption": "Inside the Sorento — automatic, seven seats", "category": "The car", "width": 1280, "height": 720, "position": 25 }
+    {
+      "id": "img_ext_frontyard",
+      "url": "/media/gallery/front-yard.jpg",
+      "thumbnailUrl": "/media/gallery/front-yard_thumb.jpg",
+      "alt": "The duplex seen from the front yard, a two-storey house behind a low garden wall",
+      "caption": "The house from the front yard",
+      "category": "Exterior & grounds",
+      "width": 2000,
+      "height": 1333,
+      "position": 1
+    },
+    {
+      "id": "img_ext_frontyard2",
+      "url": "/media/gallery/front-yard2.jpg",
+      "thumbnailUrl": "/media/gallery/front-yard2_thumb.jpg",
+      "alt": "Front of the duplex from the side of the yard, showing the upper balcony and planted borders",
+      "caption": "Front yard and upper balcony",
+      "category": "Exterior & grounds",
+      "width": 1333,
+      "height": 2000,
+      "position": 2
+    },
+    {
+      "id": "img_ext_frontyard3",
+      "url": "/media/gallery/fonrt-yard3.jpg",
+      "thumbnailUrl": "/media/gallery/fonrt-yard3_thumb.jpg",
+      "alt": "Full-height view of the house frontage with the driveway and gate",
+      "caption": "Frontage, driveway and gate",
+      "category": "Exterior & grounds",
+      "width": 1333,
+      "height": 2000,
+      "position": 3
+    },
+    {
+      "id": "img_ext_backyard",
+      "url": "/media/gallery/backyard.jpg",
+      "thumbnailUrl": "/media/gallery/backyard_thumb.jpg",
+      "alt": "The back yard with a paved area and planted terrace behind the house",
+      "caption": "The back yard and planted terrace",
+      "category": "Exterior & grounds",
+      "width": 1333,
+      "height": 2000,
+      "position": 4
+    },
+    {
+      "id": "img_liv_sitting1",
+      "url": "/media/gallery/sitting-room1.jpg",
+      "thumbnailUrl": "/media/gallery/sitting-room1_thumb.jpg",
+      "alt": "Sitting room with a sofa, armchairs and a coffee table on a patterned rug",
+      "caption": "The sitting room",
+      "category": "Living",
+      "width": 2000,
+      "height": 1333,
+      "position": 5
+    },
+    {
+      "id": "img_liv_sitting2",
+      "url": "/media/gallery/sitting-room2.jpg",
+      "thumbnailUrl": "/media/gallery/sitting-room2_thumb.jpg",
+      "alt": "Sitting room from the opposite corner, looking towards the windows",
+      "caption": "Sitting room, towards the windows",
+      "category": "Living",
+      "width": 2000,
+      "height": 1333,
+      "position": 6
+    },
+    {
+      "id": "img_liv_sitting3",
+      "url": "/media/gallery/sitting-room3.jpg",
+      "thumbnailUrl": "/media/gallery/sitting-room3_thumb.jpg",
+      "alt": "Wider view of the sitting room showing the TV and the route through to the dining area",
+      "caption": "Sitting room and the way through to the dining area",
+      "category": "Living",
+      "width": 2000,
+      "height": 1333,
+      "position": 7
+    },
+    {
+      "id": "img_liv_dining",
+      "url": "/media/gallery/dinning.jpg",
+      "thumbnailUrl": "/media/gallery/dinning_thumb.jpg",
+      "alt": "Dining table set for four beside the kitchen, which also serves as a work desk",
+      "caption": "The dining area — the table seats four and doubles as a desk",
+      "category": "Living",
+      "width": 2000,
+      "height": 1546,
+      "position": 8
+    },
+    {
+      "id": "img_liv_washcorner",
+      "url": "/media/gallery/washcorner.jpg",
+      "thumbnailUrl": "/media/gallery/washcorner_thumb.jpg",
+      "alt": "Hand-wash corner in the dining room with a basin and mirror",
+      "caption": "Hand-wash corner off the dining area",
+      "category": "Living",
+      "width": 1333,
+      "height": 2000,
+      "position": 9
+    },
+    {
+      "id": "img_kit_1",
+      "url": "/media/gallery/kitchen1.jpg",
+      "thumbnailUrl": "/media/gallery/kitchen1_thumb.jpg",
+      "alt": "Kitchen with fitted units, a gas hob and an oven",
+      "caption": "The kitchen",
+      "category": "Kitchen",
+      "width": 2000,
+      "height": 1333,
+      "position": 10
+    },
+    {
+      "id": "img_kit_2",
+      "url": "/media/gallery/kitchen2.jpg",
+      "thumbnailUrl": "/media/gallery/kitchen2_thumb.jpg",
+      "alt": "Kitchen from the other end, showing the fridge and worktop space",
+      "caption": "Kitchen — fridge and worktop",
+      "category": "Kitchen",
+      "width": 2000,
+      "height": 1333,
+      "position": 11
+    },
+    {
+      "id": "img_bd1_1",
+      "url": "/media/gallery/master-bedroom1.jpg",
+      "thumbnailUrl": "/media/gallery/master-bedroom1_thumb.jpg",
+      "alt": "Primary bedroom with a king bed and bedside lamps",
+      "caption": "Primary bedroom — king bed",
+      "category": "Bedroom 1",
+      "width": 2000,
+      "height": 1333,
+      "position": 12
+    },
+    {
+      "id": "img_bd1_2",
+      "url": "/media/gallery/master-bedroom2.jpg",
+      "thumbnailUrl": "/media/gallery/master-bedroom2_thumb.jpg",
+      "alt": "Primary bedroom from the window side, showing the wardrobe",
+      "caption": "Primary bedroom and wardrobe",
+      "category": "Bedroom 1",
+      "width": 2000,
+      "height": 1333,
+      "position": 13
+    },
+    {
+      "id": "img_bd1_3",
+      "url": "/media/gallery/master-bedroom3.jpg",
+      "thumbnailUrl": "/media/gallery/master-bedroom3_thumb.jpg",
+      "alt": "Full-height view of the primary bedroom with natural light from the window",
+      "caption": "Primary bedroom",
+      "category": "Bedroom 1",
+      "width": 1333,
+      "height": 2000,
+      "position": 14
+    },
+    {
+      "id": "img_bd1_4",
+      "url": "/media/gallery/master-bedroom4.jpg",
+      "thumbnailUrl": "/media/gallery/master-bedroom4_thumb.jpg",
+      "alt": "Primary bedroom detail with the headboard and bedding",
+      "caption": "Primary bedroom detail",
+      "category": "Bedroom 1",
+      "width": 2000,
+      "height": 1333,
+      "position": 15
+    },
+    {
+      "id": "img_bd2_1",
+      "url": "/media/gallery/second-bedroom1.jpg",
+      "thumbnailUrl": "/media/gallery/second-bedroom1_thumb.jpg",
+      "alt": "Second bedroom with a queen bed and a window",
+      "caption": "Second bedroom — queen bed",
+      "category": "Bedroom 2",
+      "width": 2000,
+      "height": 1333,
+      "position": 16
+    },
+    {
+      "id": "img_bd2_2",
+      "url": "/media/gallery/second-bedroom2.jpg",
+      "thumbnailUrl": "/media/gallery/second-bedroom2_thumb.jpg",
+      "alt": "Second bedroom from the doorway, showing the full room",
+      "caption": "Second bedroom",
+      "category": "Bedroom 2",
+      "width": 1600,
+      "height": 2000,
+      "position": 17
+    },
+    {
+      "id": "img_bd2_3",
+      "url": "/media/gallery/second-bedroom3.jpg",
+      "thumbnailUrl": "/media/gallery/second-bedroom3_thumb.jpg",
+      "alt": "Second bedroom detail with the bedside table",
+      "caption": "Second bedroom detail",
+      "category": "Bedroom 2",
+      "width": 2000,
+      "height": 1333,
+      "position": 18
+    },
+    {
+      "id": "img_bath_master1",
+      "url": "/media/gallery/masster-bathroom1.jpg",
+      "thumbnailUrl": "/media/gallery/masster-bathroom1_thumb.jpg",
+      "alt": "En-suite bathroom with a walk-in shower and vanity",
+      "caption": "En-suite bathroom",
+      "category": "Bathrooms",
+      "width": 1333,
+      "height": 2000,
+      "position": 19
+    },
+    {
+      "id": "img_bath_master2",
+      "url": "/media/gallery/master-bathroom2.jpg",
+      "thumbnailUrl": "/media/gallery/master-bathroom2_thumb.jpg",
+      "alt": "En-suite bathroom showing the shower enclosure",
+      "caption": "En-suite shower",
+      "category": "Bathrooms",
+      "width": 1333,
+      "height": 2000,
+      "position": 20
+    },
+    {
+      "id": "img_bath_master3",
+      "url": "/media/gallery/master-bathroom3.jpg",
+      "thumbnailUrl": "/media/gallery/master-bathroom3_thumb.jpg",
+      "alt": "En-suite bathroom vanity with mirror and basin",
+      "caption": "En-suite vanity",
+      "category": "Bathrooms",
+      "width": 2000,
+      "height": 1333,
+      "position": 21
+    },
+    {
+      "id": "img_bath_second1",
+      "url": "/media/gallery/secondary-bathroom1.jpg",
+      "thumbnailUrl": "/media/gallery/secondary-bathroom1_thumb.jpg",
+      "alt": "Second bathroom with a shower over the bath",
+      "caption": "Second bathroom",
+      "category": "Bathrooms",
+      "width": 1333,
+      "height": 2000,
+      "position": 22
+    },
+    {
+      "id": "img_bath_second2",
+      "url": "/media/gallery/secondaty-bathroom2.jpg",
+      "thumbnailUrl": "/media/gallery/secondaty-bathroom2_thumb.jpg",
+      "alt": "Second bathroom from the doorway, showing the basin and toilet",
+      "caption": "Second bathroom",
+      "category": "Bathrooms",
+      "width": 1333,
+      "height": 2000,
+      "position": 23
+    },
+    {
+      "id": "img_car_ext",
+      "url": "/media/gallery/sorento1.jpg",
+      "thumbnailUrl": "/media/gallery/sorento1_thumb.jpg",
+      "alt": "The Kia Sorento parked on the property, three-quarter front view",
+      "caption": "The Kia Sorento, kept on the premises",
+      "category": "The car",
+      "width": 1280,
+      "height": 720,
+      "position": 24
+    },
+    {
+      "id": "img_car_int",
+      "url": "/media/gallery/sorento2.jpg",
+      "thumbnailUrl": "/media/gallery/sorento2_thumb.jpg",
+      "alt": "Interior of the Kia Sorento showing the dashboard and front seats",
+      "caption": "Inside the Sorento — automatic, seven seats",
+      "category": "The car",
+      "width": 1280,
+      "height": 720,
+      "position": 25
+    }
   ]
 }

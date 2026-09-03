@@ -45,6 +45,15 @@ PY
 echo "== prod _redirects /api rule =="
 grep '/api/' "$DIST/_redirects"
 
+# Point the <link rel="preconnect"> / <link rel="dns-prefetch"> in every HTML
+# head at the production backend origin (committed value is the staging origin,
+# to match the committed _redirects). Same idea as the /api/* rewrite above.
+STAGING_ORIGIN="https://kigali-keys-staging.fly.dev"
+find "$DIST" -name '*.html' -type f -exec \
+  sed -i "s#${STAGING_ORIGIN}#${BACKEND_ORIGIN}#g" {} +
+echo "== prod preconnect origin =="
+grep -rh 'rel="preconnect"' "$DIST"/index.html
+
 MODE=(--dir "$DIST" --site "$NETLIFY_SITE" --no-build --message "production frontend")
 if [ "${1:-}" = "--prod" ]; then
   MODE+=(--prod)

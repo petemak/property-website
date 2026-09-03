@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>That page isn't here — Kigali Keys</title>
   <meta name="robots" content="noindex">
+  <!-- Warm the API origin before the first fetch. Committed value is the staging
+       backend (matches _redirects); scripts/deploy-frontend-prod.sh rewrites it
+       to the production origin, exactly as it does for the /api/* proxy line. -->
+  <link rel="preconnect" href="https://kigali-keys-staging.fly.dev" crossorigin>
+  <link rel="dns-prefetch" href="https://kigali-keys-staging.fly.dev">
   <link rel="stylesheet" href="/assets/fonts/fonts.css">
   <link rel="stylesheet" href="/assets/css/tokens.css">
   <link rel="stylesheet" href="/assets/css/base.css">

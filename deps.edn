@@ -40,6 +40,13 @@
   :dev
   {:extra-paths ["dev" "test/backend"]}
 
+  ;; Re-encodes the seed gallery images + approximate-location map into
+  ;; src/frontend/public/media/ for the frontend to bundle/deploy to its CDN.
+  ;; Same encoder as the backend seeder (kigali.images). See kigali.media-export.
+  :export-media
+  {:exec-fn   kigali.media-export/export!
+   :exec-args {}}
+
   :test
   {:extra-paths ["test/backend"]
    :extra-deps  {io.github.cognitect-labs/test-runner

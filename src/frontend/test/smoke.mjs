@@ -55,6 +55,11 @@ page.on("response", (r) => {
   if (/\/assets\/fonts\/.*\.woff2(\?|$)/.test(r.url())) fontResponses.push({ file: r.url().split("/").pop(), status: r.status() });
 });
 
+// Every request the page makes — used to assert the home first paint stays lean.
+const requests = [];
+page.on("request", (r) => requests.push(r.url()));
+const requestsSince = (mark) => requests.slice(mark);
+
 const PUBLIC_ROUTES = ["/", "/gallery", "/the-car", "/location", "/book", "/book?car=1",
   "/contact", "/terms", "/privacy", "/house-rules", "/cancellation-policy",
   "/vehicle-rental-agreement", "/booking/KK-7F3Q2A", "/no-such-page"];
@@ -293,6 +298,60 @@ try {
     await page.waitForSelector(".lightbox", { state: "visible" });
     const counter = await page.locator(".lightbox__counter").textContent();
     if (!/\d+ \/ \d+/.test(counter)) throw new Error("no counter: " + counter);
+    await page.keyboard.press("Escape");
+  });
+
+  // ---- Performance discipline (engineering-standards "Performance & delivery") ----
+  await check("preconnect to the API origin is present in every public page <head>", async () => {
+    for (const route of ["/", "/gallery", "/book", "/the-car", "/location", "/contact"]) {
+      await page.goto(BASE + route, { waitUntil: "domcontentloaded" });
+      const n = await page.locator('head link[rel="preconnect"][href*="fly.dev"]').count();
+      const dns = await page.locator('head link[rel="dns-prefetch"][href*="fly.dev"]').count();
+      if (!n) throw new Error(`${route}: no <link rel=preconnect> to the backend origin in <head>`);
+      if (!dns) throw new Error(`${route}: no <link rel=dns-prefetch> fallback in <head>`);
+    }
+  });
+
+  await check("Home first paint makes the minimum API calls — no GET /api/availability", async () => {
+    const mark = requests.length;
+    await page.goto(BASE + "/", { waitUntil: "networkidle" });
+    const apiCalls = requestsSince(mark).filter((u) => /\/api\//.test(u)).map((u) => u.replace(BASE, ""));
+    if (apiCalls.some((u) => /\/api\/availability/.test(u))) {
+      throw new Error("home fired GET /api/availability on load (defer it until the date picker opens): " + apiCalls.join(", "));
+    }
+    // property + gallery, nothing heavier. (quote only fires with ?checkIn in the URL.)
+    const unexpected = apiCalls.filter((u) => !/\/api\/(property|gallery)(\?|$)/.test(u));
+    if (unexpected.length) throw new Error("unexpected first-paint API calls on home: " + unexpected.join(", "));
+  });
+
+  await check("Gallery grid <img> use the thumbnail URL and loading=lazy", async () => {
+    await page.goto(BASE + "/gallery", { waitUntil: "networkidle" });
+    await page.waitForSelector(".gallery-justified img");
+    const imgs = await page.locator(".gallery-justified img").evaluateAll((els) =>
+      els.map((el) => ({ src: el.getAttribute("src"), loading: el.getAttribute("loading"), decoding: el.getAttribute("decoding") })));
+    if (imgs.length < 20) throw new Error("expected the full grid, got " + imgs.length);
+    for (const im of imgs) {
+      if (!/_thumb\.jpg(\?|$)/.test(im.src || "")) throw new Error("grid image is not the *_thumb URL: " + im.src);
+      if (im.loading !== "lazy") throw new Error("grid image missing loading=lazy: " + im.src);
+      if (im.decoding !== "async") throw new Error("grid image missing decoding=async: " + im.src);
+    }
+  });
+
+  await check("Lightbox loads the full-size URL (not the thumbnail) on open", async () => {
+    await page.goto(BASE + "/gallery", { waitUntil: "networkidle" });
+    const firstThumbSrc = await page.locator(".gallery-justified img").first().getAttribute("src");
+    const mark = requests.length;
+    await page.locator(".gallery-justified button").first().click();
+    await page.waitForSelector(".lightbox", { state: "visible" });
+    const bigSrc = await page.locator(".lightbox__img img").getAttribute("src");
+    if (/_thumb\.jpg(\?|$)/.test(bigSrc || "")) throw new Error("lightbox is showing the thumbnail, not the full image: " + bigSrc);
+    const stem = (firstThumbSrc || "").split("/").pop().replace(/_thumb\.jpg.*$/, "");
+    if (!bigSrc.includes(stem)) throw new Error(`lightbox image ${bigSrc} is not the full-size of ${firstThumbSrc}`);
+    const full = await page.locator(".lightbox__img img").evaluate((el) => el.complete && el.naturalWidth > 0);
+    if (!full) throw new Error("lightbox full-size image did not load");
+    // neighbour preload: opening image 0 warms image 1's full URL, but not all 25.
+    const fullReqs = requestsSince(mark).filter((u) => /\/media\/gallery\/.*\.(jpe?g)(\?|$)/.test(u) && !/_thumb/.test(u));
+    if (fullReqs.length > 4) throw new Error("lightbox pulled too many full-size images at once (expected current + neighbours): " + fullReqs.length);
     await page.keyboard.press("Escape");
   });
 

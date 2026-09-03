@@ -51,7 +51,11 @@
    :location {:approxLat -1.9300
               :approxLng 30.0930
               :showExactAddress false
-              :staticMapUrl "/api/media/map/approx.png"
+              ;; CDN-relative, served at rest from the frontend deploy (not
+              ;; proxied). See api-contract.md "Media URLs".
+              ;; NB: .jpg, not .png — the source map re-encodes far smaller as a
+              ;; JPEG (flagged to the frontend as a contract tweak).
+              :staticMapUrl "/media/map/approx.jpg"
               :pointsOfInterest [{:name "Kigali International Airport" :minutesByCar 20 :km 11 :category "transport"}
                                  {:name "City centre / CBD" :minutesByCar 15 :km 7 :category "transport"}
                                  {:name "Local supermarket, Kinyinya" :minutesByCar 5 :km 2 :category "amenity"}
@@ -300,48 +304,68 @@
 (defn- stem [name] (str/replace name #"\.[^.]+$" ""))
 
 (defn- place-gallery-file!
-  "Copies a real source photo into the media dir and returns its real
-   {:width :height}. Falls back to a neutral grey placeholder when the source
-   file is absent (should not happen once every category has a photo)."
+  "Re-encodes a real source photo into the media dir as a web-optimised
+   progressive JPEG (within the size budget — never the camera-original) plus a
+   thumbnail, and returns the stored image's {:width :height}. Falls back to a
+   neutral grey placeholder when the source file is absent (should not happen
+   once every category has a photo)."
   [^java.io.File src ^java.io.File full ^java.io.File thumb]
   (io/make-parents full)
   (if (.exists src)
-    (do (io/copy src full)
-        (let [dims (images/dimensions (images/read-image full))]
-          (images/write-thumbnail! full thumb)
-          dims))
+    (let [{:keys [width height]} (images/write-web-image! src full)]
+      (images/write-thumbnail! full thumb)
+      {:width width :height height})
     (do (log/warn "gallery source photo missing, using placeholder" {:src (str src)})
-        (images/write-solid-placeholder! full 2400 1600)
-        (images/write-solid-placeholder! thumb 480 320)
-        {:width 2400 :height 1600})))
+        (images/write-solid-placeholder! full 2000 1333)
+        (images/write-solid-placeholder! thumb 800 533)
+        {:width 2000 :height 1333})))
 
 (defn- seed-gallery! [db media-dir photos-dir]
   (when (empty? (db/q db ["SELECT id FROM gallery_images LIMIT 1"]))
     (doseq [[i [category rel alt caption]] (map-indexed vector gallery-seed)]
-      (let [base (basename rel)
-            thumb-name (str (stem base) "_thumb.jpg")
+      ;; Normalise to <stem>.jpg — every stored gallery image is a JPEG after
+      ;; re-encode, and the frontend bundle (clojure -X:export-media) uses the
+      ;; same names. Keeps the owner's stem (e.g. front-yard, sorento1).
+      (let [base (str (stem (basename rel)) ".jpg")
+            thumb-name (str (stem (basename rel)) "_thumb.jpg")
             src (io/file photos-dir rel)
             full (io/file media-dir "gallery" base)
             thumb (io/file media-dir "gallery" thumb-name)
             {:keys [width height]} (place-gallery-file! src full thumb)]
         (db/exec! db
                   ["INSERT INTO gallery_images
-                    (id, filename, thumb_filename, alt, caption, category, width, height, position, is_lead, created_at)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+                    (id, filename, thumb_filename, alt, caption, category, width, height, position, is_lead, origin, created_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
                    (util/short-id "img") base thumb-name
-                   alt caption category width height (inc i) (if (zero? i) 1 0) (util/now-iso)])))))
+                   alt caption category width height (inc i) (if (zero? i) 1 0)
+                   "seed" (util/now-iso)])))))
 
 (defn- seed-map!
-  "Publishes only the approximate-location map at /api/media/map/approx.png.
+  "Publishes only the approximate-location map as an optimised map/approx.jpg.
    The exact-location image is deliberately never copied into the media dir."
   [media-dir photos-dir]
-  (let [dest (io/file media-dir "map" "approx.png")
+  (let [dest (io/file media-dir "map" "approx.jpg")
         src (io/file photos-dir "location-map/approximate-location.png")]
     (when-not (.exists dest)
       (io/make-parents dest)
       (if (.exists src)
-        (io/copy src dest)
+        (images/write-web-image! src dest 1200 120000)
         (images/write-solid-placeholder! dest 640 400)))))
+
+(def ^:private stale-map-urls
+  #{"/api/media/map/approx.png" "/media/map/approx.png"})
+
+(defn- normalize-property-media!
+  "Idempotent fix-up for already-seeded deployments: the public map URL moved to
+   the CDN-relative /media/... path and to a .jpg (api-contract.md 'Media
+   URLs'). Rewrite a known stale value in place; leave an owner-customised value
+   alone."
+  [db]
+  (when-let [prop (some-> (db/q1 db ["SELECT data FROM content_documents WHERE doc_key = 'property'"])
+                          :data util/<-json)]
+    (when (stale-map-urls (get-in prop [:location :staticMapUrl]))
+      (db/exec! db ["UPDATE content_documents SET data = ? WHERE doc_key = 'property'"
+                    (util/->json (assoc-in prop [:location :staticMapUrl] "/media/map/approx.jpg"))]))))
 
 (defn- seed-owner! [db {:keys [admin-email admin-password admin-name]}]
   (when (and admin-password (seq admin-password))
@@ -357,6 +381,7 @@
   component/Lifecycle
   (start [this]
     (put-content! db "property" property-content)
+    (normalize-property-media! db)
     (put-content! db "pricing" pricing)
     (put-content! db "vehicle" vehicle)
     (put-content! db "settings" settings)

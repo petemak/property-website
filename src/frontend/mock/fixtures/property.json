@@ -64,7 +64,7 @@
     "approxLat": -1.9833,
     "approxLng": 30.1028,
     "showExactAddress": false,
-    "staticMapUrl": "/api/media/map/approx.png",
+    "staticMapUrl": "/media/map/approx.jpg",
     "pointsOfInterest": [
       { "name": "Kigali International Airport", "minutesByCar": 20, "km": 12, "category": "transport" },
       { "name": "City centre / CBD", "minutesByCar": 12, "km": 6, "category": "transport" },

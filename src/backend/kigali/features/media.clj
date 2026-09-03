@@ -16,9 +16,10 @@
       (respond/error :notFound "Not found.")
       (let [f (io/file root rel)]
         (if (and (.exists f) (.isFile f))
+          ;; Cache-Control for /api/media/* is set centrally in
+          ;; kigali.middleware/wrap-cache-control (public, immutable, 1y).
           {:status 200
-           :headers {"Content-Type" (or (mime/ext-mime-type (.getName f)) "application/octet-stream")
-                     "Cache-Control" "public, max-age=300"}
+           :headers {"Content-Type" (or (mime/ext-mime-type (.getName f)) "application/octet-stream")}
            :body f}
           (respond/error :notFound "Not found."))))))
 

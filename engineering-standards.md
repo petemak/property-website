@@ -43,9 +43,40 @@
 - Structured error logging with real context, not scattered
   print statements
 
+## Performance & delivery
+- Static assets (HTML, CSS, JS, fonts, images) are served from
+  the CDN edge, never proxied through the application origin.
+  The backend serves JSON and does data work; it is not an
+  image server for public traffic.
+- Every image has a size budget: hero/full-view <= ~300 KB,
+  gallery/thumbnail <= ~60 KB, at a sensible max dimension
+  (~2000px full, ~800px thumb). Re-encode on ingest (seed and
+  admin upload) — never ship a camera-original straight to the
+  page. Grids use the thumbnail; the full-size image loads only
+  on demand (lightbox). Below-the-fold images are lazy-loaded.
+- Read-only GET endpoints whose data changes rarely
+  (property/content, gallery, vehicle, legal documents) send
+  Cache-Control so the CDN edge caches them (public, max-age in
+  minutes, plus stale-while-revalidate). The frontend must
+  tolerate slightly stale reads for these. Availability/quote
+  get a short max-age; anything user-specific or mutating is
+  no-store.
+- Verify caching actually happens after deploy (edge cache hit,
+  not fwd=miss) — a Cache-Control header the CDN ignores is not
+  a cache.
+- The homepage's first paint makes the minimum set of API calls;
+  no fetching large ranges or full collections that aren't shown
+  yet. Add rel=preconnect to the API origin.
+- A single-region backend is fine to launch on, but the target
+  audience is worldwide — treat backend region and (if needed)
+  multi-region read replicas as a known scaling lever, not an
+  afterthought.
+
 ## Non-negotiable vs guideline
 - Non-negotiable: server-side validation and authorization, no
   hardcoded secrets, versioned migrations, idempotent mutations,
-  no micro-frontends
+  no micro-frontends, static assets served from the CDN (not
+  proxied through the origin), per-image size budgets
 - Guideline, may deviate with a stated reason: vertical-slice
-  folder structure, the specific error shape, the date format
+  folder structure, the specific error shape, the date format,
+  the exact Cache-Control durations

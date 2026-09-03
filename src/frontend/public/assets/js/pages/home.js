@@ -10,9 +10,16 @@ import { priceBreakdown } from "../components/price-breakdown.js";
 import { accordion } from "../components/accordion.js";
 import { openLightbox } from "../components/lightbox.js";
 import { bookingCopy } from "../lib/config.js";
-import { money, minutesToText, isoDate, addDays } from "../lib/format.js";
+import { money, minutesToText } from "../lib/format.js";
 
 const root = $("#home-root");
+
+// First paint calls the minimum: GET /property + GET /gallery. No GET /availability
+// here — the home hero widget uses native <input type=date>; the real calendar
+// (which needs the unavailable-nights list) only loads on /book. Kick the gallery
+// fetch off immediately, in parallel with /property, so the LCP hero image URL is
+// known as early as possible rather than after a serial round-trip.
+const galleryPromise = api.getGallery().catch(() => ({ images: [] }));
 
 (async function () {
   const { property } = await initPublicPage({ transparentHeader: true });
@@ -23,10 +30,7 @@ const root = $("#home-root");
   const copy = bookingCopy(property.bookingMode);
   const currency = property.pricing?.currency || "USD";
 
-  const [gallery, availability] = await Promise.all([
-    api.getGallery().catch(() => ({ images: [] })),
-    api.getAvailability(isoDate(new Date()), addDays(isoDate(new Date()), 365)).catch(() => null),
-  ]);
+  const gallery = await galleryPromise;
 
   const leadImg = gallery.images?.find((i) => i.id === gallery.leadImageId) || gallery.images?.[0];
 
@@ -53,7 +57,10 @@ const root = $("#home-root");
 function hero(property, leadImg, copy) {
   return h("section", { class: "hero" },
     h("div", { class: "hero__media" }, smartImage({
-      url: leadImg?.url, alt: leadImg?.alt || "The Kigali Keys duplex exterior", ratio: "16 / 10", loading: "eager",
+      // LCP element: full-size url (backend compresses the hero to budget),
+      // eager + high priority, explicit dimensions to hold the box.
+      url: leadImg?.url, alt: leadImg?.alt || "The Kigali Keys duplex exterior", ratio: "16 / 10",
+      loading: "eager", fetchpriority: "high", width: leadImg?.width, height: leadImg?.height,
       label: "Lead photo of the house",
     })),
     h("div", { class: "hero__inner container" },
@@ -105,7 +112,7 @@ function theHome(property, gallery) {
     strip.appendChild(h("button", {
       type: "button", "aria-label": `Open photo: ${img.alt || img.caption || "house photo"}`,
       onClick: () => openLightbox(gallery.images, i),
-    }, smartImage({ url: img.thumbnailUrl || img.url, alt: img.alt || "", ratio: "4 / 3" })));
+    }, smartImage({ url: img.thumbnailUrl || img.url, alt: img.alt || "", ratio: "4 / 3", width: img.width, height: img.height })));
   });
 
   return h("section", { class: "section", "aria-labelledby": "home-h" },
@@ -174,7 +181,7 @@ function carTeaser(property, gallery) {
   const carImg = (gallery?.images || []).find((i) => i.category === "The car");
   return h("section", { class: "section", "aria-labelledby": "car-h" },
     h("div", { class: "container split" },
-      h("div", {}, smartImage({ url: carImg?.url, alt: carImg?.alt || "The Kia Sorento parked at the property", ratio: "4 / 3", label: "The Kia Sorento" })),
+      h("div", {}, smartImage({ url: carImg?.thumbnailUrl || carImg?.url, alt: carImg?.alt || "The Kia Sorento parked at the property", ratio: "4 / 3", label: "The Kia Sorento", width: carImg?.width, height: carImg?.height })),
       h("div", {},
         h("h2", { id: "car-h" }, "The car"),
         h("p", {}, `A Kia Sorento SUV is kept on the premises. Add it to your stay for ${rate} a day and collect the keys at the house — no separate hire company, no airport queue.`),

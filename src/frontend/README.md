@@ -25,7 +25,9 @@ patched.
 |---|---|---|
 | `playwright` (`playwright-core`) | **dev / test only** | Drives real Chromium for `test/smoke.mjs`, which click-tests the rendered pages and walks all four user journeys. Not shipped. Already present in the machine's npx cache; `package.json` pins it for reproducibility. |
 
-Runtime dependencies: **none.**
+Runtime dependencies: **none.** No new libraries or frameworks were added for
+the performance work (seed-image optimisation is the backend's `:export-media`
+task, not a frontend dependency).
 
 ## Layout
 
@@ -86,6 +88,12 @@ block dates, publish a new agreement version); owner-only Users page; the
 accept-invite page; and a "no uncaught page errors" assertion across the whole
 run.
 
+Performance checks: `preconnect`/`dns-prefetch` to the API origin in every
+public `<head>`; the home first paint makes only `GET /property` + `GET
+/gallery` and never `GET /api/availability`; gallery-grid `<img>` use the
+`*_thumb` URL with `loading="lazy"` + `decoding="async"`; the lightbox loads the
+full-size URL on open and warms only the neighbours, not all 25.
+
 ## How the v1 / v2 seams are wired (all data, no `if`-forests)
 
 - **Stepper** renders from `WIZARD_STEPS` in `lib/config.js`. `stepsFor(bookingMode)`
@@ -119,16 +127,76 @@ run.
 
 ## Photos
 
-Owner-supplied photos live in the repo at `assets/property-photos/` and are
-mapped per `assets/property-photos/MAPPING.md`. The mock (`dev-server.mjs`)
-serves them under `/api/media/photos/<category>/<file>` and the approximate map
-at `/api/media/map/approx.png`; production backend serves the same photos under
-its own `/api/media/...` paths (the frontend only ever uses the `url` values
-`GET /gallery` returns). `location-map/exact-location.png` is never served — the
-mock explicitly falls back to a placeholder for it. Any category with no photo
+Owner-supplied originals live in the repo at `assets/property-photos/` (700 KB –
+1.4 MB each) and are mapped per `assets/property-photos/MAPPING.md`. Those
+originals are **not** part of the frontend deploy.
+
+### Seed media bundle — committed, served from the CDN edge
+
+`src/frontend/public/media/` **is committed** (unlike the gitignored runtime
+`/media/` tree the backend seeder writes). It holds the web-optimised seed
+images that ship as static files in the frontend deploy, so Netlify serves them
+from the edge at rest and they are never proxied through the Fly backend:
+
+```
+public/media/gallery/<stem>.jpg        full  — longest edge ~2000px, <= 300 KB
+public/media/gallery/<stem>_thumb.jpg  thumb — longest edge  ~800px, <=  60 KB
+public/media/map/approx.jpg            approximate-location map (re-encoded)
+```
+
+25 gallery photos (50 files) + 1 map ≈ **8 MB**. These are produced by the
+**backend** with `clojure -X:export-media` (`src/backend/kigali/media_export.clj`),
+which re-encodes `assets/property-photos/` with the same encoder the seeder uses
+(`kigali.images`), so the bytes match what `GET /gallery` describes. Do **not**
+add a second generator on the frontend side.
+
+`GET /gallery` returns these as `/media/...` URLs; admin-uploaded images stay on
+`/api/media/...` (proxied). **The frontend renders whatever `url` /
+`thumbnailUrl` / `staticMapUrl` the API returns — no hardcoded image paths, and
+a mix of `/media/...` and `/api/media/...` is expected.**
+
+> **Open coordination point with the backend:** the exporter normalises every
+> filename to `.jpg`, but `kigali.seed/seed-gallery!` stores the raw source
+> basename in `gallery_images.filename` — so the two `the-car/sorento*.jpeg`
+> sources would come back from `GET /gallery` as `…/sorento1.jpeg` while the
+> exported file on disk is `sorento1.jpg`. Exporter and seeder must agree on the
+> extension (normalise both to `.jpg`, or keep `.jpeg` in both). The mock fixture
+> currently follows the exporter (`.jpg` for all 25).
+
+The mock `dev-server.mjs` serves `public/media/...` directly (static), and still
+answers `/api/media/photos/...` and any unknown `/api/media/...` with a
+brand-palette placeholder SVG (as `smartImage()` does client-side on a 404).
+`location-map/exact-location.png` is never published. Any category with no photo
 (currently **Workspace** — no desk installed yet) renders no tile; the category
-stays in the API enum. `smartImage()` still falls back to a brand-palette SVG if
-a URL 404s.
+stays in the API enum.
+
+### Loading discipline
+
+- Grid / preview-strip / card thumbnails use `thumbnailUrl`, `loading="lazy"`,
+  `decoding="async"`, and carry explicit `width`/`height` (plus a CSS
+  `aspect-ratio` box) so there is no layout shift.
+- The full-size `url` is fetched **only** when the lightbox opens for that image;
+  the lightbox warms just the immediate prev/next neighbours, not the whole set.
+- The hero is the LCP element: full-size `url`, `loading="eager"`,
+  `fetchpriority="high"`, and its `GET /gallery` fetch is kicked off in parallel
+  with `GET /property` rather than after it.
+
+## API origin preconnect
+
+Every page `<head>` carries `<link rel="preconnect" ... crossorigin>` +
+`<link rel="dns-prefetch">` to the backend origin so the first `/api` call
+doesn't pay full connection setup. The committed value is the **staging** origin
+(matches the committed `_redirects`); `scripts/deploy-frontend-prod.sh` rewrites
+it to the production origin in the deployed copy, exactly as it does the `/api/*`
+proxy line.
+
+## Cache-staleness tolerance
+
+`/property`, `/gallery`, `/vehicle`, `/documents/*` are `max-age=300,
+stale-while-revalidate=86400`; `/availability` is short. The frontend re-fetches
+on each page load and never assumes a just-made admin change is instantly live
+on the public site — treat a few minutes' staleness on the cacheable set as
+normal.
 
 ## Webfonts
 

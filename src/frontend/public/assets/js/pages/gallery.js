@@ -46,7 +46,7 @@ const root = $("#gallery-root");
                   h("button", {
                     type: "button", "aria-label": `Open photo ${globalIndex + 1} of ${images.length}: ${img.alt || img.caption || cat}`,
                     onClick: (e) => openLightbox(images, globalIndex, e.currentTarget),
-                  }, smartImage({ url: img.thumbnailUrl || img.url, alt: img.alt || "", ratio: "3 / 2" })),
+                  }, smartImage({ url: img.thumbnailUrl || img.url, alt: img.alt || "", ratio: "3 / 2", width: img.width, height: img.height })),
                   img.caption ? h("figcaption", {}, img.caption) : null,
                 );
               })

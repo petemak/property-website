@@ -53,4 +53,5 @@
       muuntaja/wrap-format
       wrap-multipart-params
       wrap-params
-      wrap-cookies))
+      wrap-cookies
+      mw/wrap-cache-control))
