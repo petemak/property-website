@@ -12,8 +12,10 @@
 /assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
-# CSS/JS are not fingerprinted (no build step) — modest edge cache, revalidate.
+# CSS/JS are not fingerprinted (no build step) — short edge cache while the
+# site is being iterated on, so a deploy propagates within ~10 min instead of
+# an hour of stale CSS masking the change. stale-while-revalidate keeps it fast.
 /assets/css/*
-  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Cache-Control: public, max-age=600, stale-while-revalidate=86400
 /assets/js/*
-  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Cache-Control: public, max-age=600, stale-while-revalidate=86400

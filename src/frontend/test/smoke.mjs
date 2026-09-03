@@ -16,8 +16,8 @@ const PW_CANDIDATES = [
   "playwright-core",
   "/home/pjm/.npm/_npx/e41f203b7505f1fb/node_modules/playwright-core",
 ];
-let chromium;
-for (const c of PW_CANDIDATES) { try { ({ chromium } = require(c)); break; } catch {} }
+let chromium, webkit, devices;
+for (const c of PW_CANDIDATES) { try { ({ chromium, webkit, devices } = require(c)); break; } catch {} }
 if (!chromium) { console.error("playwright-core not found — run `npm i` in src/frontend"); process.exit(2); }
 
 const EXE_CANDIDATES = [
@@ -692,6 +692,67 @@ try {
       for (const token of banned) if (src.includes(token)) hits.push(`${file}: "${token.trim()}"`);
     }
     if (hits.length) throw new Error("stale tokens shipped: " + hits.join(", "));
+  });
+
+  // ---- Booking widget on a real mobile engine (device emulation) ----
+  // Chromium desktop renders <input type="date"> as a compact inline control,
+  // so a bare viewport resize never exercises the mobile native form-control
+  // path that overflows the card / renders taller than the <select> on
+  // Android Chrome and iOS Safari. Emulate actual devices instead. WebKit is
+  // an optional Playwright browser; if it isn't installed this check is
+  // reported as skipped rather than failing the suite.
+  const dateWidgetProbe = async (browserType, device, tag) => {
+    const b = await browserType.launch();
+    try {
+      const c = await b.newContext({ ...device });
+      const pg = await c.newPage();
+      await pg.goto(BASE + "/", { waitUntil: "networkidle" });
+      await pg.waitForSelector("#hero-widget .booking-widget input[name=checkIn]");
+      await pg.evaluate(() => {
+        const w = document.querySelector("#hero-widget .booking-widget");
+        for (const [n, v] of [["checkIn", "2026-09-04"], ["checkOut", "2026-09-11"]]) {
+          const el = w.querySelector(`input[name=${n}]`);
+          el.value = v; el.dispatchEvent(new window.Event("change", { bubbles: true }));
+        }
+      });
+      const m = await pg.evaluate(() => {
+        const w = document.querySelector("#hero-widget .booking-widget");
+        const cs = getComputedStyle(w);
+        const wr = w.getBoundingClientRect();
+        const innerRight = wr.right - parseFloat(cs.paddingRight) - parseFloat(cs.borderRightWidth);
+        const ci = w.querySelector("input[name=checkIn]").getBoundingClientRect();
+        const co = w.querySelector("input[name=checkOut]").getBoundingClientRect();
+        const sel = w.querySelector("select[name=guests]").getBoundingClientRect();
+        const de = document.documentElement;
+        return { innerRight, ciRight: ci.right, coRight: co.right, ciH: ci.height, coH: co.height, selH: sel.height, docOverflow: de.scrollWidth - de.clientWidth };
+      });
+      if (m.ciRight > m.innerRight + 1 || m.coRight > m.innerRight + 1)
+        throw new Error(`${tag}: date input overflows the card (in ${(m.ciRight - m.innerRight).toFixed(1)}px / out ${(m.coRight - m.innerRight).toFixed(1)}px past inner right edge)`);
+      if (Math.abs(m.ciH - m.selH) > 3 || Math.abs(m.coH - m.selH) > 3)
+        throw new Error(`${tag}: date input height off from the Guests <select> by >3px (date ${m.ciH.toFixed(1)} vs select ${m.selH.toFixed(1)})`);
+      if (m.docOverflow > 0) throw new Error(`${tag}: horizontal document overflow +${m.docOverflow}px`);
+      await pg.locator("#hero-widget .booking-widget input[name=checkIn]").click(); // picker still opens on tap
+      await c.close();
+    } finally {
+      await b.close();
+    }
+  };
+
+  await check("Booking widget date inputs fit the card + match the Guests select — Android Chrome (Pixel 7 emulation)", async () => {
+    await dateWidgetProbe(chromium, devices["Pixel 7"], "Pixel 7 / Blink");
+  });
+
+  await check("Booking widget date inputs fit the card + match the Guests select — iOS Safari (iPhone 13 / WebKit)", async () => {
+    if (!webkit) { console.log("      (skipped — Playwright webkit browser not installed; run `npx playwright install webkit`)"); return; }
+    try {
+      await dateWidgetProbe(webkit, devices["iPhone 13"], "iPhone 13 / WebKit");
+    } catch (e) {
+      if (/Executable doesn't exist|Host system is missing dependencies|libevent|browserType\.launch/i.test(e.message)) {
+        console.log("      (skipped — webkit present but not runnable on this host: " + e.message.split("\n")[0] + ")");
+        return;
+      }
+      throw e;
+    }
   });
 
   await check("No uncaught page errors across the run", async () => {
