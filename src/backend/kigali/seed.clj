@@ -303,6 +303,14 @@
 (defn- basename [rel] (last (str/split rel #"/")))
 (defn- stem [name] (str/replace name #"\.[^.]+$" ""))
 
+(def ^:private gallery-seed-by-stem
+  ;; source basename stem -> [category rel alt caption]. Lets the media
+  ;; normaliser re-derive a seed row's source photo from its (old- or
+  ;; new-scheme) filename with no schema change — every stem in gallery-seed is
+  ;; unique (front-yard, sorento1, …).
+  (into {} (map (fn [[_ rel :as entry]] [(stem (basename rel)) entry]))
+        gallery-seed))
+
 (defn- place-gallery-file!
   "Re-encodes a real source photo into the media dir as a web-optimised
    progressive JPEG (within the size budget — never the camera-original) plus a
@@ -355,17 +363,109 @@
 (def ^:private stale-map-urls
   #{"/api/media/map/approx.png" "/media/map/approx.png"})
 
+(defn- expected-full-dims
+  "Pixel dimensions images/write-web-image! would produce for src, read from the
+   file header without a full decode. Mirrors images/resize-to-max geometry."
+  [^java.io.File src]
+  (if (.exists src)
+    (let [{:keys [width height]} (images/source-dimensions src)]
+      (images/scaled-dimensions width height images/full-max-edge))
+    {:width 2000 :height 1333})) ;; matches place-gallery-file!'s placeholder branch
+
+(defn- gallery-row-current?
+  "True when a seed row already matches a fresh seed-gallery! +
+   `clojure -X:export-media` result: canonical <stem>.jpg / <stem>_thumb.jpg
+   names, both files present and within the size budget, and width/height equal
+   to the re-encoded full image. Keeps normalisation idempotent — a fresh DB and
+   a second run do no re-encoding and no row churn."
+  [row media-dir photos-dir]
+  (let [st (stem (:filename row))
+        [_ rel] (gallery-seed-by-stem st)]
+    (boolean
+     (and rel
+          (= (:filename row) (str st ".jpg"))
+          (= (:thumb_filename row) (str st "_thumb.jpg"))
+          (let [^java.io.File full  (io/file media-dir "gallery" (:filename row))
+                ^java.io.File thumb (io/file media-dir "gallery" (:thumb_filename row))
+                {ew :width eh :height} (expected-full-dims (io/file photos-dir rel))]
+            (and (.exists full) (.exists thumb)
+                 (<= (.length full) images/full-max-bytes)
+                 (<= (.length thumb) images/thumb-max-bytes)
+                 (= (:width row) ew) (= (:height row) eh)
+                 (let [d (images/source-dimensions full)]
+                   (and d (= (:width d) ew) (= (:height d) eh)))))))))
+
+(defn- normalize-gallery-row!
+  "Re-encodes one seed row's source photo into MEDIA_DIR exactly as
+   seed-gallery! does, renames the row and its files to <stem>.jpg /
+   <stem>_thumb.jpg, deletes the stale old-extension files when the name
+   changed, and refreshes width/height from the re-encoded full image. Returns
+   :renamed, :re-encoded, or nil when the row has no known seed source."
+  [db media-dir photos-dir row]
+  (if-let [[_ rel] (gallery-seed-by-stem (stem (:filename row)))]
+    (let [st        (stem (:filename row))
+          new-base  (str st ".jpg")
+          new-thumb (str st "_thumb.jpg")
+          renamed?  (or (not= (:filename row) new-base)
+                        (not= (:thumb_filename row) new-thumb))
+          src       (io/file photos-dir rel)
+          full      (io/file media-dir "gallery" new-base)
+          thumb     (io/file media-dir "gallery" new-thumb)
+          {:keys [width height]} (place-gallery-file! src full thumb)]
+      (when (not= (:filename row) new-base)
+        (.delete ^java.io.File (io/file media-dir "gallery" (:filename row))))
+      (when (not= (:thumb_filename row) new-thumb)
+        (.delete ^java.io.File (io/file media-dir "gallery" (:thumb_filename row))))
+      (db/exec! db ["UPDATE gallery_images
+                     SET filename = ?, thumb_filename = ?, width = ?, height = ?
+                     WHERE id = ?"
+                    new-base new-thumb width height (:id row)])
+      (if renamed? :renamed :re-encoded))
+    (do (log/warn "gallery seed row has no matching source, left as-is"
+                  {:id (:id row) :filename (:filename row)})
+        nil)))
+
+(defn- normalize-gallery!
+  "Brings every origin='seed' gallery row — the row and the files in MEDIA_DIR —
+   in line with a fresh seed. Rows already in that form are left untouched."
+  [db media-dir photos-dir]
+  (let [rows     (db/q db ["SELECT * FROM gallery_images WHERE origin = 'seed'"])
+        outcomes (doall
+                  (keep (fn [row]
+                          (when-not (gallery-row-current? row media-dir photos-dir)
+                            (normalize-gallery-row! db media-dir photos-dir row)))
+                        rows))]
+    {:re-encoded (count outcomes)
+     :renamed   (count (filter #{:renamed} outcomes))
+     :untouched (- (count rows) (count outcomes))}))
+
 (defn- normalize-property-media!
-  "Idempotent fix-up for already-seeded deployments: the public map URL moved to
-   the CDN-relative /media/... path and to a .jpg (api-contract.md 'Media
-   URLs'). Rewrite a known stale value in place; leave an owner-customised value
-   alone."
-  [db]
-  (when-let [prop (some-> (db/q1 db ["SELECT data FROM content_documents WHERE doc_key = 'property'"])
-                          :data util/<-json)]
-    (when (stale-map-urls (get-in prop [:location :staticMapUrl]))
-      (db/exec! db ["UPDATE content_documents SET data = ? WHERE doc_key = 'property'"
-                    (util/->json (assoc-in prop [:location :staticMapUrl] "/media/map/approx.jpg"))]))))
+  "Idempotent fix-up for already-seeded deployments upgrading to the /media/ CDN
+   scheme (api-contract.md 'Media URLs'):
+     - the public map URL moved to /media/map/approx.jpg (.png -> .jpg); rewrite
+       a known stale value, leave an owner-customised one alone;
+     - every origin='seed' gallery row is re-encoded / renamed so the row and
+       the files in MEDIA_DIR are identical to what a fresh seed-gallery! +
+       `clojure -X:export-media` produce (<stem>.jpg / <stem>_thumb.jpg, within
+       budget, real post-resize width/height).
+   Safe on every boot and against a fresh DB (no-op). Returns a summary map."
+  [db media-dir photos-dir]
+  (let [map-rewritten?
+        (boolean
+         (when-let [prop (some-> (db/q1 db ["SELECT data FROM content_documents WHERE doc_key = 'property'"])
+                                 :data util/<-json)]
+           (when (stale-map-urls (get-in prop [:location :staticMapUrl]))
+             (db/exec! db ["UPDATE content_documents SET data = ? WHERE doc_key = 'property'"
+                           (util/->json (assoc-in prop [:location :staticMapUrl] "/media/map/approx.jpg"))])
+             true)))
+        gallery (normalize-gallery! db media-dir photos-dir)]
+    (log/info "normalize-property-media!"
+              {:map-url-rewritten map-rewritten?
+               :gallery-seed-rows (+ (:re-encoded gallery) (:untouched gallery))
+               :re-encoded (:re-encoded gallery)
+               :renamed (:renamed gallery)
+               :untouched (:untouched gallery)})
+    {:map-url-rewritten map-rewritten? :gallery gallery}))
 
 (defn- seed-owner! [db {:keys [admin-email admin-password admin-name]}]
   (when (and admin-password (seq admin-password))
@@ -381,7 +481,6 @@
   component/Lifecycle
   (start [this]
     (put-content! db "property" property-content)
-    (normalize-property-media! db)
     (put-content! db "pricing" pricing)
     (put-content! db "vehicle" vehicle)
     (put-content! db "settings" settings)
@@ -389,6 +488,7 @@
     (seed-email-templates! db)
     (let [media-dir (get-in config [:media :dir])
           photos-dir (get-in config [:seed :photos-dir])]
+      (normalize-property-media! db media-dir photos-dir)
       (seed-gallery! db media-dir photos-dir)
       (seed-map! media-dir photos-dir))
     (seed-owner! db (:seed config))

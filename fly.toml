@@ -12,6 +12,19 @@ primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
 [env]
   PORT = "8080"
   HTTP_HOST = "0.0.0.0"
+  # Staging data reset 2026-09-03 (r8): the performance changeset (65f938b)
+  # moves seed gallery images + the approx-location map to the frontend CDN
+  # (/media/...) and normalises every stored gallery filename to <stem>.jpg.
+  # An in-place run against r7 was tried first (that is what a prod in-place
+  # upgrade would do): migration 20260903000001 applied cleanly and
+  # normalize-property-media! fixed the map URL, BUT seed-gallery! is guarded to
+  # only run on an empty table, so the two car rows kept their original
+  # sorento1.jpeg / sorento2.jpeg filenames while the CDN bundle ships
+  # sorento1.jpg / sorento2.jpg -> those two images 404. Bumped to a fresh r8
+  # path so the seeder repopulates the gallery with the normalised .jpg
+  # filenames and re-encodes every image through kigali.images. Carries forward
+  # the r7 reset below.
+  #
   # Staging data reset 2026-09-01 (r7): bumped to a fresh db/media path so the
   # idempotent seeder repopulates property/pricing/legal/gallery from a clean
   # slate, and the new §26b migration
@@ -33,8 +46,8 @@ primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
   # the round-3 pass (British-English copy, climate/kitchen fixes, cleaningFee
   # 35->30, houseRules v3 / privacy v3 / websiteTerms v2).
   # Prior r1..r6 paths are left on the volume, unused. The DB holds no real data.
-  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r7.db"
-  MEDIA_DIR = "/data/media-r7"
+  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r8.db"
+  MEDIA_DIR = "/data/media-r8"
   SEED_PHOTOS_DIR = "/app/assets/property-photos"
   SESSION_COOKIE_SECURE = "true"
   DB_POOL_SIZE = "1"
