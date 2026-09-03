@@ -1,0 +1,54 @@
+# Kigali Keys backend — PRODUCTION.
+#
+# Separate Fly app from staging (kigali-keys-staging / fly.toml). Staging stays
+# untouched as a safe testing ground; this file is the production deploy target.
+#
+# Deploy with:
+#   flyctl deploy --config fly.production.toml --app kigali-keys
+#
+# One machine, one SQLite database on a persistent volume. Do NOT scale past one
+# instance: the per-IP rate limiter and the idempotency replay-dedupe store are
+# per-process, and SQLite is single-writer. Same AOT Dockerfile as staging.
+
+app = "kigali-keys"
+primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  HTTP_HOST = "0.0.0.0"
+  # Fresh production database + media path on the production volume. Never
+  # pointed at a staging path.
+  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys.db"
+  MEDIA_DIR = "/data/media"
+  SEED_PHOTOS_DIR = "/app/assets/property-photos"
+  SESSION_COOKIE_SECURE = "true"
+  DB_POOL_SIZE = "1"
+  RATE_LIMIT_MAX = "10"
+  # TOKEN_SECRET, ADMIN_INITIAL_EMAIL, ADMIN_INITIAL_NAME and
+  # ADMIN_INITIAL_PASSWORD are NOT set here — they are set as Fly secrets by the
+  # site owner (see the deployment report / README). The initial owner is only
+  # seeded on first boot when ADMIN_INITIAL_PASSWORD is present.
+
+# Persistent disk. MEDIA_DIR and the SQLite file both live here so gallery
+# originals/thumbnails and all data survive restarts and redeploys.
+[[mounts]]
+  source = "kigali_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"   # production: never let the single machine stop
+  auto_start_machines = true
+  min_machines_running = 1      # always warm — no cold start behind the CDN proxy
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 200
+    soft_limit = 150
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

@@ -1,0 +1,28 @@
+# Kigali Keys frontend — PRODUCTION config (reference).
+#
+# Separate Netlify site from staging. The repo-root netlify.toml + the
+# src/frontend/public/_redirects committed in the tree both target the STAGING
+# backend and drive the staging site — they are left untouched so staging stays
+# reproducible.
+#
+# The Netlify CLI has no --config flag, so production is deployed by
+# scripts/deploy-frontend-prod.sh, which:
+#   1. copies src/frontend/public/ to a throwaway dist dir,
+#   2. rewrites only the /api/* proxy line in that copy's _redirects to the
+#      PRODUCTION Fly backend origin,
+#   3. runs `netlify deploy --prod` from that dir (no netlify.toml in scope),
+#      so nothing else about routing changes between staging and production.
+#
+# This file records the intended production settings for humans / future CI.
+
+[build]
+  publish = "."          # deploy the prepared dist dir as-is, no build step
+  command = ""
+
+# Production API proxy — the prod site's _redirects is generated with this value.
+# Backend origin: https://kigali-keys.fly.dev
+[[redirects]]
+  from = "/api/*"
+  to = "https://kigali-keys.fly.dev/api/:splat"
+  status = 200
+  force = true
