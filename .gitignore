@@ -50,3 +50,6 @@ package-lock.json
 # seeder output when MEDIA_DIR is mispointed at the source photo tree
 /assets/property-photos/gallery/
 /assets/property-photos/map/
+
+# Local Netlify folder
+.netlify

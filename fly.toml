@@ -12,18 +12,21 @@ primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
 [env]
   PORT = "8080"
   HTTP_HOST = "0.0.0.0"
-  # Staging data reset 2026-09-03 (r8): the performance changeset (65f938b)
-  # moves seed gallery images + the approx-location map to the frontend CDN
-  # (/media/...) and normalises every stored gallery filename to <stem>.jpg.
-  # An in-place run against r7 was tried first (that is what a prod in-place
-  # upgrade would do): migration 20260903000001 applied cleanly and
-  # normalize-property-media! fixed the map URL, BUT seed-gallery! is guarded to
-  # only run on an empty table, so the two car rows kept their original
-  # sorento1.jpeg / sorento2.jpeg filenames while the CDN bundle ships
-  # sorento1.jpg / sorento2.jpg -> those two images 404. Bumped to a fresh r8
-  # path so the seeder repopulates the gallery with the normalised .jpg
-  # filenames and re-encodes every image through kigali.images. Carries forward
-  # the r7 reset below.
+  # Staging pointed back at r7 2026-09-03 (deliberate, do NOT re-bump): this is
+  # the pre-production gate for commit 3fe1ff0, which extends
+  # normalize-property-media! to ALSO normalise gallery_images rows in place
+  # (rename <stem>.<ext> -> <stem>.jpg, re-encode through kigali.images to match
+  # a fresh seed, idempotent). The retained r7 volume is a real half-migrated
+  # old-scheme DB: init + sent-emails + 20260903000001 applied, staticMapUrl
+  # already rewritten last round, but the 2 Kia Sorento gallery rows are still
+  # sorento1.jpeg / sorento2.jpeg with un-re-encoded bytes -> those images 404
+  # against the CDN bundle (which ships sorento1.jpg / sorento2.jpg). That is
+  # exactly what a prod in-place upgrade of the existing /data/kigali-keys.db
+  # would hit, so r7 is the correct test bed. The r8 bump (a fresh reseed) does
+  # NOT exercise the fix and has been reverted. Expected boot log:
+  # normalize-property-media! {:map-url-rewritten false, :re-encoded 2,
+  # :renamed 2, :untouched 23}; a second deploy is a no-op ({:re-encoded 0,
+  # :renamed 0, :untouched 25}). Carries forward the r7 reset below.
   #
   # Staging data reset 2026-09-01 (r7): bumped to a fresh db/media path so the
   # idempotent seeder repopulates property/pricing/legal/gallery from a clean
@@ -46,8 +49,8 @@ primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
   # the round-3 pass (British-English copy, climate/kitchen fixes, cleaningFee
   # 35->30, houseRules v3 / privacy v3 / websiteTerms v2).
   # Prior r1..r6 paths are left on the volume, unused. The DB holds no real data.
-  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r8.db"
-  MEDIA_DIR = "/data/media-r8"
+  DATABASE_URL = "jdbc:sqlite:/data/kigali-keys-r7.db"
+  MEDIA_DIR = "/data/media-r7"
   SEED_PHOTOS_DIR = "/app/assets/property-photos"
   SESSION_COOKIE_SECURE = "true"
   DB_POOL_SIZE = "1"
