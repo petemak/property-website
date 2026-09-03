@@ -49,6 +49,8 @@ primary_region = "jnb"  # Johannesburg — closest Fly region to Kigali
     hard_limit = 200
     soft_limit = 150
 
+# Resized 2026-09-03 from shared-cpu-1x/512MB to shared-cpu-2x/1GB (user-approved,
+# Option B, ~+$3.30/mo) to improve origin response time behind the CDN proxy.
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"
+  size = "shared-cpu-2x"
+  memory = "1gb"
