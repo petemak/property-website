@@ -121,8 +121,28 @@
   gap: var(--sp-3);
 }
 .booking-widget h2, .booking-widget h3 { font-size: var(--fs-500); margin-bottom: var(--sp-2); }
-.booking-widget .field-grid { display: grid; gap: var(--sp-3); grid-template-columns: 1fr 1fr; align-items: start; }
+/* Check-in / Check-out stack by default: two native date inputs (iOS renders
+   them as wide "4 Sep 2026" controls) can't sit two-up with a real gap below
+   ~600px, so the gap collapses and the boxes touch. Go 2-col only where they
+   fit comfortably — same breakpoint as .field-row. */
+.booking-widget .field-grid { display: grid; gap: var(--sp-3); grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 600px) {
+  .booking-widget .field-grid { grid-template-columns: 1fr 1fr; }
+}
 .booking-widget .from-price { font-size: var(--fs-300); color: var(--c-text-muted); }
+
+/* Compact the hero booking widget on phones so it reads as a card, not a
+   full-screen form. Desktop (>=900px hero grid, widget bottom-right) untouched.
+   The sticky .mobile-book-bar already shows "From $X / night", so drop the
+   in-widget price line here to avoid the duplication. */
+@media (max-width: 599px) {
+  .booking-widget { padding: var(--sp-4); gap: var(--sp-2); }
+  .booking-widget h2, .booking-widget h3 { margin-bottom: var(--sp-1); }
+  .booking-widget .field-grid { gap: var(--sp-2); }
+  .booking-widget .field { gap: var(--sp-1); }
+  #hero-widget .booking-widget .from-price:has(strong) { display: none; }
+  .hero__inner { gap: var(--sp-4); }
+}
 
 /* ---- Sticky booking bars ---- */
 .sticky-rail { position: sticky; top: calc(var(--header-h) + var(--sp-4)); }
