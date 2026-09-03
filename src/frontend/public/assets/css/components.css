@@ -121,14 +121,13 @@
   gap: var(--sp-3);
 }
 .booking-widget h2, .booking-widget h3 { font-size: var(--fs-500); margin-bottom: var(--sp-2); }
-/* Check-in / Check-out stack by default: two native date inputs (iOS renders
-   them as wide "4 Sep 2026" controls) can't sit two-up with a real gap below
-   ~600px, so the gap collapses and the boxes touch. Go 2-col only where they
-   fit comfortably — same breakpoint as .field-row. */
-.booking-widget .field-grid { display: grid; gap: var(--sp-3); grid-template-columns: 1fr; align-items: start; }
-@media (min-width: 600px) {
-  .booking-widget .field-grid { grid-template-columns: 1fr 1fr; }
-}
+/* Check-in / Check-out sit side-by-side (two-up) at every width — the compact
+   horizontal arrangement the owner prefers. This holds below 600px now that
+   `appearance: none` on the native date inputs (see "Native date / time
+   inputs" below) makes them honour their grid-track width instead of their
+   chunky intrinsic content size, so the gap no longer collapses at 360-390px.
+   `min-width: 0` on .field / the inputs is the belt-and-braces overflow guard. */
+.booking-widget .field-grid { display: grid; gap: var(--sp-3); grid-template-columns: 1fr 1fr; align-items: start; }
 .booking-widget .from-price { font-size: var(--fs-300); color: var(--c-text-muted); }
 
 /* Compact the hero booking widget on phones so it reads as a card, not a
@@ -421,6 +420,17 @@ legend { font-family: var(--font-head); font-weight: 600; font-size: var(--fs-50
 .booking-widget .field input[type="time"],
 .booking-widget .field select {
   min-height: 2.75rem;
+}
+/* Now that the two date inputs share a row at every width, each sits in a
+   ~120-160px track from 320-390px. The formatted value ("09/10/2026" on Blink,
+   "10 Sep 2026" on WebKit) fits with room at 360/390; on a 320px viewport the
+   locale MM/DD/YYYY string is a few px wide for the track, so clip it cleanly
+   instead of letting the year digits collide with the calendar icon. */
+.booking-widget .field input[type="date"]::-webkit-date-and-time-value,
+.booking-widget .field input[type="time"]::-webkit-date-and-time-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .checkbox-field { display: grid; grid-template-columns: auto 1fr; gap: var(--sp-3); align-items: start; }

@@ -98,28 +98,36 @@ try {
     if (!(await page.locator("text=What's included").count())) throw new Error("missing included table");
   });
 
-  await check("Booking widget: Check-in / Check-out stack with a gap on mobile, sit side-by-side with equal bottoms on desktop; widget stays a compact fraction of the phone viewport", async () => {
+  await check("Booking widget: Check-in / Check-out sit side-by-side with a gap + equal bottoms at every width (mobile included); widget stays a compact fraction of the phone viewport", async () => {
     const measure = () => page.evaluate(() => {
       const w = document.querySelector("#hero-widget .booking-widget");
+      const cs = getComputedStyle(w);
+      const wr = w.getBoundingClientRect();
+      const innerRight = wr.right - parseFloat(cs.paddingRight) - parseFloat(cs.borderRightWidth);
       const a = w.querySelector("input[name=checkIn]").getBoundingClientRect();
       const b = w.querySelector("input[name=checkOut]").getBoundingClientRect();
       return {
         ax: a.x, bx: b.x, ay: a.y, by: b.y, ah: a.height, bh: b.height,
-        aright: a.right, bbot: b.bottom, abot: a.bottom, atop: a.top, btop: b.top,
-        widgetH: w.getBoundingClientRect().height,
+        aright: a.right, bright: b.right, bbot: b.bottom, abot: a.bottom, atop: a.top, btop: b.top,
+        innerRight, widgetH: w.getBoundingClientRect().height,
       };
     });
 
-    // ---- mobile: stacked, same x, vertical gap between the two inputs ----
+    // ---- mobile: side-by-side (same row), horizontal gap, within the card ----
+    // The owner prefers the compact two-column arrangement; `appearance: none`
+    // on the native date inputs keeps them inside their grid track at 360-390px.
     for (const [label, width, height] of [["360px", 360, 780], ["390px", 390, 844]]) {
       await page.setViewportSize({ width, height });
       await page.goto(BASE + "/", { waitUntil: "networkidle" });
       await page.waitForSelector("#hero-widget .booking-widget input[name=checkIn]");
       const m = await measure();
-      if (Math.abs(m.ax - m.bx) > 1) throw new Error(`${label}: date inputs not left-aligned when stacked — checkIn x ${m.ax.toFixed(1)} vs checkOut x ${m.bx.toFixed(1)}`);
-      const gap = m.btop - m.abot;
-      if (gap < 4) throw new Error(`${label}: no vertical gap between stacked date inputs (gap ${gap.toFixed(1)}px)`);
-      if (m.by <= m.ay) throw new Error(`${label}: checkOut is not below checkIn`);
+      if (Math.abs(m.ay - m.by) > 1) throw new Error(`${label}: date inputs not on the same row — checkIn y ${m.ay.toFixed(1)} vs checkOut y ${m.by.toFixed(1)}`);
+      const gap = m.bx - m.aright;
+      if (gap < 6) throw new Error(`${label}: horizontal gap between side-by-side date inputs is only ${gap.toFixed(1)}px (want >= 6)`);
+      if (m.bx <= m.ax) throw new Error(`${label}: checkOut is not to the right of checkIn`);
+      if (m.aright > m.innerRight + 1 || m.bright > m.innerRight + 1) throw new Error(`${label}: a date input overruns the card inner edge (checkIn +${(m.aright - m.innerRight).toFixed(1)}px / checkOut +${(m.bright - m.innerRight).toFixed(1)}px)`);
+      if (Math.abs(m.ah - m.bh) > 1) throw new Error(`${label}: input heights differ — checkIn ${m.ah.toFixed(2)} vs checkOut ${m.bh.toFixed(2)}`);
+      if (Math.abs(m.abot - m.bbot) > 1) throw new Error(`${label}: input bottom edges not aligned — checkIn ${m.abot.toFixed(2)} vs checkOut ${m.bbot.toFixed(2)}`);
       // Reads as a compact card, not a full-screen form: on a stock iPhone
       // viewport (390x844) the widget should stay under ~55% of the height.
       if (height === 844) {
