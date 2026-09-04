@@ -67,7 +67,7 @@ function hero(property, leadImg, copy) {
       h("div", {},
         h("h1", { class: "hero__title" }, property.tagline || "Keys to a furnished home in Kigali — and to the car outside."),
         h("p", { class: "hero__sub" },
-          `${property.neighbourhood || "Kigali"} · Whole ${property.bedrooms || 2}-bed duplex · sleeps ${property.maxGuests || 4} · gated`),
+          `${property.neighbourhood || "Kigali"} · Whole stand-alone ${property.bedrooms || 2}-bed home · sleeps ${property.maxGuests || 4} · gated`),
       ),
       h("div", { id: "hero-widget" },
         bookingWidget({
