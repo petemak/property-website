@@ -1,14 +1,15 @@
 # QA Report — Kigali Keys
 
 **Date:** 2026-08-30, re-verified 2026-08-30 (settings blocker), 2026-09-01
-(calendar fix + Sent log feature) and 2026-09-03 (performance changeset —
-caching + CDN media, commits `65f938b` + `3fe1ff0`) — see "Re-verification"
-and "Performance changeset" notes at end.
-**Commit:** through `3fe1ff0` (`wrap-cache-control` middleware, migration
-`20260903000001-gallery-image-origin`, image re-encode pipeline on seed + admin
-upload, `normalize-property-media!` idempotent startup fix-up, frontend `_headers`,
-home first-paint trimmed to `/property` + `/gallery`, `preconnect` to the API
-origin).
+(calendar fix + Sent log feature), 2026-09-03 (performance changeset —
+caching + CDN media) and 2026-09-04 (SMTP mailer, commit `773d2a7`) — see
+"Re-verification", "Performance changeset" and "SMTP mailer" notes at end.
+**Commit:** through `773d2a7`. The SMTP mailer changeset (env-gated `SmtpMailer`
+transport, `com.draines/postal`, async executor, `POST /admin/email-templates/
+:key/test` now returns `{sent,to,status,error?}`, `sent_emails.status` enum
+`stored|sent|failed`) verified on the real backend on **both** transports — see
+"SMTP mailer" section. Backend suite now 66 tests / 450 assertions / 0 failures;
+frontend smoke 48/48.
 **Verdict:** **PASS — ready for production promotion.** The settings blocker is
 fixed and re-verified; Finding 2 (banned placeholder strings) resolved; the
 calendar month-anchor bug and the missing email-outbox viewer are both fixed and
@@ -58,8 +59,8 @@ this exact changeset) spot-checked.
 | §23 vehicle agreement versions | PASS — publish → v5 current, prior versions/acceptances intact |
 | §24 legal document versions | PASS — publish houseRules → v4, `termsVersions` in GET /property bumped |
 | §25 GET /admin/agreement-acceptances (+ :id) | PASS — read-only list + filters; `:id` returns immutable `documentSnapshot`; no write endpoint |
-| §26 email templates | PASS — GET/GET:key/PUT/preview/test; PUT with unknown `{{token}}`→422; test→202 |
-| §26b sent-email log (outbox) | PASS — GET /admin/sent-emails [owner+admin]: unauth→401; item shape exact; status "stored"; filters non-overlapping. GET /admin/sent-emails/:id → brand-wrapped html for templated rows, raw body for untemplated; unknown id→404. Migration 20260901000001 clean on fresh DB. Re-verified 2026-09-03: list + `:id` still 200, `no-store`. |
+| §26 email templates | PASS — GET/GET:key/PUT/preview; PUT unknown `{{token}}`→422. `POST :key/test` now returns **200 `{sent,to,status,error?}`** (was bare 202): outbox → `{status:"stored"}`; `MAIL_TRANSPORT=smtp` with a dead server → `{sent:false,status:"failed",error}`; unauth → 401 standard shape; unknown key → 404. (Note for reviewer: `sent` is `true` for `status:"stored"` per contract+code+test — cosmetic, frontend branches on `status`.) |
+| §26b sent-email log (outbox) | PASS — GET /admin/sent-emails [owner+admin]: unauth→401; item shape exact; filters non-overlapping. `:id` → brand-wrapped html / raw body; unknown id→404. Migration 20260901000001 clean. Re-verified 2026-09-04: **`status` enum now `stored|sent|failed`** (`queued|delivered|bounced` reserved); unknown status renders neutral without throwing; `no-store`. |
 | §27 admin users [owner] | PASS — create→invited + adminInvite email row; demote/delete last owner→409; delete self→409 |
 | §28 GET/PUT /admin/settings [owner] | **PASS.** GET owner-only (401 unauth / 403 non-owner). PUT full matrix: `publicPhone` omitted / `null` / `""` → 200 stored `null` (GET /admin/settings **and** GET /property `contact.phone` both JSON `null`); real value stored trimmed; over-length → 422. Same for `guestResponseTimeText`. Re-verified 2026-09-03: PUT with `publicPhone:null` + `guestResponseTimeText:null` → 200, both read back `null`. |
 
@@ -76,7 +77,7 @@ accept-invite) session: `/admin/settings` (GET **and** PUT) → 403;
 | Catalog / inventory (small) | PASS — date + car calendars are live; admin blocks & pricing mutate real data reflected in `/availability` and `/quote`. Gallery media now resolves to the frontend CDN (`/media/...`) for seed photos, backend proxy (`/api/media/...`) for admin uploads — verified in a live `GET /gallery`. |
 | Accounts / auth (admin only) | PASS — owner vs admin enforced server-side; invite → accept-invite → session works; no guest accounts |
 | Admin / back-office | PASS — booking queue, property text, gallery, availability, pricing, vehicle, agreement versioning, acceptance log, users, email templates, owner Settings all work end to end. 2026-09-03: admin **image upload re-encodes to budget** and stores an `origin='upload'` row served at `/api/media/...`; admin screens (`/admin/gallery`, `/admin/settings`, `/admin/vehicle`, `/admin/bookings`) render without console errors after a real owner login. |
-| Notifications (email) | PASS — `sent_emails` rows written for bookingReceived/adminNewBooking/bookingApproved/bookingRejected/contactAck/adminInvite + the untemplated direct host notice; approve & reject show the rendered email before sending; the A9 "Sent log" outbox viewer exists (filterable table, "Stored" badge, sandboxed iframe modal). |
+| Notifications (email) | PASS — `sent_emails` rows written for bookingReceived/adminNewBooking/bookingApproved/bookingRejected/contactAck/adminInvite + the untemplated direct host notice; approve & reject show the rendered email before sending; the A9 "Sent log" outbox viewer exists (filterable table, sandboxed iframe modal). 2026-09-04: `MAIL_TRANSPORT` selects the transport — `outbox` (default, records `stored`, never transmits) or `smtp` (`postal`, async single-thread executor, 7s timeouts, catches Throwable, records `sent`/`failed`). Sent-log badges: Sent (green) / Failed (red) / Stored (neutral). |
 | Legal / compliance | PASS — stayTerms v3, houseRules v3, websiteTerms v2, privacy v3, cancellationPolicy v3 served publicly and versioned via admin |
 | Customer agreement (Kia Sorento) | PASS — full agreement text shown at Step 4 only when the car is added; submit writes a `vehicleRentalAgreement` acceptance row (version + bodyHash + snapshot) alongside stayTerms + houseRules — re-verified 2026-09-03, exactly 3 rows persisted for a fresh car booking. |
 
@@ -380,3 +381,55 @@ Light regression — PASS. §1 contact block shape unchanged (phone null); §4
 pre-selected current month; no .woff2 404s; header + logo render; no page errors.
 
 Verdict: PASS — the Sent log feature ships correctly, no regressions. Cleared.
+
+## SMTP mailer (§26 test / §26b) — commit 773d2a7 — PASS
+
+Verified on the real Clojure backend from this repo on **both** transports, plus
+frontend (mock), Playwright/Chromium, and a live staging spot-check
+(`MAIL_TRANSPORT` unset). Backend suite 66 tests / 450 assertions / 0 failures
+(incl. new `kigali.mailer-test`); frontend smoke 48/48.
+
+**Failure-safety gate — PASS (the key property).** With `MAIL_TRANSPORT=smtp`
+and all four `SMTP_*` set but the host (127.0.0.1:2525) refusing connections:
+`POST /bookings` returned **201 in 19 ms** — not delayed by the 7 s SMTP timeout,
+booking persisted — and within ~1 s both `sent_emails` rows flipped to status
+**`failed`** (connection-refused caught, recorded, never propagated). `POST
+/approve` on the SMTP transport was likewise fast and unaffected. A dead mail
+server cannot delay or break a guest request.
+
+**Startup behaviour — PASS.** `MAIL_TRANSPORT=smtp` with `SMTP_HOST` missing →
+backend fails to start with a clear message naming the missing var; no silent
+fallback to outbox. `MAIL_TRANSPORT` unset / `outbox` → `OutboxMailer`, clean
+boot, every email recorded `stored`. Async executor shuts down cleanly on
+SIGTERM (no hang / thread leak).
+
+**Endpoint — PASS.** `POST /admin/email-templates/:key/test` → 200
+`{sent,to,status,error?}` (no longer bare 202); unauth → 401 standard error
+shape; unknown key → 404. On SMTP failure: 200 `{sent:false,status:"failed",
+error:"Couldn't connect to host…"}`.
+
+**Frontend — PASS.** "Send test to me" surfaces the transport result inline next
+to the button (success / "recorded, not sent" / error). Sent-log renders `sent`
+green, `failed` red, `stored` neutral; unknown status still renders neutrally.
+Row-detail modal shows the same. No console errors.
+
+**Regression sweep — PASS.** §1 contact block; §4 7-night no-car quote 520; §6
+booking records exactly 3 acceptance rows; §26b list/detail; §28 settings save
+with null phone; gallery 25 `/media/` images; no `.woff2` 404s; booking-widget
+date fields side-by-side on mobile.
+
+**Standards — PASS.** SMTP credentials `#env` only, no defaults, no literals in
+`email.clj`; no schema change (`sent_emails.status` is `TEXT` with no CHECK, so
+`sent`/`failed` insert without DDL); guest-path callers ignore the `send-email!`
+return so the async transport adds no latency and does not affect idempotency;
+`com.draines/postal 2.0.5` is a maintained, standard choice.
+
+**Non-blocking notes for follow-up:** (1) `test` endpoint returns `sent:true`
+for `status:"stored"` (contract + code + test all agree; frontend branches on
+`status` so cosmetic, but misleading to a raw API reader). (2) `api-contract.md`
+§26b prose still has a stale "In v1 the transport is 'store & log' … does not
+transmit" line above the updated enum paragraph. (3) `SmtpMailer.-send!` would
+NPE if `:executor` were nil — guarded only by component start-order, no test.
+
+**Verdict: PASS — cleared for production.** The SMTP code is inert until
+`MAIL_TRANSPORT=smtp` is set as a Fly secret on the production app.
