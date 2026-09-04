@@ -12,7 +12,7 @@
    (component/system-map
     :config cfg
     :db     (component/using (db/new-db) {:config :config})
-    :email  (component/using (email/new-mailer) {:db :db})
+    :email  (component/using (email/mailer-for-config cfg) {:db :db :config :config})
     :seed   (component/using (seed/new-seeder) {:config :config :db :db})
     :server (component/using (server/new-server)
                              {:config :config :db :db :email :email}))))

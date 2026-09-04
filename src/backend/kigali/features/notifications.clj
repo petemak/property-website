@@ -121,12 +121,19 @@
 
 (defn- test-template [ctx req]
   (let [k (require-key! (get-in req [:path-params :key]))
-        to (get-in req [:admin-user :email])]
-    (send-email! ctx k to {:guestFirstName (get-in req [:admin-user :name])
-                           :bookingReference "KK-DEMO12"
-                           :stayDates "5–12 September 2026"
-                           :statusUrl "/booking/KK-DEMO12"})
-    (respond/accepted {:sent true :to to})))
+        to (get-in req [:admin-user :email])
+        ret (send-email! ctx k to {:guestFirstName (get-in req [:admin-user :name])
+                                   :bookingReference "KK-DEMO12"
+                                   :stayDates "5–12 September 2026"
+                                   :statusUrl "/booking/KK-DEMO12"})
+        ;; Await the real transport result so the admin gets a concrete answer
+        ;; even when the SMTP transport sends off-thread.
+        {:keys [status error]} (email/await-result ret 12000)
+        status (or status "unknown")]
+    (respond/ok (cond-> {:sent (contains? #{"sent" "stored"} status)
+                         :to to
+                         :status status}
+                  error (assoc :error error)))))
 
 (defn routes [ctx]
   [["/admin/email-templates"

@@ -1058,8 +1058,20 @@ POST /admin/email-templates/:key/test
 ```
 `PUT` validates that every `{{token}}` used exists in `availableTokens` ->
 otherwise `422 validationError`. The brand wrapper (logo, colours, footer) is
-applied server-side and is not part of `bodyMarkdown`. `test` sends the
-rendered email to the signed-in admin's address, `202`.
+applied server-side and is not part of `bodyMarkdown`.
+
+`test` sends the rendered email to the signed-in admin's address and now
+**reports the transport result** (previously a bare `202`):
+```json
+// POST :key/test  200
+{ "sent": true, "to": "admin@kigalikeys.rw", "status": "sent" }
+// on transport failure — still 200, with an error string
+{ "sent": false, "to": "admin@kigalikeys.rw", "status": "failed", "error": "Connection refused" }
+```
+`status` is the §26b `sent_emails` status: `"stored"` on the default outbox
+transport (recorded, not transmitted — `sent` is still `true`), `"sent"` or
+`"failed"` when `MAIL_TRANSPORT=smtp`. The endpoint waits for the real send
+result before responding even though guest-path sends are asynchronous.
 
 ### 26b. Sent-email log (outbox)
 
@@ -1098,11 +1110,14 @@ to messages with no template (`templateKey: null` in the response) — `q` (matc
 `bookingReference` is `null` for emails not tied to a booking (e.g.
 `contactAck`, `adminInvite`). `templateKey` is `null` for messages sent without a
 template (the direct new-request notification to the host's own address) — render
-these with a neutral label such as "Direct message". `status` is an open enum —
-v1 only ever emits
-`"stored"` (written to the outbox, not transmitted). Reserved for a real
-provider: `queued | sent | delivered | bounced | failed`. Clients must render an
-unrecognised status as a neutral label, never throw.
+these with a neutral label such as "Direct message". `status` is an open enum.
+With the default `MAIL_TRANSPORT=outbox` v1 only ever emits `"stored"` (written
+to the outbox, not transmitted). With `MAIL_TRANSPORT=smtp` v1 also emits
+`"sent"` (accepted by the SMTP server) and `"failed"` (the send threw; the row
+is still recorded, the booking/contact request still succeeded). `queued |
+delivered | bounced` remain reserved for a future provider with delivery
+webhooks. Clients must render an unrecognised status as a neutral label, never
+throw.
 
 **`GET /admin/sent-emails/:id`** — **[owner + admin]**
 ```json

@@ -27,6 +27,13 @@ const MIME = {
   ".webp": "image/webp", ".woff2": "font/woff2", ".ico": "image/x-icon",
 };
 
+// Mock-only: which transport result POST /admin/email-templates/:key/test
+// reports, so the UI's sent / stored / failed branches are all reachable.
+const MAIL_TEST_OUTCOME = {
+  bookingApproved: { status: "sent" },
+  adminInvite: { status: "failed", error: "SMTP 550: relay access denied" },
+};
+
 const load = async (f) => JSON.parse(await readFile(join(FIX, f), "utf8"));
 const property = await load("property.json");
 const vehicle = await load("vehicle.json");
@@ -405,7 +412,15 @@ async function handleAdmin(req, res, p, q, m) {
     return send(res, 200, { subject, html: `<!doctype html><body style="font-family:Inter,sans-serif;background:#FAF7F2;padding:24px"><div style="max-width:560px;margin:auto;background:#fff;border-radius:12px;padding:24px"><h1 style="font-family:Georgia,serif;color:#1F5B4E">Kigali Keys</h1><pre style="white-space:pre-wrap;font:inherit">${body}</pre></div></body>` });
   }
   const ett = p.match(/^\/admin\/email-templates\/([^/]+)\/test$/);
-  if (ett && m === "POST") return send(res, 202, { sent: true });
+  if (ett && m === "POST") {
+    // api-contract §26: 200 with { sent, to, status, error? }. The default
+    // outbox transport records but doesn't transmit -> "stored". To exercise
+    // the smtp-only "sent" / "failed" paths without env juggling, the mock
+    // keys the outcome off the template being tested.
+    const to = (state.session && state.session.email) || "admin@kigalikeys.rw";
+    const outcome = MAIL_TEST_OUTCOME[ett[1]] || { status: "stored" };
+    return send(res, 200, { sent: outcome.status !== "failed", to, ...outcome });
+  }
 
   // sent-email log (outbox) — api-contract §26b. Read-only, newest first.
   if (p === "/admin/sent-emails" && m === "GET") {

@@ -662,8 +662,62 @@ try {
     await page.locator(".modal button:has-text('Close')").click();
     await page.waitForSelector(".modal", { state: "detached" });
 
-    // status badge: v1 'stored' shows a neutral 'Stored' label with helptext
+    // status badge: 'stored' shows a neutral 'Stored' label with helptext
     if (!(await page.locator(".admin-table tbody .status-badge--neutral", { hasText: "Stored" }).count())) throw new Error("no neutral 'Stored' status badge");
+  });
+
+  // ---- A9 Sent log — 'sent' / 'failed' status badges render with distinct styling ----
+  await check("A9 Sent log — Sent + Failed badges render with distinct success / danger styling", async () => {
+    await page.goto(BASE + "/admin/emails?tab=sent", { waitUntil: "networkidle" });
+    await page.waitForSelector(".admin-table tbody tr");
+
+    const sent = page.locator(".admin-table tbody .status-badge--sent", { hasText: "Sent" });
+    const failed = page.locator(".admin-table tbody .status-badge--failed", { hasText: "Failed" });
+    const stored = page.locator(".admin-table tbody .status-badge--neutral", { hasText: "Stored" });
+    if (!(await sent.count())) throw new Error("no 'Sent' success badge in the sent log (fixture missing a status:sent row?)");
+    if (!(await failed.count())) throw new Error("no 'Failed' danger badge in the sent log (fixture missing a status:failed row?)");
+
+    const colOf = (loc) => loc.first().evaluate((el) => getComputedStyle(el).color);
+    const rgb = (s) => (s.match(/\d+/g) || []).map(Number);
+    const sentCol = rgb(await colOf(sent));
+    const failedCol = rgb(await colOf(failed));
+    const storedCol = rgb(await colOf(stored));
+
+    const same = (a, b) => a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+    if (same(sentCol, failedCol)) throw new Error("Sent and Failed badges use the same colour: " + sentCol.join(","));
+    if (same(failedCol, storedCol)) throw new Error("Failed badge is not visually distinct from the neutral Stored badge");
+    // danger = red-dominant, success = green-dominant
+    if (!(failedCol[0] > failedCol[1] && failedCol[0] > failedCol[2])) throw new Error("Failed badge is not a red/danger colour: rgb(" + failedCol.join(",") + ")");
+    if (!(sentCol[1] >= sentCol[0])) throw new Error("Sent badge is not a green/success colour: rgb(" + sentCol.join(",") + ")");
+
+    // the row-detail modal uses the same badge component
+    await page.locator(".admin-table tbody tr", { has: page.locator(".status-badge--failed") }).first().click();
+    await page.waitForSelector(".modal .detail-list");
+    if (!(await page.locator(".modal .detail-list .status-badge--failed", { hasText: "Failed" }).count())) throw new Error("row-detail modal does not show the Failed danger badge");
+    await page.locator(".modal button:has-text('Close')").click();
+    await page.waitForSelector(".modal", { state: "detached" });
+  });
+
+  // ---- A9 Templates — 'Send test to me' surfaces the transport result inline ----
+  await check("A9 Templates — 'Send test to me' surfaces sent / stored / failed inline near the button", async () => {
+    // default template (bookingReceived) -> mock reports the outbox 'stored' result
+    await page.goto(BASE + "/admin/emails?key=bookingReceived", { waitUntil: "networkidle" });
+    await page.waitForSelector("button:has-text('Send test to me')");
+    await page.locator("button:has-text('Send test to me')").click();
+    await page.waitForSelector(".test-email-result .inline-alert--warning");
+    if (!/outbox|doesn't send/i.test(await page.locator(".test-email-result").textContent())) throw new Error("stored result did not explain the email was not actually sent");
+
+    // bookingApproved -> mock reports 'sent'
+    await page.goto(BASE + "/admin/emails?key=bookingApproved", { waitUntil: "networkidle" });
+    await page.locator("button:has-text('Send test to me')").click();
+    await page.waitForSelector(".test-email-result .inline-alert--success");
+    if (!/sent to .+@/i.test(await page.locator(".test-email-result").textContent())) throw new Error("'sent' result did not name the recipient address");
+
+    // adminInvite -> mock reports 'failed' with an error string
+    await page.goto(BASE + "/admin/emails?key=adminInvite", { waitUntil: "networkidle" });
+    await page.locator("button:has-text('Send test to me')").click();
+    await page.waitForSelector(".test-email-result .inline-alert--error");
+    if (!/Send failed:/i.test(await page.locator(".test-email-result").textContent())) throw new Error("'failed' result did not show the error message");
   });
 
   await check("Admin — Users page reachable for owner", async () => {

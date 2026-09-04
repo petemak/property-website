@@ -324,8 +324,8 @@
 }
 .status-badge::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
 .status-badge--pending { color: var(--c-status-pending); background: var(--c-status-pending-bg); }
-.status-badge--approved, .status-badge--confirmed { color: var(--c-status-approved); background: var(--c-status-approved-bg); }
-.status-badge--rejected { color: var(--c-status-rejected); background: var(--c-status-rejected-bg); }
+.status-badge--approved, .status-badge--confirmed, .status-badge--sent { color: var(--c-status-approved); background: var(--c-status-approved-bg); }
+.status-badge--rejected, .status-badge--failed { color: var(--c-status-rejected); background: var(--c-status-rejected-bg); }
 .status-badge--cancelled, .status-badge--expired, .status-badge--neutral { color: var(--c-status-neutral); background: var(--c-status-neutral-bg); }
 
 /* ---- CTA band ---- */
@@ -453,6 +453,9 @@ legend { font-family: var(--font-head); font-weight: 600; font-size: var(--fs-50
 .inline-alert--error { background: var(--c-danger-bg); border-color: var(--c-danger); color: var(--c-danger); }
 .inline-alert--success { background: var(--c-success-bg); border-color: var(--c-success); }
 .inline-alert--warning { background: var(--c-warning-bg); border-color: #c98a3c; }
+
+/* Inline result of "Send test to me" on the email templates tab */
+.test-email-result:not(:empty) { margin-top: var(--sp-3); }
 
 /* ---- Stepper (wizard progress) ---- */
 .stepper { list-style: none; margin: 0 0 var(--sp-6); padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2); counter-reset: wiz; }

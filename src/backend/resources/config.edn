@@ -8,6 +8,17 @@
  :media   {:dir #or [#env MEDIA_DIR "media"]
            :max-upload-bytes 12582912}
 
+ :mail    {;; "outbox" (default) writes every message to sent_emails and never
+           ;; transmits — staging stays non-sending. "smtp" actually sends.
+           :transport #or [#env MAIL_TRANSPORT "outbox"]
+           :smtp {:host     #env SMTP_HOST
+                  :port     #long #or [#env SMTP_PORT 465]
+                  :user     #env SMTP_USER
+                  :pass     #env SMTP_PASS
+                  :from     #env SMTP_FROM
+                  :reply-to #or [#env SMTP_REPLY_TO nil]
+                  :ssl?     #boolean #or [#env SMTP_SSL true]}}
+
  :secrets {;; HMAC secret for guest booking status links. MUST be overridden in
            ;; every real environment via env var.
            :token-secret #or [#env TOKEN_SECRET "dev-only-insecure-token-secret-change-me"]}

@@ -42,6 +42,7 @@ async function renderTemplates(ctx, params) {
   const subject = h("input", { type: "text", id: "e-subj", value: tpl.subject, style: "width:100%" });
   const bodyMd = h("textarea", { id: "e-body", rows: "12", style: "width:100%" }, tpl.bodyMarkdown);
   const status = h("div", { "aria-live": "polite" });
+  const testStatus = h("div", { class: "test-email-result", "aria-live": "polite" });
   const previewHost = h("div", { class: "email-preview" });
 
   ctx.mount(h("div", {},
@@ -61,8 +62,9 @@ async function renderTemplates(ctx, params) {
       h("div", { class: "wizard-actions" },
         h("button", { class: "btn btn--primary", type: "button", onClick: save }, "Save"),
         h("button", { class: "btn btn--ghost", type: "button", onClick: preview }, "Refresh preview"),
-        h("button", { class: "btn btn--ghost", type: "button", onClick: async () => { try { await api.adminTestEmail(activeKey); announce("Test email sent to your address."); } catch (e) { announce(e.message); } } }, "Send test to me"),
+        h("button", { class: "btn btn--ghost", type: "button", onClick: sendTest }, "Send test to me"),
       ),
+      testStatus,
     ),
 
     h("section", { class: "admin-panel" }, h("h2", {}, "Preview"), previewHost),
@@ -77,6 +79,36 @@ async function renderTemplates(ctx, params) {
       status.replaceChildren(alertBox("Saved.", "success"));
       preview();
     } catch (e) { status.replaceChildren(alertBox(e.message)); }
+  }
+
+  // api-contract §26: POST :key/test now returns { sent, to, status, error? }.
+  // Reflect the real transport result inline, next to the button.
+  async function sendTest() {
+    testStatus.replaceChildren();
+    let res;
+    try {
+      res = await api.adminTestEmail(activeKey);
+    } catch (e) {
+      testStatus.replaceChildren(alertBox(e.message, "error"));
+      announce(e.message);
+      return;
+    }
+    const to = res && res.to ? res.to : "your address";
+    let msg, kind;
+    if (res && res.status === "sent") {
+      msg = `Test email sent to ${to}.`;
+      kind = "success";
+    } else if (res && res.status === "failed") {
+      msg = res.error ? `Send failed: ${res.error}` : "Send failed.";
+      kind = "error";
+    } else {
+      // "stored" (default outbox) or any unrecognised non-failure status:
+      // the message was recorded but NOT actually transmitted.
+      msg = `Recorded to the outbox for ${to} — this environment doesn't send email. Set MAIL_TRANSPORT=smtp to deliver.`;
+      kind = "warning";
+    }
+    testStatus.replaceChildren(alertBox(msg, kind));
+    announce(msg);
   }
 
   async function preview() {
@@ -109,11 +141,18 @@ function templateLabel(key) {
   return TEMPLATE_LABEL[key] || key;
 }
 
-// v1 only ever emits "stored". Anything else renders as a neutral label — never throw.
+// api-contract §26b: the outbox transport emits "stored"; MAIL_TRANSPORT=smtp
+// also emits "sent" and "failed". queued|delivered|bounced are reserved. Any
+// value we don't know about renders as a neutral label — never throw.
+const SENT_STATUS = {
+  stored: { cls: "status-badge--neutral", label: "Stored", title: "Recorded to the outbox — this environment did not transmit it." },
+  sent: { cls: "status-badge--sent", label: "Sent", title: "Accepted by the mail server." },
+  failed: { cls: "status-badge--failed", label: "Failed", title: "The mail server rejected the message or the send threw. The request itself still succeeded." },
+};
+
 function statusCell(status) {
-  if (status === "stored") {
-    return h("span", { class: "status-badge status-badge--neutral", title: "v1 stores emails; a mail provider will report delivery here." }, "Stored");
-  }
+  const known = SENT_STATUS[status];
+  if (known) return h("span", { class: `status-badge ${known.cls}`, title: known.title }, known.label);
   return h("span", { class: "role-note" }, status || "—");
 }
 
@@ -149,7 +188,7 @@ async function renderSentLog(ctx, params) {
   ctx.mount(h("div", {},
     pageTitle("Email"),
     tabsNav(ctx, "sent"),
-    h("p", { class: "role-note" }, "Every email the system generated, newest first. Read-only — the log is a by-product of the system sending mail. Status ", h("strong", {}, "Stored"), " means v1 wrote the email to the outbox; a mail provider will report delivery here later."),
+    h("p", { class: "role-note" }, "Every email the system generated, newest first. Read-only — the log is a by-product of the system sending mail. Emails are recorded here; in production with a mail provider configured, the status shows whether each was ", h("strong", {}, "Sent"), " or ", h("strong", {}, "Failed"), "."),
     h("div", { class: "admin-filters" },
       field({ label: "Template", control: tplSel, id: "se-tpl" }),
       field({ label: "Search", control: search, id: "se-q" }),

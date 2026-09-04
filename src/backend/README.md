@@ -43,6 +43,19 @@ dev-only fallbacks are used when unset. No secret is hardcoded.
 | `MEDIA_DIR` | gallery + static map storage | `media` |
 | `SEED_PHOTOS_DIR` | source of owner photos for first-run seed | `assets/property-photos` |
 | `ADMIN_INITIAL_EMAIL` / `ADMIN_INITIAL_NAME` / `ADMIN_INITIAL_PASSWORD` | seed the first owner (only when the password is set) | — |
+| `MAIL_TRANSPORT` | `outbox` = record to `sent_emails`, never transmit; `smtp` = actually send, then record `sent`/`failed` | `outbox` |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | SMTP server + credentials + envelope From (owner points these at Zoho Mail SMTP). Required when `MAIL_TRANSPORT=smtp` — startup fails fast if any of host/user/pass/from is missing | — / `465` / — / — / — |
+| `SMTP_REPLY_TO` | optional `Reply-To` header | — |
+| `SMTP_SSL` | implicit TLS (SMTPS, port 465). Set `false` for STARTTLS on 587 | `true` |
+
+Mail: staging leaves `MAIL_TRANSPORT` unset (`outbox`) so it never sends. In
+production the `SMTP_*` values are **Fly secrets** (`fly secrets set …`), and
+`MAIL_TRANSPORT=smtp` is what flips transmission on — the SMTP code is inert
+until then. Guest-path sends (booking create/approve/reject, contact,
+admin-invite) run on a background single-thread executor so a slow SMTP server
+can't hang a request; the `sent_emails` row's final `sent`/`failed` status
+appears a moment after the response. The admin "send test" endpoint waits for
+the real result.
 
 ## Layout
 
