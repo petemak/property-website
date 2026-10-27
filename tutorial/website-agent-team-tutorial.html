@@ -259,8 +259,10 @@
     <li><a href="#sec09" class="side-link"><span class="toc-num">09</span>Choosing where it lives</a></li>
     <li><a href="#sec10" class="side-link"><span class="toc-num">10</span>Cloudflare, Render, Wrangler</a></li>
     <li><a href="#sec11" class="side-link"><span class="toc-num">11</span>Make it scale</a></li>
-    <li><a href="#sec12" class="side-link"><span class="toc-num">12</span>Build checklist</a></li>
-    <li><a href="#sec13" class="side-link"><span class="toc-num">13</span>Quick reference</a></li>
+    <li><a href="#sec12" class="side-link"><span class="toc-num">12</span>Making it findable</a></li>
+    <li><a href="#sec13" class="side-link"><span class="toc-num">13</span>Evaluating your crew</a></li>
+    <li><a href="#sec14" class="side-link"><span class="toc-num">14</span>Build checklist</a></li>
+    <li><a href="#sec15" class="side-link"><span class="toc-num">15</span>Quick reference</a></li>
   </ol>
 </nav>
 <div class="main-content">
@@ -294,8 +296,10 @@
         <li><a href="#sec09"><span class="toc-num">09</span>Choosing where it lives</a></li>
         <li><a href="#sec10"><span class="toc-num">10</span>What "Cloudflare," "Render," and "Wrangler" actually are</a></li>
         <li><a href="#sec11"><span class="toc-num">11</span>Make it scale, not just work</a></li>
-        <li><a href="#sec12"><span class="toc-num">12</span>Build checklist</a></li>
-        <li><a href="#sec13"><span class="toc-num">13</span>Quick reference</a></li>
+        <li><a href="#sec12"><span class="toc-num">12</span>Making it findable</a></li>
+        <li><a href="#sec13"><span class="toc-num">13</span>Evaluating your crew</a></li>
+        <li><a href="#sec14"><span class="toc-num">14</span>Build checklist</a></li>
+        <li><a href="#sec15"><span class="toc-num">15</span>Quick reference</a></li>
       </ol>
     </div>
 
@@ -319,6 +323,7 @@
       <div class="filerow"><span class="fname">Playwright test script</span><span class="fmeta">qa</span><p>Saved so QA can actually drive the rendered pages and click-test them, not just read the source.</p></div>
       <div class="filerow"><span class="fname">QA report</span><span class="fmeta">qa</span><p>Pass/fail summary returned in its response — not saved to disk unless you ask it to write one.</p></div>
       <div class="filerow"><span class="fname">Hosting config</span><span class="fmeta">deployment-engineer</span><p>Whatever the chosen host needs — Dockerfile, render.yaml, vercel.json, etc.</p></div>
+      <div class="filerow"><span class="fname">robots.txt / sitemap.xml</span><span class="fmeta">deployment-engineer · Sec 12</span><p>Environment-aware — staging disallows all crawling, production allows it and points to the sitemap.</p></div>
     </div>
   </div>
 </div>
@@ -610,6 +615,12 @@ Then produce design-spec.md covering:
    pages, which are still in scope even though customers
    never see them, and including the agreement-acceptance step
    if "customer agreements" applies
+6. For each public-facing page: a one-line target search intent
+   (what someone would actually type into Google to want this
+   page) and a title. Also name the single schema.org type that
+   best fits the overall business (LocalBusiness, Restaurant,
+   Store, ProfessionalService, Organization, etc.) — frontend
+   will use both when implementing SEO basics.
 
 For every piece of dynamic content, also write api-contract.md:
 the exact endpoints, HTTP methods, and JSON request/response
@@ -678,6 +689,16 @@ Rules:
 - When an image is missing or no category-appropriate photo is
   available, use a simple neutral SVG placeholder in the brand's
   palette, obviously a placeholder — never a random-photo service
+- Every page gets a unique `&lt;title&gt;` and meta description
+  built from design-spec.md's target search intent for that
+  page — not the business name repeated on every page. Exactly
+  one `&lt;h1&gt;` per page. A canonical `&lt;link&gt;` tag
+  pointing at that page's own URL. Open Graph tags (og:title,
+  og:description, og:image) so the page previews properly when
+  shared. One JSON-LD `&lt;script type="application/ld+json"&gt;`
+  block per page using the schema.org type ux-designer specified,
+  with real values from
+  brand-brief.md and design-spec.md — not placeholder text.
 - Before reporting done, click-test the actual rendered page,
   not just check that it builds without console errors. In
   particular: a "whole card is clickable" pattern (an overlay
@@ -749,6 +770,19 @@ Rules:
 - When an image is missing or no category-appropriate photo is
   available, use a simple neutral SVG placeholder in the brand's
   palette, obviously a placeholder — never a random-photo service
+- Every page gets a unique `&lt;title&gt;` and meta description
+  built from design-spec.md's target search intent for that
+  page — not the business name repeated on every page. Exactly
+  one `:h1` per page. A canonical `:link` tag pointing at that
+  page's own URL. Open Graph tags (og:title, og:description,
+  og:image) so the page previews properly when shared. One
+  JSON-LD `:script` block per page (`{:type "application/ld+json"}`)
+  using the schema.org type ux-designer specified, with real
+  values from brand-brief.md
+  and design-spec.md — not placeholder text. If server-rendering
+  isn't part of this project, confirm these render into the
+  initial HTML response rather than only appearing after
+  Replicant hydrates client-side — a crawler may not wait for that.
 - Before reporting done, click-test the actual rendered page in
   a browser, not just check that shadow-cljs compiles cleanly.
   The same "whole card is clickable" overlay footgun applies
@@ -869,14 +903,14 @@ teammate is expecting.</pre>
       <pre>---
 name: qa
 description: Verifies the finished site against the API contract,
-  the scope checklist, and user journeys, and click-tests the
-  rendered pages. Use after frontend and backend teammates
-  finish, before deployment.
+  the scope checklist, user journeys, engineering standards, and
+  SEO basics, and click-tests the rendered pages. Use after
+  frontend and backend teammates finish, before deployment.
 tools: Read, Write, Bash, Grep
 model: sonnet
 ---
 
-You are a QA engineer. Run five separate checks — do not skip
+You are a QA engineer. Run six separate checks — do not skip
 any of them, they catch different classes of problem:
 
 1. Contract consistency: read api-contract.md and confirm every
@@ -927,6 +961,13 @@ any of them, they catch different classes of problem:
    a stateful service where statelessness was required: flag
    each one specifically, with the file and the rule it breaks.
 
+6. SEO basics: every public-facing page has a unique, non-empty
+   title and meta description, exactly one h1, a canonical tag,
+   and a JSON-LD block of the schema.org type design-spec.md
+   specified. On the staging URL specifically, confirm
+   robots.txt disallows everything — a staging site that Google
+   can index is a bug, not a detail.
+
 Report:
 - One pass/fail line per contract endpoint
 - One pass/fail line per scope-checklist category marked
@@ -937,6 +978,8 @@ Report:
   breaks continuity if one does
 - One pass/fail line per non-negotiable item in
   engineering-standards.md, if that file exists
+- One pass/fail line per page for SEO basics, plus one line for
+  whether staging's robots.txt correctly disallows everything
 - Keep it short — the reader needs what's broken, not
   confirmation of what's fine
 
@@ -989,23 +1032,40 @@ PHASE 1 — Staging
    doesn't exist yet. Verify this yourself before moving on;
    don't let the user discover it's wrong by clicking around a
    staging site where nothing loads.
-5. Deploy to a staging or preview environment, not the final
+5. Write robots.txt and sitemap.xml, and make robots.txt
+   environment-aware — this is the step most likely to get
+   skipped, and skipping it has a real consequence: a staging
+   URL that Google can freely crawl and index becomes duplicate
+   or unfinished content competing with the real site before
+   you're ready. Staging's robots.txt must disallow everything:
+     User-agent: *
+     Disallow: /
+   sitemap.xml should only ever be generated using the
+   production domain's URLs, never staging's.
+6. Deploy to a staging or preview environment, not the final
    production domain — most hosts (Vercel, Netlify, Cloudflare
    Pages, Render, Fly.io) offer a free preview URL distinct from
    production; use one.
-6. Report the staging URL and STOP. Wait for the user to
+7. Report the staging URL and STOP. Wait for the user to
    explicitly say the design and functionality look right
    before continuing to Phase 2.
 
 PHASE 2 — Production (only after explicit approval)
-7. Promote the approved staging deployment to production, or
+8. Promote the approved staging deployment to production, or
    redeploy to the production tier/domain.
-8. This will usually require stopping to ask the user to
-   create an account, add a payment method, or paste in a
-   token — you cannot and should not do these steps yourself.
-9. Once live, report the URL, and list anything the user still
-   needs to do manually (custom domain, environment secrets,
-   DNS records).</pre>
+9. Flip robots.txt to production's real version — allow
+   crawling and point to sitemap.xml. This is step 5's mirror
+   image and just as easy to forget: leaving the "disallow all"
+   version live in production makes the real site invisible to
+   Google, which is a quieter failure than a leaked staging URL
+   but just as much a bug.
+10. This will usually require stopping to ask the user to
+    create an account, add a payment method, or paste in a
+    token — you cannot and should not do these steps yourself.
+11. Once live, report the URL, and list anything the user still
+    needs to do manually (custom domain, environment secrets,
+    DNS records, submitting the sitemap in Google Search
+    Console).</pre>
       <div class="callout">The pause between phases is the point. A staging URL costs nothing and nobody sees it but you — that's exactly when to catch a wrong color, a broken mobile layout, or a tone that doesn't match the brand brief, before it's live.</div>
       <div class="callout">Notice what this subagent <b>can't</b> do: create accounts, enter payment details, or handle secrets on your behalf. That's intentional — it will stop and ask you to do those parts yourself, the same way any careful assistant should.</div>
     </div>
@@ -1565,10 +1625,242 @@ one, and deploy the site to a staging environment.</pre>
   </div>
 </section>
 
-<!-- CHECKLIST -->
+<!-- SECTION: SEO -->
 <section id="sec12">
   <div class="wrap">
-    <div class="section-head"><span class="sec-num">12</span><h2>Build checklist</h2></div>
+    <div class="section-head"><span class="sec-num">12</span><h2>Making it findable</h2></div>
+    <p class="sec-sub">"SEO" sounds like a specialty. Mechanically, almost all of it is just making sure a crawler can find your pages, understand what each one is about, and trust that it's the real, finished version — Google can't rank a page it can't read, and it won't rank a page it thinks might be a duplicate or unfinished. You've already built most of the foundation without naming it: semantic HTML, alt text, and mobile-first layout from <code>frontend-html</code>/<code>frontend-cljs</code>, and the Lighthouse pass from Section 11, all directly affect ranking too — speed and accessibility aren't SEO's neighbors, they're inputs to it.</p>
+
+    <p>What's actually new here, split by who's responsible:</p>
+
+    <div class="filegroup-label">ux-designer — plans it</div>
+    <div class="filerow"><span class="fname">Target search intent per page</span><p>What someone would actually type into Google to want this specific page — drives the title and heading, not just the business name repeated everywhere.</p></div>
+    <div class="filerow"><span class="fname">schema.org type for the business</span><p>LocalBusiness, Restaurant, Store, ProfessionalService, Organization, etc. — determines what structured data frontend implements.</p></div>
+
+    <div class="filegroup-label">frontend-html / frontend-cljs — implements it, per page</div>
+    <div class="filerow"><span class="fname">Unique title + meta description</span><p>Built from the target search intent, not the business name copy-pasted across every page.</p></div>
+    <div class="filerow"><span class="fname">One h1, a canonical tag, Open Graph tags</span><p>Exactly one h1 (already true if semantic HTML rules are followed); canonical avoids duplicate-content confusion; Open Graph makes shared links preview properly.</p></div>
+    <div class="filerow"><span class="fname">JSON-LD structured data</span><p>One block per page, using the schema.org type ux-designer chose, filled with real values — this is what earns rich results (star ratings, business hours) in search listings.</p></div>
+
+    <div class="filegroup-label">deployment-engineer — handles it at the infrastructure level</div>
+    <div class="filerow"><span class="fname">sitemap.xml</span><p>Generated with production URLs only — never staging's, or Google indexes the wrong domain.</p></div>
+    <div class="filerow"><span class="fname">robots.txt, environment-aware</span><p>Disallow everything on staging; allow crawling and point to the sitemap on production. Both directions of this are easy to get wrong — see the callout below.</p></div>
+
+    <div class="callout">The one genuinely easy mistake here, and it's specific to running two environments the way this crew does: a staging URL is still a real, publicly reachable URL. Without an explicit <code>robots.txt</code> that disallows everything, nothing stops Google from crawling and indexing your unfinished staging site right alongside — or instead of — your real one. The fix has to go the other way too: when you promote to production, that same restrictive <code>robots.txt</code> has to flip to actually allow crawling, or your finished site goes live invisible to search. <code>deployment-engineer</code>'s Phase 1 and Phase 2 steps in Section 08 now handle both directions explicitly.</div>
+
+    <span class="file-tag">robots.txt — staging</span>
+    <pre>User-agent: *
+Disallow: /</pre>
+
+    <span class="file-tag">robots.txt — production</span>
+    <pre>User-agent: *
+Allow: /
+
+Sitemap: https://yourbusiness.com/sitemap.xml</pre>
+
+    <p class="dim">The one step nothing here can do for you: actually submitting the sitemap in Google Search Console, and verifying you own the domain. Same shape as the custom domain procedure in Section 08 — <code>deployment-engineer</code> can tell you the sitemap URL to submit, but creating an account and verifying ownership is yours to do.</p>
+
+    <p style="margin-top:26px;"><b>Your role, concretely</b> — most of this section is automatic, so here's exactly where it fits into the run you already know from Section 08, and the two places you actually have to do something:</p>
+
+    <ol class="walkthrough">
+      <li>
+        <h4>Nothing extra during the normal build</h4>
+        <p>Everything above is already wired into the subagents you're already running — <code>ux-designer</code> and <code>frontend-html</code>/<code>frontend-cljs</code> handle it during Section 08's Steps 1-3, <code>deployment-engineer</code> handles it during Steps 5-9. You don't type any new prompt to trigger it.</p>
+      </li>
+      <li>
+        <h4>Optional: state real target keywords upfront, if you have them</h4>
+        <p><code>ux-designer</code> will guess a reasonable search intent per page from your brief alone. If you already know what phrases actually matter for this business, say so in your first prompt or in <code>business-context.md</code> — it takes priority over a guess:</p>
+        <pre>Build me a car rental site for a single location in Kigali.
+Target search terms: "car rental Kigali", "airport car hire
+Rwanda". Make sure the homepage and the fleet page are built
+around those, not generic phrasing.</pre>
+      </li>
+      <li>
+        <h4>During Step 6 (staging review): check robots.txt yourself</h4>
+        <p>Open <code>&lt;your-staging-url&gt;/robots.txt</code> directly in a browser tab, right alongside the click-through you're already doing. It must read exactly:</p>
+        <pre>User-agent: *
+Disallow: /</pre>
+        <p>If it doesn't — if it's missing, or already allows crawling — say so before you approve; that's a staging site Google could index.</p>
+      </li>
+      <li>
+        <h4>After Step 7 (production approval): check it again</h4>
+        <p>Same file, production URL this time — <code>&lt;your-real-domain&gt;/robots.txt</code>. It should now read:</p>
+        <pre>User-agent: *
+Allow: /
+
+Sitemap: https://yourbusiness.com/sitemap.xml</pre>
+        <p>If it still shows <code>Disallow: /</code>, your live site is invisible to Google — ask <code>deployment-engineer</code> to flip it.</p>
+      </li>
+      <li>
+        <h4>The one manual step: Google Search Console</h4>
+        <p>This only happens once, after production is live:</p>
+        <pre>1. Go to search.google.com/search-console
+2. Add a property using your production domain
+3. Ask deployment-engineer directly: "I'm verifying
+   yourbusiness.com in Google Search Console — what
+   verification record do I need to add, and what's my exact
+   sitemap URL?" It already knows your host and DNS setup and
+   can give you the exact record.
+4. Add that record wherever your domain's DNS is managed
+   (same place as the custom domain steps in Section 08),
+   then click verify in Search Console.
+5. Once verified, paste your sitemap URL under Sitemaps in the
+   left nav and submit it.</pre>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- SECTION: EVALS -->
+<section id="sec13">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">13</span><h2>Evaluating your crew</h2></div>
+    <p class="sec-sub">This is a different question from anything <code>qa</code> answers. <code>qa</code> checks whether <i>one build</i> is correct — the contract, the scope, the journeys, the standards, for the specific project you just ran. It can't tell you whether <code>ux-designer</code> reliably writes a good scope-checklist across ten different kinds of business, or whether last week's edit to <code>frontend-html.md</code> actually fixed the overlay-click bug or just added words that happen not to hurt on the one project you tested it against. That's evaluation — checking the crew itself, not one thing it built.</p>
+
+    <div class="callout">Worth naming plainly: every subagent edit in this tutorial so far — the image-placeholder rule, the click-testing footgun, WebSearch for library research, the engineering-standards check — was verified against exactly one project, the one being worked on at the time. That's enough to confirm a fix addresses the bug you just saw. It's not enough to know whether it generalizes to a business you haven't tried yet, or whether it quietly broke something else. Closing that gap is what this section is for.</div>
+
+    <p>A minimal version of this doesn't need new tooling — you already have everything an eval needs, just applied to one run at a time instead of many. Here's the concrete version of each step: a real file to create, a real prompt to type.</p>
+
+    <ol class="walkthrough">
+      <li>
+        <h4>Build a small, fixed prompt set</h4>
+        <p>One file, one line per business, each annotated with what should apply — this annotation is your ground truth for grading later, so write it before you've seen any output, not after.</p>
+        <span class="file-tag">eval-prompts.md</span>
+        <pre># Eval Prompts
+
+1. "Build me a site for a small coffee roastery that ships
+   beans nationwide."
+   Expect: catalog, payments, notifications. No accounts, no
+   admin, no customer agreements.
+
+2. "Build me a car rental site for a single location in Kigali."
+   Expect: catalog, payments, accounts, admin, customer
+   agreements (rental contract), legal/compliance.
+
+3. "Build me a booking site for a two-dentist clinic."
+   Expect: notifications (reminders), admin (schedule). No
+   catalog, no payments unless deposits are implied.
+
+4. "Build me a marketing site for a B2B SaaS analytics tool,
+   no live product yet."
+   Expect: no catalog, no payments, no accounts — mostly
+   static pages plus a signup/waitlist form.
+
+5. "Build me a donation site for a small local nonprofit."
+   Expect: payments (donations), notifications (receipts),
+   legal/compliance (tax receipt language). No catalog.
+
+6. "Build me a rental site for wedding equipment — tents,
+   chairs, tables."
+   Expect: catalog, payments, customer agreements (rental
+   terms), admin (availability calendar), notifications.</pre>
+        <p class="dim" style="margin-top:8px;">Notice #2 and #6 are the two prompts that should exercise "customer agreements" — the category added to this tutorial back in Section 07 after it turned up missing on a real project. Written down like this, that gap would have been caught by a sweep across the set, not by hitting it live.</p>
+      </li>
+
+      <li>
+        <h4>Re-run against the whole set, in isolated directories</h4>
+        <p>Type this into Claude Code once you've changed a subagent file and want to check it against everything, not just the one business you were fixing:</p>
+        <pre>For each business in eval-prompts.md, do the following in a
+fresh subdirectory eval-runs/&lt;slug&gt;/ (slug = a short kebab-case
+name, e.g. eval-runs/coffee-roastery/):
+
+1. Run the brand-strategist subagent with that business's
+   one-line description as the prompt.
+2. Run the ux-designer subagent immediately after.
+
+Stop there for eval runs — don't build frontend, backend, or
+deploy. Keep each business's files completely separate; don't
+let one run's brand-brief.md or scope-checklist.md leak into
+another business's directory.</pre>
+        <p class="dim" style="margin-top:8px;">Stopping after <code>ux-designer</code> is deliberate, not a shortcut: most of the real bugs found earlier in this tutorial were scoping and design decisions — a missed category, a page that didn't match the brief — not implementation bugs. That's where the highest-signal, cheapest-to-run check is.</p>
+      </li>
+
+      <li>
+        <h4>Grade against a rubric you already have</h4>
+        <p>Turn <code>qa</code>'s own checks into a standing rubric file, reused across every run instead of written fresh each time:</p>
+        <span class="file-tag">eval-rubric.md</span>
+        <pre># Eval Rubric
+
+For each business run, check:
+
+1. scope-checklist.md — every category marked "applies" matches
+   the "Expect:" line for that business in eval-prompts.md.
+   Flag both directions: something missed, and something added
+   that wasn't implied.
+2. design-spec.md — every "applies" category has a matching
+   page or section.
+3. api-contract.md exists and its endpoints are shaped like the
+   categories that apply (a "payments" category should produce
+   a checkout-shaped endpoint, not a static price list).
+4. user-journeys.md has 2-4 journeys, and at least one covers
+   the business's most obvious primary use case.
+5. Any "customer agreements" or "legal/compliance" category
+   marked "applies" is a first-class step somewhere, not folded
+   silently into another page.</pre>
+      </li>
+
+      <li>
+        <h4>Let Claude grade the first pass — with a subagent built only for that</h4>
+        <p>Give grading its own subagent, deliberately read-only, so it can't quietly "fix" what it's supposed to be scoring:</p>
+        <span class="file-tag">.claude/agents/eval-grader.md</span>
+        <pre>---
+name: eval-grader
+description: Grades one eval run's artifacts against
+  eval-rubric.md. Use after a business has been run through
+  brand-strategist and ux-designer into an eval-runs/&lt;slug&gt;/
+  directory.
+tools: Read
+model: sonnet
+---
+
+You are an eval grader, not a builder — you only have Read
+access on purpose. Read eval-rubric.md and every file in the
+eval-runs/ directory you're pointed at. Score each rubric item
+pass/fail with a one-line reason. Do not soften a fail into a
+"partial pass" — either the artifact matches the rubric item or
+it doesn't.
+
+Output a single markdown table: one row per rubric item,
+columns for item, pass/fail, reason. End with an overall
+pass/fail for the run — fail if any rubric item failed.</pre>
+        <p>Then, to grade the whole set in one pass:</p>
+        <pre>For each subdirectory under eval-runs/, use the eval-grader
+subagent to grade it against eval-rubric.md. Collect every
+result into one table: one row per business, one column per
+rubric item, plus an overall pass/fail per business.</pre>
+        <p class="dim" style="margin-top:8px;">Same principle as Section 08: no single agent is trusted to both produce something and confirm it's correct. Periodically open a couple of the actual <code>eval-runs/</code> directories yourself to make sure the grader hasn't drifted — a grader that always says pass is worse than no grader at all.</p>
+      </li>
+
+      <li>
+        <h4>Keep a simple, dated record</h4>
+        <p>Append to this every time you run a full sweep — plain markdown, no tooling required:</p>
+        <span class="file-tag">eval-log.md</span>
+        <pre># Eval Log
+
+## 2026-09-03 — after adding engineering-standards.md check to qa
+ux-designer @ commit a1b2c3d
+6/6 passed scope-checklist accuracy
+6/6 passed design-spec coverage
+5/6 passed user-journeys primary-flow check — dentist run
+  missed the "book an appointment" journey, investigate
+
+## 2026-08-20 — baseline, before "customer agreements" existed
+ux-designer @ commit 9f8e7d6
+4/6 passed scope-checklist accuracy — car rental and wedding
+  rental runs both missed customer agreements. This is the run
+  that led to adding the category in Section 07.</pre>
+        <p class="dim" style="margin-top:8px;">If you're already using git for this project, the commit hash of <code>.claude/agents/</code> at the time of the run is a free, exact version marker — no separate versioning scheme needed.</p>
+      </li>
+    </ol>
+
+    <p class="dim">This is intentionally the minimum useful version, scoped to this specific crew — rubric design, calibrating an LLM grader, and drawing reliable conclusions from a small sample are each deeper topics in their own right than fit here.</p>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section id="sec14">
+  <div class="wrap">
+    <div class="section-head"><span class="sec-num">14</span><h2>Build checklist</h2></div>
     <p class="sec-sub">Tap items off as you assemble your own crew.</p>
     <ul class="checklist" id="checklist">
       <li data-i="0"><span class="checkbox"></span>Wrote <code>brand-strategist</code> and <code>ux-designer</code> subagents</li>
@@ -1586,19 +1878,21 @@ one, and deploy the site to a staging environment.</pre>
       <li data-i="7"><span class="checkbox"></span>Wrote a <code>deployment-engineer</code> subagent</li>
       <li data-i="8"><span class="checkbox"></span>Had it research and recommend a host — after QA signed off, not before</li>
       <li data-i="9"><span class="checkbox"></span>Deployed to staging and got a working preview URL</li>
+      <li data-i="9d-seo"><span class="checkbox"></span>Confirmed staging's <code>robots.txt</code> disallows everything before sharing the preview URL</li>
       <li data-i="8b"><span class="checkbox"></span>Can explain in your own words why the frontend and backend need different hosts</li>
       <li data-i="9b"><span class="checkbox"></span>Personally clicked through every page against the brand brief and design spec</li>
       <li data-i="9c-journey"><span class="checkbox"></span>Walked every journey in <code>user-journeys.md</code> end-to-end and judged whether it actually felt obvious</li>
       <li data-i="9c"><span class="checkbox"></span>Approved and promoted to production yourself</li>
+      <li data-i="9e-seo"><span class="checkbox"></span>Confirmed production's <code>robots.txt</code> flipped to allow crawling, and the sitemap uses the real domain</li>
     </ul>
-    <span id="progress-label">0 / 19 complete</span>
+    <span id="progress-label">0 / 21 complete</span>
   </div>
 </section>
 
 <!-- CHEATSHEET -->
-<section id="sec13" style="border-bottom:none;">
+<section id="sec15" style="border-bottom:none;">
   <div class="wrap">
-    <div class="section-head"><span class="sec-num">13</span><h2>Quick reference</h2></div>
+    <div class="section-head"><span class="sec-num">15</span><h2>Quick reference</h2></div>
     <div class="cheatsheet">
       <div class="row"><span class="cmd">brand-strategist → ux-designer</span><span class="desc">Always run these two first, in sequence, as subagents — never parallelize them.</span></div>
       <div class="row"><span class="cmd">api-contract.md</span><span class="desc">The single source of truth frontend and backend both build against. Written once, by ux-designer.</span></div>
@@ -1615,6 +1909,7 @@ one, and deploy the site to a staging environment.</pre>
       <div class="row"><span class="cmd">frontend-html / frontend-cljs · backend-node / backend-clojure</span><span class="desc">Four interchangeable pieces, not two paired stacks — any frontend works with either backend as long as both read the same api-contract.md.</span></div>
       <div class="row"><span class="cmd">engineering-standards.md</span><span class="desc">Goals, architectural boundaries, and technology restrictions every code-writing subagent reads before making a design decision. Optional; write it once your stack actually matters.</span></div>
       <div class="row"><span class="cmd">CLAUDE.md ≠ subagents</span><span class="desc">Project CLAUDE.md is loaded for your main session, not for subagents dispatched via Task/Agent — they only see what their own prompt tells them to read.</span></div>
+      <div class="row"><span class="cmd">robots.txt: Disallow: / (staging) → Allow: / (production)</span><span class="desc">Must flip both directions — a crawlable staging site and an accidentally-blocked production site are the same class of bug, just opposite failure modes.</span></div>
     </div>
     <p class="dim" style="margin-top:18px;">Reference: <a href="https://code.claude.com/docs/en/sub-agents" target="_blank" rel="noopener">Subagents docs</a> · <a href="https://code.claude.com/docs/en/agent-teams" target="_blank" rel="noopener">Agent teams docs</a></p>
   </div>

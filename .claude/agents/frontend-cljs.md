@@ -47,6 +47,19 @@ Rules:
 - When an image is missing or no category-appropriate photo is
   available, use a simple neutral SVG placeholder in the brand's
   palette, obviously a placeholder — never a random-photo service
+- Every page gets a unique `<title>` and meta description
+  built from design-spec.md's target search intent for that
+  page — not the business name repeated on every page. Exactly
+  one `:h1` per page. A canonical `:link` tag pointing at that
+  page's own URL. Open Graph tags (og:title, og:description,
+  og:image) so the page previews properly when shared. One
+  JSON-LD `:script` block per page (`{:type "application/ld+json"}`)
+  using the schema.org type ux-designer specified, with real
+  values from brand-brief.md
+  and design-spec.md — not placeholder text. If server-rendering
+  isn't part of this project, confirm these render into the
+  initial HTML response rather than only appearing after
+  Replicant hydrates client-side — a crawler may not wait for that.
 - Before reporting done, click-test the actual rendered page in
   a browser, not just check that shadow-cljs compiles cleanly.
   The same "whole card is clickable" overlay footgun applies

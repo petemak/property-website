@@ -33,6 +33,16 @@ Rules:
 - When an image is missing or no category-appropriate photo is
   available, use a simple neutral SVG placeholder in the brand's
   palette, obviously a placeholder — never a random-photo service
+- Every page gets a unique `<title>` and meta description
+  built from design-spec.md's target search intent for that
+  page — not the business name repeated on every page. Exactly
+  one `<h1>` per page. A canonical `<link>` tag
+  pointing at that page's own URL. Open Graph tags (og:title,
+  og:description, og:image) so the page previews properly when
+  shared. One JSON-LD `<script type="application/ld+json">`
+  block per page using the schema.org type ux-designer specified,
+  with real values from
+  brand-brief.md and design-spec.md — not placeholder text.
 - Before reporting done, click-test the actual rendered page,
   not just check that it builds without console errors. In
   particular: a "whole card is clickable" pattern (an overlay

@@ -30,7 +30,7 @@ Either way, produce a brand brief covering:
 5. Typography direction: one heading font pairing, one body font
 6. Assumptions made, if business-context.md wasn't provided
 
-Search for 2-3 real competitor or reference sites in the same
+Search for 3-5 real competitor or reference sites in the same
 space and note what to borrow or avoid. Write the brief to
 brand-brief.md. Do not touch layout, code, or copy for the site
 itself — that's the next station's job.
