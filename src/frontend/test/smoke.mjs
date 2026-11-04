@@ -628,6 +628,20 @@ try {
     await page.waitForSelector(".admin-table, .empty-state");
   });
 
+  await check("Admin gallery upload form collects category + required alt, and shows a visible error without it", async () => {
+    await page.goto(BASE + "/admin/gallery", { waitUntil: "networkidle" });
+    await page.waitForSelector("#up-alt");
+    const cats = await page.locator("#up-cat option").allTextContents();
+    if (!cats.includes("The car")) throw new Error("upload category select lacks 'The car': " + cats.join(","));
+    // no file chosen -> visible prompt, not a silent no-op
+    await page.getByRole("button", { name: "Upload", exact: true }).click();
+    await page.waitForSelector(".inline-alert--error");
+    // file chosen but no alt -> visible alt-required error (backend would 422)
+    await page.setInputFiles("#up", { name: "car.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]) });
+    await page.getByRole("button", { name: "Upload", exact: true }).click();
+    await page.waitForSelector("text=alt text");
+  });
+
   // ---- A9 Sent log (outbox) — api-contract §26b ----
   await check("A9 Sent log — tab renders fixture rows, template filter narrows, row opens the rendered email", async () => {
     await page.goto(BASE + "/admin/emails", { waitUntil: "networkidle" });

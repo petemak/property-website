@@ -19,26 +19,48 @@ export async function renderGallery(ctx) {
   function draw() {
     const missingAlt = data.images.filter((i) => !i.alt || !i.alt.trim()).length;
     const fileInput = h("input", { type: "file", id: "up", accept: "image/jpeg,image/png,image/webp", multiple: true });
+    // The backend rejects an upload without alt text (1–250 chars), so it is
+    // collected here, up front, and applied to every file in this batch.
+    const altInput = h("input", { type: "text", id: "up-alt", maxLength: 250, placeholder: "Describe the photo (required)" });
+    const capInput = h("input", { type: "text", id: "up-cap", maxLength: 250 });
+    const catSelect = h("select", { id: "up-cat" },
+      ...GALLERY_CATEGORIES.map((c) => h("option", { value: c }, c)));
+    const status = h("div", { role: "status" });
 
     mount(host,
       h("section", { class: "admin-panel" },
         h("h2", {}, "Upload photos"),
-        h("p", { class: "role-note" }, "JPG, PNG or WebP. Uploads go through our backend to storage; a thumbnail is generated server-side."),
+        h("p", { class: "role-note" }, "JPG, PNG or WebP. Alt text and category apply to every file chosen in one go; you can refine each photo below afterwards."),
         field({ label: "Choose files", control: fileInput, id: "up" }),
+        field({ label: "Category", control: catSelect, id: "up-cat" }),
+        field({ label: "Alt text", control: altInput, id: "up-alt" }),
+        field({ label: "Caption (optional)", control: capInput, id: "up-cap" }),
+        status,
         h("button", { class: "btn btn--primary", type: "button", onClick: async () => {
           const files = Array.from(fileInput.files || []);
-          if (!files.length) return;
+          if (!files.length) { mount(status, alertBox("Choose at least one photo first.")); return; }
+          const alt = altInput.value.trim();
+          if (!alt) { mount(status, alertBox("Add alt text describing the photo — it is required.")); altInput.focus(); return; }
+          let failed = 0, done = 0, lastError = "";
           for (const f of files) {
             const fd = new FormData();
             fd.append("file", f);
-            fd.append("alt", "");
-            fd.append("caption", "");
-            fd.append("category", "Living");
-            try { const img = await api.adminUploadImage(fd); data.images.push(img); }
-            catch (e) { announce("Upload failed: " + e.message); }
+            fd.append("alt", alt);
+            fd.append("caption", capInput.value.trim());
+            fd.append("category", catSelect.value);
+            try { const img = await api.adminUploadImage(fd); data.images.push(img); done++; }
+            catch (e) { failed++; lastError = e.message; }
           }
-          announce("Upload complete. Add alt text to each new photo.");
           draw();
+          const result = h("div", { role: "status" });
+          if (failed) {
+            mount(result, alertBox(`${failed} of ${files.length} upload(s) failed: ${lastError}`));
+            announce("Upload failed: " + lastError);
+          } else {
+            mount(result, alertBox(`${done} photo(s) uploaded.`, "success"));
+            announce("Upload complete.");
+          }
+          host.prepend(result);
         } }, "Upload"),
       ),
 
