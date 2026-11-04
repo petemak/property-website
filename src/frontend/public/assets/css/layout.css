@@ -163,6 +163,12 @@ body.has-transparent-header #site-header { min-height: 0; }
 /* Contact/copyright on the left, maker credit on the right, one row (stacked on phones). */
 .footer-bottom { margin-top: var(--sp-6); padding-top: var(--sp-5); border-top: 1px solid rgba(255,255,255,0.25); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3) var(--sp-5); }
 .footer-meta { margin: 0; font-size: var(--fs-300); opacity: 0.9; }
+/* From tablet width up the text shrinks (and wraps) before the credit ever drops to its own line. */
+@media (min-width: 640px) {
+  .footer-bottom { flex-wrap: nowrap; }
+  .footer-meta { flex: 1 1 auto; min-width: 0; }
+  .site-footer__credit { flex: none; }
+}
 /* Maker credit (maker-credit/maker-credit.css), sitting under the footer-meta rule. */
 .site-footer__credit { display: inline-flex; align-items: center; gap: var(--sp-2); margin: 0; }
 .maker-mark { flex: none; width: auto; height: 1.0625rem; color: var(--maker-mark, #84cc16); }
