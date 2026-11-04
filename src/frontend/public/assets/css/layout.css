@@ -160,14 +160,16 @@ body.has-transparent-header #site-header { min-height: 0; }
 }
 .footer-grid ul { list-style: none; margin: 0; padding: 0; }
 .footer-grid li { margin-bottom: var(--sp-2); }
-.footer-meta { margin-top: var(--sp-6); padding-top: var(--sp-5); border-top: 1px solid rgba(255,255,255,0.25); font-size: var(--fs-300); opacity: 0.9; }
+/* Contact/copyright on the left, maker credit on the right, one row (stacked on phones). */
+.footer-bottom { margin-top: var(--sp-6); padding-top: var(--sp-5); border-top: 1px solid rgba(255,255,255,0.25); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3) var(--sp-5); }
+.footer-meta { margin: 0; font-size: var(--fs-300); opacity: 0.9; }
 /* Maker credit (maker-credit/maker-credit.css), sitting under the footer-meta rule. */
-.site-footer__credit { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-2); }
+.site-footer__credit { display: inline-flex; align-items: center; gap: var(--sp-2); margin: 0; }
 .maker-mark { flex: none; width: auto; height: 1.0625rem; color: var(--maker-mark, #84cc16); }
 /* Full-height tap target without making the footer line taller. */
 .maker-link { display: inline-flex; align-items: center; min-height: 44px; margin-block: calc((1.0625rem - 44px) / 2); }
 .maker-link:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: 4px; }
-.site-footer__credit { margin-top: var(--sp-4); font-size: var(--fs-300); }
+.site-footer__credit { font-size: var(--fs-300); }
 @media (min-width: 768px) {
   .footer-grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
 }

@@ -104,9 +104,11 @@ export function renderFooter(property) {
           ["/vehicle-rental-agreement", "Vehicle rental agreement"],
         ]),
       ),
-      metaLine,
-      // PJM maker credit — markup from maker-credit/footer-credit.html (static, vetted SVG).
-      h("p", { class: "site-footer__credit", html: `Designed and built by ${MAKER_LINK}` }),
+      h("div", { class: "footer-bottom" },
+        metaLine,
+        // PJM maker credit — markup from maker-credit/footer-credit.html (static, vetted SVG).
+        h("p", { class: "site-footer__credit", html: `Designed and built by ${MAKER_LINK}` }),
+      ),
     )
   );
   host.replaceChildren(footer);
