@@ -4,6 +4,7 @@
   /* Brand palette */
   --c-hill-green: #1F5B4E;
   --c-hill-green-dark: #164138;
+  --maker-mark: #84cc16;       /* PJM credit mark in the footer; ~4:1 on Hill Green (needs >= 3:1) */
   --c-clay: #D97A45;          /* large decorative fills only */
   --c-clay-action: #C25E2C;   /* text-bearing action surfaces — passes 4.5:1 with white bold >=16px */
   --c-charcoal: #2B2A28;

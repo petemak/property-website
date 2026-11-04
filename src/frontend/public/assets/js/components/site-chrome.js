@@ -62,6 +62,8 @@ function isCurrent(href, path) {
   return path === href || path.startsWith(href + "/");
 }
 
+const MAKER_LINK = '<a class="maker-link" href="mailto:peter.makumbi@yahoo.com" title="Email PJM"><svg class="maker-mark" viewBox="0 0 56 32" role="img" aria-label="PJM" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1.2" y="1.2" width="53.6" height="29.6" rx="6" stroke-width="2.2"/><g transform="translate(6 4)"><path d="M4 21V3h6a5 5 0 0 1 0 10H4"/><path d="M24 3v13a5 5 0 0 1-10 0"/><path d="M24 3l8 11 8-11v18"/></g></svg></a>';
+
 export function renderFooter(property) {
   const host = $("#site-footer");
   if (!host) return;
@@ -102,7 +104,9 @@ export function renderFooter(property) {
           ["/vehicle-rental-agreement", "Vehicle rental agreement"],
         ]),
       ),
-      metaLine
+      metaLine,
+      // PJM maker credit — markup from maker-credit/footer-credit.html (static, vetted SVG).
+      h("p", { class: "site-footer__credit", html: `Designed and built by ${MAKER_LINK}` }),
     )
   );
   host.replaceChildren(footer);

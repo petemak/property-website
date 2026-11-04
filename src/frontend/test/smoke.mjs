@@ -642,6 +642,27 @@ try {
     await page.waitForSelector("text=alt text");
   });
 
+  await check("Footer carries the PJM maker credit on every public page: text, accessible mark, token colour, 44px tap target", async () => {
+    for (const route of ["/", "/the-car", "/contact"]) {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(BASE + route, { waitUntil: "networkidle" });
+      const info = await page.evaluate(() => {
+        const c = document.querySelector(".site-footer .site-footer__credit");
+        if (!c) return null;
+        const svg = c.querySelector("svg.maker-mark");
+        const link = c.querySelector("a.maker-link");
+        return { text: c.textContent.trim(), label: svg && svg.getAttribute("aria-label"), color: svg && getComputedStyle(svg).color,
+                 href: link && link.getAttribute("href"), tapH: link && link.getBoundingClientRect().height };
+      });
+      if (!info) throw new Error(route + ": no maker credit in footer");
+      if (!/^Designed and built by/.test(info.text)) throw new Error(route + ": credit text is " + info.text);
+      if (info.label !== "PJM") throw new Error(route + ": mark lacks aria-label PJM");
+      if (info.color !== "rgb(132, 204, 22)") throw new Error(route + ": mark colour is " + info.color);
+      if (!/^mailto:/.test(info.href || "")) throw new Error(route + ": credit link is " + info.href);
+      if (info.tapH < 44) throw new Error(route + ": tap target " + info.tapH + "px < 44");
+    }
+  });
+
   // ---- A9 Sent log (outbox) — api-contract §26b ----
   await check("A9 Sent log — tab renders fixture rows, template filter narrows, row opens the rendered email", async () => {
     await page.goto(BASE + "/admin/emails", { waitUntil: "networkidle" });
